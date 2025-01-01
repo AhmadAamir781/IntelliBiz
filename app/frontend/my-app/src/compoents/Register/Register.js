@@ -1,20 +1,10 @@
-import styles from"./Register/Register.module.css"
+import Header from "../Card/Header";
+import styles from"../Register/Register.module.css";
 
 const Register = () =>{
     return(
         <body className={styles.body}>
-    <header className={styles.header}>
-        <nav className={styles.container}>
-            <div className={styles.logo}>BusinessBoost</div>
-            
-<div className={styles['nav-links']}>   
-                <a href="/login">Login/Signup</a>
-                <a href="#register">Register</a>
-                <a href="/home">Home</a>
-            </div>
-        </nav>
-    </header>
-
+<Header/>
     <main>
         <section className={styles.hero}>
             <div class={styles['hero-content']}>
