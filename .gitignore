@@ -25,7 +25,6 @@ logs/
 *.log
 
 # SQL Specific
-*.sql
 *.bak
 *.sqlproj
 *.sqlproj.user
