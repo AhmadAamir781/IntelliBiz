@@ -29,6 +29,13 @@ namespace IntelliBiz.Controllers
             if (user == null) return NotFound();
             return Ok(user);
         }
+        [HttpGet]
+        public async Task<IActionResult> ReadAllUser()
+        {
+            var user = await _userRepository.ReadAllUserAsync();
+            if (user == null) return NotFound();
+            return Ok(user);
+        }
 
         [HttpPut]
         public async Task<IActionResult> UpdateUser([FromBody] User user)
