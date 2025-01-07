@@ -32,8 +32,7 @@ namespace IntelliBiz.Controllers
         [HttpGet]
         public async Task<IActionResult> ReadAllUser()
         {
-            var user = await _userRepository.ReadAllUserAsync();
-            if (user == null) return NotFound();
+            var user = await _userRepository.ReadAllUsersAsync();
             return Ok(user);
         }
 
