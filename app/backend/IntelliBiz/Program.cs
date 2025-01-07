@@ -1,9 +1,6 @@
-using IntelliBiz.ApplicationDbContext;
-using IntelliBiz.Interfaces;
-using IntelliBiz.Repositories.IntelliBiz.Infrastructure.Repositories;
-using IntelliBiz.Service;
-using Microsoft.EntityFrameworkCore;
 
+using IntelliBiz.Repositories;
+using IntelliBiz.Repositories.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,11 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped<BusinessService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
