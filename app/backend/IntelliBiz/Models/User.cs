@@ -8,7 +8,6 @@ namespace IntelliBiz.Models
         {
             Name = Email = Password = Phone = Address = Role = string.Empty;
         }
-        [SwaggerIgnore]
         public int UserId { get; set; }
 
         [Required(ErrorMessage = "Name is required.")]

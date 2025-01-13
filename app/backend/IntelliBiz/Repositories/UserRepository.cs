@@ -23,7 +23,6 @@ namespace IntelliBiz.Repositories
         // Create User
         public async Task<int> CreateUserAsync(User user)
         {
-            const string query = "EXEC [dbo].[CreateUser] @p_name, @p_email, @p_password, @p_phone, @p_address, @p_role";
             using var connection = CreateConnection();
 
             var parameters = new DynamicParameters();
@@ -34,6 +33,7 @@ namespace IntelliBiz.Repositories
             parameters.Add("@p_address", user.Address);
             parameters.Add("@p_role", user.Role);
 
+            const string query = "[dbo].[CreateUser]";
             return await connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
         }
 
@@ -79,11 +79,11 @@ namespace IntelliBiz.Repositories
         // Delete User
         public async Task<int> DeleteUserAsync(int userId)
         {
-            const string query = "EXEC [dbo].[DeleteUser] @p_user_id";
             using var connection = CreateConnection();
 
             var parameters = new DynamicParameters();
             parameters.Add("@p_user_id", userId);
+            const string query = "EXEC [dbo].[DeleteUser] @p_user_id";
 
             return await connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
         }
