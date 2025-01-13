@@ -1,10 +1,8 @@
-# IntelliBiz - System Diagrams
-
-## 1. **Use Case Diagram**
+## Use Case Diagram
 Illustrates the interactions between users, businesses, and the IntelliBiz system.
 
 ```mermaid
-usecaseDiagram
+usecase
     actor Admin
     actor User
     actor Shopkeeper as Shopkeeper
