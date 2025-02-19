@@ -47,15 +47,16 @@ classDiagram
         +manageReviews()
     }
 
-    User <|-- Admin
-    User ||--o{ Business
-    User ||--o{ Appointment
-    User ||--o{ Review
-    Business ||--o{ Appointment
-    Business ||--o{ Review
+    Admin --|> User
+    Business o-- User
+    Appointment o-- User
+    Review o-- User
+    Appointment o-- Business
+    Review o-- Business
 ```
 
 ### IntelliBiz Domain Model Diagram
+
 This domain model diagram provides a high-level overview of the IntelliBiz system, depicting key entities and their relationships:
 
 - **User**: A general entity representing system users, including customers and shopkeepers.
