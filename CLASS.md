@@ -69,4 +69,3 @@ This class diagram represents the main entities in the IntelliBiz platform and t
 - **Appointment** represents booking details with customers.
 - **Review** contains customer feedback and ratings.
 
-Use this diagram to better understand the project structure before diving into the codebase!
