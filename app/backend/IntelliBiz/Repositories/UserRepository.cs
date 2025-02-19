@@ -49,6 +49,14 @@ namespace IntelliBiz.Repositories
             return await connection.QueryFirstOrDefaultAsync<User>(query, parameters, commandType: CommandType.StoredProcedure);
         }
 
+        public async Task<User> ReadUserByEmailAsync(string email)
+        {
+            const string query = "SELECT * FROM [USER] WHERE [email] = @email";
+            using var connection = CreateConnection();
+
+            return await connection.QueryFirstOrDefaultAsync<User>(query, new { email });
+        }
+
         // Read All Users (or Use Case-appropriate Query for All Users)
         public async Task<IEnumerable<User>> ReadAllUsersAsync()
         {
@@ -76,7 +84,6 @@ namespace IntelliBiz.Repositories
             return await connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
         }
 
-        // Delete User
         public async Task<int> DeleteUserAsync(int userId)
         {
             using var connection = CreateConnection();

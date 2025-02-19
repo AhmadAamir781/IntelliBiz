@@ -3,77 +3,80 @@ using IntelliBiz.Repositories;
 using IntelliBiz.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-[Route("api/[controller]")]
-[ApiController]
-public class BusinessController(IBusinessRepository businessRepository) : ControllerBase
+namespace IntelliBiz.Controllers
 {
-    // Create Business
-    [HttpPost]
-    public async Task<IActionResult> CreateBusiness([FromBody] Business business)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class BusinessController(IBusinessRepository businessRepository) : ControllerBase
     {
-        if (business == null)
+        // Create Business
+        [HttpPost]
+        public async Task<IActionResult> CreateBusiness([FromBody] Business business)
         {
-            return BadRequest("Business data is required.");
+            if (business == null)
+            {
+                return BadRequest("Business data is required.");
+            }
+
+            var result = await businessRepository.CreateBusinessAsync(business);
+            if (result > 0)
+            {
+                return Ok("Business created successfully.");
+            }
+
+            return StatusCode(500, "Error creating business.");
         }
 
-        var result = await businessRepository.CreateBusinessAsync(business);
-        if (result > 0)
+        // Update Business
+        [HttpPut]
+        public async Task<IActionResult> UpdateBusiness([FromBody] Business business)
         {
-            return Ok("Business created successfully.");
+            if (business == null)
+            {
+                return BadRequest("Business data is required.");
+            }
+
+            var result = await businessRepository.UpdateBusinessAsync(business);
+            if (result > 0)
+            {
+                return Ok("Business updated successfully.");
+            }
+
+            return StatusCode(500, "Error updating business.");
         }
 
-        return StatusCode(500, "Error creating business.");
-    }
-
-    // Update Business
-    [HttpPut]
-    public async Task<IActionResult> UpdateBusiness([FromBody] Business business)
-    {
-        if (business == null)
+        // Delete Business
+        [HttpDelete("{businessId}")]
+        public async Task<IActionResult> DeleteBusiness(int businessId)
         {
-            return BadRequest("Business data is required.");
+            var result = await businessRepository.DeleteBusinessAsync(businessId);
+            if (result > 0)
+            {
+                return Ok("Business deleted successfully.");
+            }
+
+            return StatusCode(500, "Error deleting business.");
         }
 
-        var result = await businessRepository.UpdateBusinessAsync(business);
-        if (result > 0)
+        // Get Single Business
+        [HttpGet("{businessId}")]
+        public async Task<IActionResult> GetBusiness(int businessId)
         {
-            return Ok("Business updated successfully.");
+            var business = await businessRepository.ReadBusinessAsync(businessId);
+            if (business != null)
+            {
+                return Ok(business);
+            }
+
+            return NotFound("Business not found.");
         }
 
-        return StatusCode(500, "Error updating business.");
-    }
-
-    // Delete Business
-    [HttpDelete("{businessId}")]
-    public async Task<IActionResult> DeleteBusiness(int businessId)
-    {
-        var result = await businessRepository.DeleteBusinessAsync(businessId);
-        if (result > 0)
+        // Get All Businesses
+        [HttpGet]
+        public async Task<IActionResult> GetAllBusinesses()
         {
-            return Ok("Business deleted successfully.");
+            var businesses = await businessRepository.GetAllBusinessesAsync();
+            return Ok(businesses);
         }
-
-        return StatusCode(500, "Error deleting business.");
-    }
-
-    // Get Single Business
-    [HttpGet("{businessId}")]
-    public async Task<IActionResult> GetBusiness(int businessId)
-    {
-        var business = await businessRepository.ReadBusinessAsync(businessId);
-        if (business != null)
-        {
-            return Ok(business);
-        }
-
-        return NotFound("Business not found.");
-    }
-
-    // Get All Businesses
-    [HttpGet]
-    public async Task<IActionResult> GetAllBusinesses()
-    {
-        var businesses = await businessRepository.GetAllBusinessesAsync();
-        return Ok(businesses);
     }
 }

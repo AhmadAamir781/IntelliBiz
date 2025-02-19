@@ -1,6 +1,7 @@
 
 using IntelliBiz.Repositories;
 using IntelliBiz.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -21,6 +22,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.Authority = "https://dev-p1lr1cmw6quzv1v8.us.auth0.com/";
+    options.Audience = "intelli-biz";
+});
 
 var app = builder.Build();
 

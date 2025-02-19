@@ -7,6 +7,7 @@ namespace IntelliBiz.Repositories.Interfaces
         Task<int> CreateUserAsync(User user);
         Task<int> DeleteUserAsync(int userId);
         Task<User> ReadUserAsync(int userId);
+        Task<User> ReadUserByEmailAsync(string email);
         Task<IEnumerable<User>> ReadAllUsersAsync();
         Task<int> UpdateUserAsync(User user);
     }

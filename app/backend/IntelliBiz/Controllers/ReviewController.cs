@@ -2,8 +2,10 @@
 {
     using IntelliBiz.Models;
     using IntelliBiz.Repositories.Interfaces;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using System;
+    using System.Security.Claims;
     using System.Threading.Tasks;
 
     [Route("api/[controller]")]
@@ -16,6 +18,9 @@
         {
             _reviewRepository = reviewRepository;
         }
+
+
+        [Authorize(Roles = "Customer")]
 
         // GET: api/review/{businessId}
         [HttpGet("{businessId}")]
