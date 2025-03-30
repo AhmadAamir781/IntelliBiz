@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,6 +47,8 @@ import {
   Trash2,
   Plus,
 } from "lucide-react"
+import { businessService, Business } from "@/services/businessService"
+import { toast } from "sonner"
 
 export default function BusinessManagement() {
   const searchParams = useSearchParams()
@@ -57,91 +59,28 @@ export default function BusinessManagement() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [businessToDelete, setBusinessToDelete] = useState<string | null>(null)
+  const [businessToDelete, setBusinessToDelete] = useState<number | null>(null)
+  const [businesses, setBusinesses] = useState<Business[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock business data
-  const businesses = [
-    {
-      id: "1",
-      name: "Smith Plumbing Services",
-      category: "Plumbing",
-      owner: "John Smith",
-      location: "New York, NY",
-      status: "approved",
-      registrationDate: "2023-01-15",
-      verified: true,
-    },
-    {
-      id: "2",
-      name: "Elite Electrical Solutions",
-      category: "Electrical",
-      owner: "Sarah Johnson",
-      location: "Brooklyn, NY",
-      status: "approved",
-      registrationDate: "2023-02-20",
-      verified: true,
-    },
-    {
-      id: "3",
-      name: "Green Thumb Landscaping",
-      category: "Landscaping",
-      owner: "Michael Brown",
-      location: "Queens, NY",
-      status: "approved",
-      registrationDate: "2023-03-10",
-      verified: false,
-    },
-    {
-      id: "4",
-      name: "Quick Plumbing Solutions",
-      category: "Plumbing",
-      owner: "Robert Davis",
-      location: "Manhattan, NY",
-      status: "pending",
-      registrationDate: "2023-03-15",
-      verified: false,
-    },
-    {
-      id: "5",
-      name: "Modern Electrical Services",
-      category: "Electrical",
-      owner: "Jennifer Wilson",
-      location: "Bronx, NY",
-      status: "pending",
-      registrationDate: "2023-03-14",
-      verified: false,
-    },
-    {
-      id: "6",
-      name: "Green Gardens Landscaping",
-      category: "Landscaping",
-      owner: "David Martinez",
-      location: "Staten Island, NY",
-      status: "pending",
-      registrationDate: "2023-03-13",
-      verified: false,
-    },
-    {
-      id: "7",
-      name: "Sparkle Home Cleaning",
-      category: "Cleaning",
-      owner: "Lisa Anderson",
-      location: "Brooklyn, NY",
-      status: "pending",
-      registrationDate: "2023-03-12",
-      verified: false,
-    },
-    {
-      id: "8",
-      name: "Fake Business LLC",
-      category: "Other",
-      owner: "Unknown User",
-      location: "Unknown",
-      status: "rejected",
-      registrationDate: "2023-03-11",
-      verified: false,
-    },
-  ]
+  useEffect(() => {
+    loadBusinesses()
+  }, [])
+
+  const loadBusinesses = async () => {
+    try {
+      setLoading(true)
+      const data = await businessService.getAllBusinesses()
+      setBusinesses(data)
+      setError(null)
+    } catch (err) {
+      setError("Failed to load businesses")
+      toast.error("Failed to load businesses")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Filter businesses based on status
   const filteredBusinesses = businesses.filter((business) => {
@@ -165,16 +104,23 @@ export default function BusinessManagement() {
     return true
   })
 
-  const handleDeleteBusiness = (id: string) => {
+  const handleDeleteBusiness = (id: number) => {
     setBusinessToDelete(id)
     setDeleteDialogOpen(true)
   }
 
-  const confirmDelete = () => {
-    // In a real app, you would call an API to delete the business
-    console.log(`Deleting business with ID: ${businessToDelete}`)
-    setDeleteDialogOpen(false)
-    setBusinessToDelete(null)
+  const confirmDelete = async () => {
+    if (!businessToDelete) return
+
+    try {
+      await businessService.deleteBusiness(businessToDelete)
+      toast.success("Business deleted successfully")
+      loadBusinesses()
+      setDeleteDialogOpen(false)
+      setBusinessToDelete(null)
+    } catch (err) {
+      toast.error("Failed to delete business")
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -208,6 +154,22 @@ export default function BusinessManagement() {
           </Badge>
         )
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">{error}</div>
+      </div>
+    )
   }
 
   return (

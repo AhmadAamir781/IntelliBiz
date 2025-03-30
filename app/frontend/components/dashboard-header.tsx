@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Search, MessageSquare, HelpCircle } from "lucide-react"
+import { Bell, Search, MessageSquare, HelpCircle, Star } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
