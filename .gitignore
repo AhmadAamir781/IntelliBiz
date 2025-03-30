@@ -16,6 +16,7 @@ obj/
 
 # React.js Specific
 node_modules/
+.next/
 build/
 dist/
 .npm/
