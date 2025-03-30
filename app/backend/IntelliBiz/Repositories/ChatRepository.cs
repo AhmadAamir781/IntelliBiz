@@ -1,85 +1,75 @@
-﻿namespace IntelliBiz.Repositories
+using System.Data;
+using Dapper;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories.Interfaces;
+using Microsoft.Data.SqlClient;
+
+namespace IntelliBiz.Repositories;
+
+public class ChatRepository : IChatRepository
 {
-    using Dapper;
-    using Microsoft.Data.SqlClient;
-    using Microsoft.Extensions.Configuration;
-    using System.Data;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using IntelliBiz.Models;
-    using IntelliBiz.Repositories.Interfaces;
+    private readonly IDbConnection _db;
 
-    public class ChatRepository : IChatRepository
+    public ChatRepository(IDbConnection db)
     {
-        private readonly string _connectionString;
-
-        public ChatRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
-        }
-
-        // Create Chat
-        public async Task<int> CreateChatAsync(Chat chat)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_user_id", chat.UserId);
-                parameters.Add("@p_business_id", chat.BusinessId);
-                parameters.Add("@p_initiated_at", chat.InitiatedAt);
-
-                return await connection.ExecuteAsync("dbo.CreateChat", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Delete Chat
-        public async Task<int> DeleteChatAsync(int chatId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_chat_id", chatId);
-
-                return await connection.ExecuteAsync("dbo.DeleteChat", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Read Chat
-        public async Task<Chat> ReadChatAsync(int chatId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_chat_id", chatId);
-
-                return await connection.QuerySingleOrDefaultAsync<Chat>("dbo.ReadChat", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Update Chat
-        public async Task<int> UpdateChatAsync(Chat chat)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_chat_id", chat.ChatId);
-                parameters.Add("@p_initiated_at", chat.InitiatedAt);
-
-                return await connection.ExecuteAsync("dbo.UpdateChat", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Get All Chats for a Business
-        public async Task<IEnumerable<Chat>> GetAllChatsAsync(int businessId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_business_id", businessId);
-
-                return await connection.QueryAsync<Chat>("dbo.GetAllChats", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
+        _db = db;
     }
 
-}
+    public async Task<ChatRoom> CreateChatRoomAsync(int businessId, int userId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@BusinessId", businessId);
+        parameters.Add("@UserId", userId);
+        parameters.Add("@ChatRoomId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+        await _db.ExecuteAsync("CreateChatRoom", parameters, commandType: CommandType.StoredProcedure);
+
+        var chatRoomId = parameters.Get<int>("@ChatRoomId");
+        return await GetChatRoomByIdAsync(chatRoomId) 
+            ?? throw new InvalidOperationException("Failed to create chat room");
+    }
+
+    public async Task<IEnumerable<ChatRoomResponse>> GetUserChatRoomsAsync(int userId)
+    {
+        var parameters = new { UserId = userId };
+        return await _db.QueryAsync<ChatRoomResponse>("GetChatRooms", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<IEnumerable<ChatMessageResponse>> GetChatMessagesAsync(int chatRoomId, int? lastMessageId = null)
+    {
+        var parameters = new
+        {
+            ChatRoomId = chatRoomId,
+            LastMessageId = lastMessageId
+        };
+
+        return await _db.QueryAsync<ChatMessageResponse>("GetChatMessages", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<ChatMessage> SaveChatMessageAsync(int chatRoomId, int senderId, CreateChatMessageRequest request)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@ChatRoomId", chatRoomId);
+        parameters.Add("@SenderId", senderId);
+        parameters.Add("@Message", request.Message);
+        parameters.Add("@MessageId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+        await _db.ExecuteAsync("SaveChatMessage", parameters, commandType: CommandType.StoredProcedure);
+
+        var messageId = parameters.Get<int>("@MessageId");
+        return await GetChatMessageByIdAsync(messageId) 
+            ?? throw new InvalidOperationException("Failed to save chat message");
+    }
+
+    private async Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId)
+    {
+        var parameters = new { ChatRoomId = chatRoomId };
+        return await _db.QueryFirstOrDefaultAsync<ChatRoom>("GetChatRoomById", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    private async Task<ChatMessage?> GetChatMessageByIdAsync(int messageId)
+    {
+        var parameters = new { MessageId = messageId };
+        return await _db.QueryFirstOrDefaultAsync<ChatMessage>("GetChatMessageById", parameters, commandType: CommandType.StoredProcedure);
+    }
+} 

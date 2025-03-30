@@ -1,14 +1,13 @@
-﻿using IntelliBiz.Models;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.Repositories.Interfaces
+namespace IntelliBiz.Repositories.Interfaces;
+
+public interface IUserRepository
 {
-    public interface IUserRepository
-    {
-        Task<int> CreateUserAsync(User user);
-        Task<int> DeleteUserAsync(int userId);
-        Task<User> ReadUserAsync(int userId);
-        Task<User> ReadUserByEmailAsync(string email);
-        Task<IEnumerable<User>> ReadAllUsersAsync();
-        Task<int> UpdateUserAsync(User user);
-    }
-}
+    Task<User?> GetUserByAuth0IdAsync(string auth0Id);
+    Task<User> GetUserByEmailAsync(string email);
+    Task<User> CreateUserAsync(CreateUserRequest request);
+    Task<User> UpdateUserAsync(int userId, UpdateUserRequest request);
+    Task<IEnumerable<Business>> GetUserBusinessesAsync(int userId);
+    Task<IEnumerable<Review>> GetUserReviewsAsync(int userId);
+} 

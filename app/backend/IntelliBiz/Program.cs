@@ -1,65 +1,109 @@
 
+using IntelliBiz.Hubs;
 using IntelliBiz.Repositories;
 using IntelliBiz.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using System.Data;
+using System.Text;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Add services to the container
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage);
+            return new BadRequestObjectResult(new { errors });
+        };
+    });
+
+// Configure Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        policy =>
+// Configure Auth0 authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = builder.Configuration["Auth0:Authority"];
+        options.Audience = builder.Configuration["Auth0:Audience"];
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            policy.WithOrigins("http://localhost:3000") // Your frontend URL
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+            NameClaimType = "name",
+            RoleClaimType = "https://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        };
+    });
+
+// Configure authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireBusinessOwnerRole", policy =>
+        policy.RequireRole("BusinessOwner"));
 });
 
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Configure Dapper
+builder.Services.AddScoped<IDbConnection>(sp =>
+    new Microsoft.Data.SqlClient.SqlConnection(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure repositories
 builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
-builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
-builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Configure SignalR
+builder.Services.AddSignalR();
 
-builder.Services.AddAuthentication(options =>
+// Configure CORS
+builder.Services.AddCors(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.Authority = "https://dev-p1lr1cmw6quzv1v8.us.auth0.com/";
-    options.Audience = "intelli-biz";
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(builder.Configuration["Frontend:Url"] ?? "http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors(MyAllowSpecificOrigins);
-
 app.UseHttpsRedirection();
-
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 
-app.Run();
+try
+{
+    Log.Information("Starting web application");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

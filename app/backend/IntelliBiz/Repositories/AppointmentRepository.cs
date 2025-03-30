@@ -1,89 +1,69 @@
-﻿namespace IntelliBiz.Repositories
+using System.Data;
+using Dapper;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories.Interfaces;
+using Microsoft.Data.SqlClient;
+
+namespace IntelliBiz.Repositories;
+
+public class AppointmentRepository : IAppointmentRepository
 {
-    using Dapper;
-    using Microsoft.Data.SqlClient;
-    using Microsoft.Extensions.Configuration;
-    using System.Data;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using IntelliBiz.Models;
-    using IntelliBiz.Repositories.Interfaces;
+    private readonly IDbConnection _db;
 
-    public class AppointmentRepository : IAppointmentRepository
+    public AppointmentRepository(IDbConnection db)
     {
-        private readonly string _connectionString;
-
-        public AppointmentRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
-        }
-
-        // Create Appointment
-        public async Task<int> CreateAppointmentAsync(Appointment appointment)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_user_id", appointment.UserId);
-                parameters.Add("@p_business_id", appointment.BusinessId);
-                parameters.Add("@p_appointment_date", appointment.AppointmentDate);
-                parameters.Add("@p_status", appointment.Status);
-                parameters.Add("@p_notes", appointment.Notes);
-
-                return await connection.ExecuteAsync("dbo.CreateAppointment", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Delete Appointment
-        public async Task<int> DeleteAppointmentAsync(int appointmentId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_appointment_id", appointmentId);
-
-                return await connection.ExecuteAsync("dbo.DeleteAppointment", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Read Appointment
-        public async Task<Appointment> ReadAppointmentAsync(int appointmentId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_appointment_id", appointmentId);
-
-                return await connection.QuerySingleOrDefaultAsync<Appointment>("dbo.ReadAppointment", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Update Appointment
-        public async Task<int> UpdateAppointmentAsync(Appointment appointment)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_appointment_id", appointment.AppointmentId);
-                parameters.Add("@p_appointment_date", appointment.AppointmentDate);
-                parameters.Add("@p_status", appointment.Status);
-                parameters.Add("@p_notes", appointment.Notes);
-
-                return await connection.ExecuteAsync("dbo.UpdateAppointment", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        // Get All Appointments for a Business
-        public async Task<IEnumerable<Appointment>> GetAllAppointmentsAsync(int businessId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_business_id", businessId);
-
-                return await connection.QueryAsync<Appointment>("dbo.GetAllAppointments", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
+        _db = db;
     }
 
-}
+    public async Task<Appointment> CreateAppointmentAsync(int businessId, int userId, CreateAppointmentRequest request)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@BusinessId", businessId);
+        parameters.Add("@UserId", userId);
+        parameters.Add("@AppointmentDate", request.AppointmentDate.Date);
+        parameters.Add("@AppointmentTime", request.AppointmentTime);
+        parameters.Add("@Notes", request.Notes);
+        parameters.Add("@AppointmentId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+        await _db.ExecuteAsync("CreateAppointment", parameters, commandType: CommandType.StoredProcedure);
+
+        var appointmentId = parameters.Get<int>("@AppointmentId");
+        return await GetAppointmentByIdAsync(appointmentId) 
+            ?? throw new InvalidOperationException("Failed to create appointment");
+    }
+
+    public async Task<IEnumerable<AppointmentResponse>> GetBusinessAppointmentsAsync(int businessId, DateTime startDate, DateTime endDate)
+    {
+        var parameters = new
+        {
+            BusinessId = businessId,
+            StartDate = startDate.Date,
+            EndDate = endDate.Date
+        };
+
+        return await _db.QueryAsync<AppointmentResponse>("GetBusinessAppointments", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<IEnumerable<AppointmentResponse>> GetUserAppointmentsAsync(int userId)
+    {
+        var parameters = new { UserId = userId };
+        return await _db.QueryAsync<AppointmentResponse>("GetUserAppointments", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task UpdateAppointmentStatusAsync(int appointmentId, string status)
+    {
+        var parameters = new
+        {
+            AppointmentId = appointmentId,
+            Status = status
+        };
+
+        await _db.ExecuteAsync("UpdateAppointmentStatus", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    private async Task<Appointment?> GetAppointmentByIdAsync(int appointmentId)
+    {
+        var parameters = new { AppointmentId = appointmentId };
+        return await _db.QueryFirstOrDefaultAsync<Appointment>("GetAppointmentById", parameters, commandType: CommandType.StoredProcedure);
+    }
+} 

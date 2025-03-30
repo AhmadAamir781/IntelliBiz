@@ -1,88 +1,124 @@
-﻿namespace IntelliBiz.Repositories
+using System.Data;
+using Dapper;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories.Interfaces;
+using Microsoft.Data.SqlClient;
+
+namespace IntelliBiz.Repositories;
+
+public class BusinessRepository : IBusinessRepository
 {
-    using Dapper;
-    using IntelliBiz.Models;
-    using IntelliBiz.Repositories.Interfaces;
-    using Microsoft.Data.SqlClient;
-    using Microsoft.Extensions.Configuration;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Threading.Tasks;
+    private readonly IDbConnection _db;
 
-    public class BusinessRepository : IBusinessRepository
+    public BusinessRepository(IDbConnection db)
     {
-        private readonly string _connectionString;
-
-        public BusinessRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
-        }
-
-        public async Task<int> CreateBusinessAsync(Business business)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_user_id", business.UserId);
-                parameters.Add("@p_name", business.Name);
-                parameters.Add("@p_description", business.Description);
-                parameters.Add("@p_category", business.Category);
-                parameters.Add("@p_contact_number", business.ContactNumber);
-                parameters.Add("@p_whatsapp", business.Whatsapp);
-                parameters.Add("@p_address", business.Address);
-                parameters.Add("@p_business_hours", business.BusinessHours);
-                parameters.Add("@p_photos", business.Photos);
-
-                return await connection.ExecuteAsync("dbo.CreateBusiness", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public async Task<int> UpdateBusinessAsync(Business business)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_business_id", business.BusinessId);
-                parameters.Add("@p_name", business.Name);
-                parameters.Add("@p_description", business.Description);
-                parameters.Add("@p_category", business.Category);
-                parameters.Add("@p_contact_number", business.ContactNumber);
-                parameters.Add("@p_whatsapp", business.Whatsapp);
-                parameters.Add("@p_address", business.Address);
-                parameters.Add("@p_business_hours", business.BusinessHours);
-                parameters.Add("@p_photos", business.Photos);
-
-                return await connection.ExecuteAsync("dbo.UpdateBusiness", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public async Task<int> DeleteBusinessAsync(int businessId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_business_id", businessId);
-                return await connection.ExecuteAsync("dbo.DeleteBusiness", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public async Task<Business> ReadBusinessAsync(int businessId)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var parameters = new DynamicParameters();
-                parameters.Add("@p_business_id", businessId);
-                return await connection.QueryFirstOrDefaultAsync<Business>("dbo.ReadBusiness", parameters, commandType: CommandType.StoredProcedure);
-            }
-        }
-
-        public async Task<IEnumerable<Business>> GetAllBusinessesAsync()
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                return await connection.QueryAsync<Business>("SELECT * FROM BUSINESS", commandType: CommandType.Text);
-            }
-        }
+        _db = db;
     }
 
-}
+    public async Task<IEnumerable<Business>> GetFeaturedBusinessesAsync(int count = 6)
+    {
+        var parameters = new { TopCount = count };
+        return await _db.QueryAsync<Business>("GetFeaturedBusinesses", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<Business?> GetBusinessDetailsAsync(int businessId)
+    {
+        var parameters = new { BusinessId = businessId };
+        using var multi = await _db.QueryMultipleAsync("GetBusinessDetails", parameters, commandType: CommandType.StoredProcedure);
+
+        var business = await multi.ReadFirstOrDefaultAsync<Business>();
+        if (business == null) return null;
+
+        business.Images = (await multi.ReadAsync<BusinessImage>()).ToList();
+        business.Hours = (await multi.ReadAsync<BusinessHour>()).ToList();
+        business.Reviews = (await multi.ReadAsync<Review>()).ToList();
+
+        return business;
+    }
+
+    public async Task<Business> CreateBusinessAsync(CreateBusinessRequest request, int userId)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@Name", request.Name);
+        parameters.Add("@Description", request.Description);
+        parameters.Add("@CategoryId", request.CategoryId);
+        parameters.Add("@Address", request.Address);
+        parameters.Add("@Phone", request.Phone);
+        parameters.Add("@Email", request.Email);
+        parameters.Add("@Website", request.Website);
+        parameters.Add("@CreatedBy", userId);
+        parameters.Add("@BusinessId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+        await _db.ExecuteAsync("dbo.CreateBusiness", parameters, commandType: CommandType.StoredProcedure);
+
+        var businessId = parameters.Get<int>("@BusinessId");
+        return await GetBusinessDetailsAsync(businessId) 
+            ?? throw new InvalidOperationException("Failed to create business");
+    }
+
+    public async Task<Business> UpdateBusinessAsync(int businessId, UpdateBusinessRequest request)
+    {
+        var parameters = new
+        {
+            BusinessId = businessId,
+            Name = request.Name,
+            Description = request.Description,
+            CategoryId = request.CategoryId,
+            Address = request.Address,
+            Phone = request.Phone,
+            Email = request.Email,
+            Website = request.Website
+        };
+
+        await _db.ExecuteAsync("UpdateBusiness", parameters, commandType: CommandType.StoredProcedure);
+        return await GetBusinessDetailsAsync(businessId) 
+            ?? throw new InvalidOperationException("Failed to update business");
+    }
+
+    public async Task<BusinessImage> AddBusinessImageAsync(int businessId, BusinessImageRequest request)
+    {
+        var parameters = new
+        {
+            BusinessId = businessId,
+            ImageUrl = request.ImageUrl,
+            IsMain = request.IsMain
+        };
+
+        await _db.ExecuteAsync("AddBusinessImage", parameters, commandType: CommandType.StoredProcedure);
+        return new BusinessImage
+        {
+            BusinessId = businessId,
+            ImageUrl = request.ImageUrl,
+            IsMain = request.IsMain,
+            CreatedAt = DateTime.UtcNow
+        };
+    }
+
+    public async Task<Review> AddBusinessReviewAsync(int businessId, int userId, CreateReviewRequest request)
+    {
+        var parameters = new
+        {
+            BusinessId = businessId,
+            UserId = userId,
+            Rating = request.Rating,
+            Comment = request.Comment
+        };
+
+        await _db.ExecuteAsync("AddBusinessReview", parameters, commandType: CommandType.StoredProcedure);
+        return new Review
+        {
+            BusinessId = businessId,
+            UserId = userId,
+            Rating = request.Rating,
+            Comment = request.Comment,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+    }
+
+    public async Task<IEnumerable<Business>> GetUserBusinessesAsync(int userId)
+    {
+        var parameters = new { UserId = userId };
+        return await _db.QueryAsync<Business>("GetUserBusinesses", parameters, commandType: CommandType.StoredProcedure);
+    }
+} 

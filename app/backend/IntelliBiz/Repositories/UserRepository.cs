@@ -1,100 +1,75 @@
-﻿
+using System.Data;
 using Dapper;
 using IntelliBiz.Models;
 using IntelliBiz.Repositories.Interfaces;
 using Microsoft.Data.SqlClient;
-using System.Data;
 
+namespace IntelliBiz.Repositories;
 
-namespace IntelliBiz.Repositories
+public class UserRepository : IUserRepository
 {
-    public class UserRepository : IUserRepository
+    private readonly IDbConnection _db;
+
+    public UserRepository(IDbConnection db)
     {
-        private readonly string _connectionString;
-
-        public UserRepository(IConfiguration configuration)
-        {
-            // Fetch the connection string from the appsettings.json or environment variables
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
-        }
-
-        private IDbConnection CreateConnection() => new SqlConnection(_connectionString);
-
-        // Create User
-        public async Task<int> CreateUserAsync(User user)
-        {
-            using var connection = CreateConnection();
-
-            var parameters = new DynamicParameters();
-            parameters.Add("@p_name", user.Name);
-            parameters.Add("@p_email", user.Email);
-            parameters.Add("@p_password", user.Password);
-            parameters.Add("@p_phone", user.Phone);
-            parameters.Add("@p_address", user.Address);
-            parameters.Add("@p_role", user.Role);
-
-            const string query = "[dbo].[CreateUser]";
-            return await connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
-        }
-
-        // Read User
-        public async Task<User> ReadUserAsync(int userId)
-        {
-            const string query = "EXEC [dbo].[ReadUser] @p_user_id";
-            using var connection = CreateConnection();
-
-            var parameters = new DynamicParameters();
-            parameters.Add("@p_user_id", userId);
-
-            return await connection.QueryFirstOrDefaultAsync<User>(query, parameters, commandType: CommandType.StoredProcedure);
-        }
-
-        public async Task<User> ReadUserByEmailAsync(string email)
-        {
-            const string query = "SELECT * FROM [USER] WHERE [email] = @email";
-            using var connection = CreateConnection();
-
-            return await connection.QueryFirstOrDefaultAsync<User>(query, new { email });
-        }
-
-        // Read All Users (or Use Case-appropriate Query for All Users)
-        public async Task<IEnumerable<User>> ReadAllUsersAsync()
-        {
-            const string query = "Select * from [USER]";
-            using var connection = CreateConnection();
-
-            return await connection.QueryAsync<User>(query, commandType: CommandType.StoredProcedure);
-        }
-
-        // Update User
-        public async Task<int> UpdateUserAsync(User user)
-        {
-            const string query = "EXEC [dbo].[UpdateUser] @p_user_id, @p_name, @p_email, @p_password, @p_phone, @p_address, @p_role";
-            using var connection = CreateConnection();
-
-            var parameters = new DynamicParameters();
-            parameters.Add("@p_user_id", user.UserId);
-            parameters.Add("@p_name", user.Name);
-            parameters.Add("@p_email", user.Email);
-            parameters.Add("@p_password", user.Password);
-            parameters.Add("@p_phone", user.Phone);
-            parameters.Add("@p_address", user.Address);
-            parameters.Add("@p_role", user.Role);
-
-            return await connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
-        }
-
-        public async Task<int> DeleteUserAsync(int userId)
-        {
-            using var connection = CreateConnection();
-
-            var parameters = new DynamicParameters();
-            parameters.Add("@p_user_id", userId);
-            const string query = "EXEC [dbo].[DeleteUser] @p_user_id";
-
-            return await connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
-        }
+        _db = db;
     }
 
+    public async Task<User?> GetUserByAuth0IdAsync(string auth0Id)
+    {
+        var parameters = new { Auth0Id = auth0Id };
+        return await _db.QueryFirstOrDefaultAsync<User>("GetUserByAuth0Id", parameters, commandType: CommandType.StoredProcedure);
+    }
 
-}
+    public async Task<User> GetUserByEmailAsync(string email)
+    {
+        var query = "SELECT * FROM Users WHERE Email = @Email";
+        return await _db.QueryFirstOrDefaultAsync<User>(query, new { Email = email });
+    }
+
+    public async Task<User> CreateUserAsync(CreateUserRequest request)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@Email", request.Email);
+        parameters.Add("@FirstName", request.FirstName);
+        parameters.Add("@LastName", request.LastName);
+        parameters.Add("@Password", request.Password);
+        parameters.Add("@Auth0Id", request.Auth0Id);
+        parameters.Add("@Role", request.Role);
+        parameters.Add("@UserId", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+        await _db.ExecuteAsync("CreateUser", parameters, commandType: CommandType.StoredProcedure);
+
+        var userId = parameters.Get<int>("@UserId");
+        return await GetUserByAuth0IdAsync(request.Auth0Id) 
+            ?? throw new InvalidOperationException("Failed to create user");
+    }
+
+    public async Task<User> UpdateUserAsync(int userId, UpdateUserRequest request)
+    {
+        var parameters = new
+        {
+            UserId = userId,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Password = request.Password,
+            Email = request.Email
+        };
+
+        await _db.ExecuteAsync("UpdateUser", parameters, commandType: CommandType.StoredProcedure);
+        return await GetUserByAuth0IdAsync(request.Email) 
+            ?? throw new InvalidOperationException("Failed to update user");
+    }
+
+    public async Task<IEnumerable<Business>> GetUserBusinessesAsync(int userId)
+    {
+        var parameters = new { UserId = userId };
+        return await _db.QueryAsync<Business>("GetUserBusinesses", parameters, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<IEnumerable<Review>> GetUserReviewsAsync(int userId)
+    {
+        var parameters = new { UserId = userId };
+        return await _db.QueryAsync<Review>("GetUserReviews", parameters, commandType: CommandType.StoredProcedure);
+    }
+} 

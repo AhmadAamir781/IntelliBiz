@@ -1,13 +1,12 @@
-﻿using IntelliBiz.Models;
 
-namespace IntelliBiz.Repositories.Interfaces
+using IntelliBiz.Models;
+
+namespace IntelliBiz.Repositories.Interfaces;
+
+public interface IAppointmentRepository
 {
-    public interface IAppointmentRepository
-    {
-        Task<int> CreateAppointmentAsync(Appointment appointment);
-        Task<int> DeleteAppointmentAsync(int appointmentId);
-        Task<IEnumerable<Appointment>> GetAllAppointmentsAsync(int businessId);
-        Task<Appointment> ReadAppointmentAsync(int appointmentId);
-        Task<int> UpdateAppointmentAsync(Appointment appointment);
-    }
-}
+    Task<Appointment> CreateAppointmentAsync(int businessId, int userId, CreateAppointmentRequest request);
+    Task<IEnumerable<AppointmentResponse>> GetBusinessAppointmentsAsync(int businessId, DateTime startDate, DateTime endDate);
+    Task<IEnumerable<AppointmentResponse>> GetUserAppointmentsAsync(int userId);
+    Task UpdateAppointmentStatusAsync(int appointmentId, string status);
+} 
