@@ -1,8 +1,5 @@
 {
-  "/dashboard/page": "app/dashboard/page.js",
-  "/register-business/page": "app/register-business/page.js",
-  "/business/services/page": "app/business/services/page.js",
-  "/business/messages/page": "app/business/messages/page.js",
-  "/business/page": "app/business/page.js",
-  "/business/appointments/page": "app/business/appointments/page.js"
+  "/privacy/page": "app/privacy/page.js",
+  "/page": "app/page.js",
+  "/signup/page": "app/signup/page.js"
 }
