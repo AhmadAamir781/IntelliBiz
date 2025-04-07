@@ -1,0 +1,6 @@
+@IntelliBiz_HostAddress = http://localhost:5037
+
+GET {{IntelliBiz_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
