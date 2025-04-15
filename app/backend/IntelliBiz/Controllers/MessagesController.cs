@@ -1,210 +1,336 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
+using IntelliBiz.API.Models;
+using IntelliBiz.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
     public class MessagesController : ControllerBase
     {
-        private readonly IMessageService _messageService;
-        private readonly IBusinessService _businessService;
+        private readonly IMessageRepository _messageRepository;
+        private readonly IBusinessRepository _businessRepository;
+        private readonly ILogger<MessagesController> _logger;
 
-        public MessagesController(IMessageService messageService, IBusinessService businessService)
+        public MessagesController(
+            IMessageRepository messageRepository,
+            IBusinessRepository businessRepository,
+            ILogger<MessagesController> logger)
         {
-            _messageService = messageService;
-            _businessService = businessService;
+            _messageRepository = messageRepository;
+            _businessRepository = businessRepository;
+            _logger = logger;
         }
 
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<MessageDto>>> GetAll()
+        // GET: api/messages/conversations
+        [HttpGet("conversations")]
+        public async Task<ActionResult<IEnumerable<Conversation>>> GetUserConversations()
         {
-            var messages = await _messageService.GetAllAsync();
-            return Ok(messages);
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var conversations = await _messageRepository.GetUserConversationsAsync(userId);
+                return Ok(conversations);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving user conversations");
+                return StatusCode(500, "An error occurred while retrieving conversations");
+            }
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<MessageDto>> GetById(int id)
+        // GET: api/messages/business/{businessId}/conversations
+        [HttpGet("business/{businessId}/conversations")]
+        public async Task<ActionResult<IEnumerable<Conversation>>> GetBusinessConversations(int businessId)
         {
-            var message = await _messageService.GetByIdAsync(id);
-            if (message == null)
+            try
             {
-                return NotFound(new { message = "Message not found" });
-            }
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
 
-            // Check if user is the sender, recipient, or admin
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(message.BusinessId);
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
 
-            if (message.UserId != userId && (business == null || business.OwnerId != userId) && userRole != "Admin")
-            {
-                return Forbid();
-            }
-
-            return Ok(message);
-        }
-
-        [HttpGet("user")]
-        public async Task<ActionResult<IEnumerable<MessageDto>>> GetUserMessages()
-        {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var messages = await _messageService.GetBySenderIdAsync(userId);
-            return Ok(messages);
-        }
-
-        [HttpGet("business/{businessId}")]
-        public async Task<ActionResult<IEnumerable<MessageDto>>> GetBusinessMessages(int businessId)
-        {
-            // Check if user is the business owner or admin
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(businessId);
-
-            if (business == null)
-            {
-                return NotFound(new { message = "Business not found" });
-            }
-
-            if (business.OwnerId != userId && userRole != "Admin")
-            {
-                return Forbid();
-            }
-
-            var messages = await _messageService.GetConversationAsync(userId, businessId);
-            return Ok(messages);
-        }
-
-        [HttpGet("conversation")]
-        public async Task<ActionResult<IEnumerable<MessageDto>>> GetConversation([FromQuery] int userId, [FromQuery] int businessId)
-        {
-            // Check if user is the sender, recipient, or admin
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(businessId);
-
-            if (currentUserId != userId && (business == null || business.OwnerId != currentUserId) && userRole != "Admin")
-            {
-                return Forbid();
-            }
-
-            var messages = await _messageService.GetConversationAsync(userId, businessId);
-            return Ok(messages);
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<ApiResponseDto<MessageDto>>> Create([FromBody] MessageDto messageDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ApiResponseDto<MessageDto>.ErrorResponse("Invalid message data"));
-            }
-
-            // Set user ID from the authenticated user if sending as user
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            
-            // If sending as business, verify ownership
-            if (messageDto.IsFromBusiness)
-            {
-                var business = await _businessService.GetByIdAsync(messageDto.BusinessId);
+                var business = await _businessRepository.GetBusinessByIdAsync(businessId);
                 if (business == null)
                 {
-                    return NotFound(ApiResponseDto<MessageDto>.ErrorResponse("Business not found"));
+                    return NotFound($"Business with ID {businessId} not found");
                 }
 
-                if (business.OwnerId != userId && userRole != "Admin")
+                // Check if user is the owner of the business or an admin
+                if (business.OwnerId != userId && !User.IsInRole("Admin"))
                 {
-                    return Forbid();
+                    return Forbid("You don't have permission to view conversations for this business");
                 }
-            }
-            else
-            {
-                messageDto.UserId = userId;
-            }
 
-            var response = await _messageService.CreateAsync(messageDto);
-            if (!response.Success)
-            {
-                return BadRequest(response);
+                var conversations = await _messageRepository.GetBusinessConversationsAsync(businessId);
+                return Ok(conversations);
             }
-
-            return CreatedAtAction(nameof(GetById), new { id = response.Data.Id }, response);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving conversations for business {BusinessId}", businessId);
+                return StatusCode(500, "An error occurred while retrieving conversations");
+            }
         }
 
-        [HttpPatch("{id}/read")]
-        public async Task<ActionResult<ApiResponseDto<bool>>> MarkAsRead(int id)
+        // GET: api/messages/conversation/{id}
+        [HttpGet("conversation/{id}")]
+        public async Task<ActionResult<Conversation>> GetConversation(int id)
         {
-            // Check if user is the recipient
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var message = await _messageService.GetByIdAsync(id);
-
-            if (message == null)
+            try
             {
-                return NotFound(ApiResponseDto<bool>.ErrorResponse("Message not found"));
-            }
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
 
-            var business = await _businessService.GetByIdAsync(message.BusinessId);
-            
-            // Check if the user is the intended recipient
-            bool isRecipient = false;
-            if (message.IsFromBusiness)
-            {
-                // If message is from business, user should be the recipient
-                isRecipient = message.UserId == userId;
-            }
-            else
-            {
-                // If message is from user, business owner should be the recipient
-                isRecipient = business != null && business.OwnerId == userId;
-            }
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
 
-            if (!isRecipient && userRole != "Admin")
-            {
-                return Forbid();
-            }
+                var conversation = await _messageRepository.GetConversationByIdAsync(id);
+                if (conversation == null)
+                {
+                    return NotFound($"Conversation with ID {id} not found");
+                }
 
-            var response = await _messageService.MarkAsReadAsync(id);
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
+                // Check if user is a participant in the conversation or the business owner
+                var business = await _businessRepository.GetBusinessByIdAsync(conversation.BusinessId);
+                if (conversation.UserId != userId && business?.OwnerId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid("You don't have permission to view this conversation");
+                }
 
-            return Ok(response);
+                return Ok(conversation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving conversation with ID {Id}", id);
+                return StatusCode(500, "An error occurred while retrieving the conversation");
+            }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponseDto<bool>>> Delete(int id)
+        // GET: api/messages/conversation/{id}/messages
+        [HttpGet("conversation/{id}/messages")]
+        public async Task<ActionResult<IEnumerable<Message>>> GetConversationMessages(int id)
         {
-            // Check if user is the sender, recipient, or admin
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var message = await _messageService.GetByIdAsync(id);
-
-            if (message == null)
+            try
             {
-                return NotFound(ApiResponseDto<bool>.ErrorResponse("Message not found"));
-            }
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
 
-            var business = await _businessService.GetByIdAsync(message.BusinessId);
-            if (message.UserId != userId && (business == null || business.OwnerId != userId) && userRole != "Admin")
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var conversation = await _messageRepository.GetConversationByIdAsync(id);
+                if (conversation == null)
+                {
+                    return NotFound($"Conversation with ID {id} not found");
+                }
+
+                // Check if user is a participant in the conversation or the business owner
+                var business = await _businessRepository.GetBusinessByIdAsync(conversation.BusinessId);
+                if (conversation.UserId != userId && business?.OwnerId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid("You don't have permission to view messages in this conversation");
+                }
+
+                var messages = await _messageRepository.GetMessagesByConversationIdAsync(id);
+
+                // Mark messages as read
+                await _messageRepository.MarkConversationAsReadAsync(id, userId);
+
+                return Ok(messages);
+            }
+            catch (Exception ex)
             {
-                return Forbid();
+                _logger.LogError(ex, "Error retrieving messages for conversation {Id}", id);
+                return StatusCode(500, "An error occurred while retrieving messages");
             }
+        }
 
-            var response = await _messageService.DeleteAsync(id);
-            if (!response.Success)
+        // POST: api/messages/conversation
+        [HttpPost("conversation")]
+        public async Task<ActionResult<Conversation>> CreateConversation(Conversation conversation)
+        {
+            try
             {
-                return BadRequest(response);
-            }
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
 
-            return Ok(response);
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var business = await _businessRepository.GetBusinessByIdAsync(conversation.BusinessId);
+                if (business == null)
+                {
+                    return NotFound($"Business with ID {conversation.BusinessId} not found");
+                }
+
+                // Check if conversation already exists
+                var existingConversation = await _messageRepository.GetConversationByUserAndBusinessAsync(userId, conversation.BusinessId);
+                if (existingConversation != null)
+                {
+                    return Ok(existingConversation); // Return existing conversation
+                }
+
+                conversation.UserId = userId;
+                conversation.CreatedAt = DateTime.UtcNow;
+
+                var id = await _messageRepository.CreateConversationAsync(conversation);
+                conversation.Id = id;
+
+                return CreatedAtAction(nameof(GetConversation), new { id }, conversation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating conversation");
+                return StatusCode(500, "An error occurred while creating the conversation");
+            }
+        }
+
+        // POST: api/messages
+        [HttpPost]
+        public async Task<ActionResult<Message>> CreateMessage(Message message)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var conversation = await _messageRepository.GetConversationByIdAsync(message.ConversationId);
+                if (conversation == null)
+                {
+                    return NotFound($"Conversation with ID {message.ConversationId} not found");
+                }
+
+                // Check if user is a participant in the conversation or the business owner
+                var business = await _businessRepository.GetBusinessByIdAsync(conversation.BusinessId);
+                if (conversation.UserId != userId && business?.OwnerId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid("You don't have permission to send messages in this conversation");
+                }
+
+                message.SenderId = userId;
+                message.IsRead = false;
+                message.CreatedAt = DateTime.UtcNow;
+
+                var id = await _messageRepository.CreateMessageAsync(message);
+                message.Id = id;
+
+                return Ok(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating message");
+                return StatusCode(500, "An error occurred while creating the message");
+            }
+        }
+
+        // POST: api/messages/conversation/{id}/read
+        [HttpPost("conversation/{id}/read")]
+        public async Task<IActionResult> MarkConversationAsRead(int id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var conversation = await _messageRepository.GetConversationByIdAsync(id);
+                if (conversation == null)
+                {
+                    return NotFound($"Conversation with ID {id} not found");
+                }
+
+                // Check if user is a participant in the conversation or the business owner
+                var business = await _businessRepository.GetBusinessByIdAsync(conversation.BusinessId);
+                if (conversation.UserId != userId && business?.OwnerId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid("You don't have permission to mark messages as read in this conversation");
+                }
+
+                await _messageRepository.MarkConversationAsReadAsync(id, userId);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking conversation {Id} as read", id);
+                return StatusCode(500, "An error occurred while marking the conversation as read");
+            }
+        }
+
+        // GET: api/messages/unread-count
+        [HttpGet("unread-count")]
+        public async Task<ActionResult<int>> GetUnreadMessageCount()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var count = await _messageRepository.GetTotalUnreadMessageCountAsync(userId);
+                return Ok(count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving unread message count");
+                return StatusCode(500, "An error occurred while retrieving unread message count");
+            }
         }
     }
 }

@@ -24,17 +24,7 @@
     "/signup/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/businesses/loading.js"
-    ],
-    "/businesses/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/businesses/page.js"
-    ],
-    "/register-business/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/register-business/page.js"
+      "static/chunks/app/signup/page.js"
     ]
   }
 }

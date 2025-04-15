@@ -1,20 +1,15 @@
 using IntelliBiz.API.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
     public interface IReviewRepository
     {
-        Task<Review?> GetByIdAsync(int id);
-        Task<IEnumerable<Review>> GetAllAsync();
-        Task<IEnumerable<Review>> GetByUserIdAsync(int userId);
-        Task<IEnumerable<Review>> GetByBusinessIdAsync(int businessId);
-        Task<IEnumerable<Review>> GetByStatusAsync(string status);
-        Task<IEnumerable<Review>> GetFlaggedAsync();
-        Task<int> CreateAsync(Review review);
-        Task<bool> UpdateAsync(Review review);
-        Task<bool> DeleteAsync(int id);
-        Task<bool> FlagReviewAsync(int id, string flagReason);
-        Task<bool> UnflagReviewAsync(int id);
-        Task<bool> UpdateStatusAsync(int id, string status);
+        Task<IEnumerable<Review>> GetReviewsByBusinessIdAsync(int businessId);
+        Task<IEnumerable<Review>> GetReviewsByUserIdAsync(int userId);
+        Task<Review?> GetReviewByIdAsync(int id);
+        Task<Review?> GetReviewByUserAndBusinessAsync(int userId, int businessId);
+        Task<int> CreateReviewAsync(Review review);
+        Task<bool> UpdateReviewAsync(Review review);
+        Task<bool> DeleteReviewAsync(int id);
     }
 }

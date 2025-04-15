@@ -1,180 +1,130 @@
 using Dapper;
-using IntelliBiz.API.Data;
 using IntelliBiz.API.Models;
+using IntelliBiz.Database;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
     public class ReviewRepository : IReviewRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
+        private readonly DapperContext _context;
+        private readonly IBusinessRepository _businessRepository;
 
-        public ReviewRepository(IDatabaseConnectionFactory connectionFactory)
+        public ReviewRepository(DapperContext context, IBusinessRepository businessRepository)
         {
-            _connectionFactory = connectionFactory;
+            _context = context;
+            _businessRepository = businessRepository;
         }
 
-        public async Task<Review?> GetByIdAsync(int id)
+        public async Task<IEnumerable<Review>> GetReviewsByBusinessIdAsync(int businessId)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT r.*, 
-                       u.FirstName + ' ' + u.LastName as UserName,
-                       b.Name as BusinessName
+            var query = @"
+                SELECT r.*, u.Username, u.FirstName, u.LastName 
                 FROM Reviews r
                 JOIN Users u ON r.UserId = u.Id
-                JOIN Businesses b ON r.BusinessId = b.Id
-                WHERE r.Id = @Id";
-            return await connection.QueryFirstOrDefaultAsync<Review>(sql, new { Id = id });
-        }
-
-        public async Task<IEnumerable<Review>> GetAllAsync()
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT r.*, 
-                       u.FirstName + ' ' + u.LastName as UserName,
-                       b.Name as BusinessName
-                FROM Reviews r
-                JOIN Users u ON r.UserId = u.Id
-                JOIN Businesses b ON r.BusinessId = b.Id
+                WHERE r.BusinessId = @BusinessId
                 ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<Review>(sql);
+
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<Review>(query, new { BusinessId = businessId });
         }
 
-        public async Task<IEnumerable<Review>> GetByUserIdAsync(int userId)
+        public async Task<IEnumerable<Review>> GetReviewsByUserIdAsync(int userId)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT r.*, 
-                       u.FirstName + ' ' + u.LastName as UserName,
-                       b.Name as BusinessName
+            var query = @"
+                SELECT r.*, b.Name as BusinessName
                 FROM Reviews r
-                JOIN Users u ON r.UserId = u.Id
                 JOIN Businesses b ON r.BusinessId = b.Id
                 WHERE r.UserId = @UserId
                 ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<Review>(sql, new { UserId = userId });
+
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<Review>(query, new { UserId = userId });
         }
 
-        public async Task<IEnumerable<Review>> GetByBusinessIdAsync(int businessId)
+        public async Task<Review?> GetReviewByIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT r.*, 
-                       u.FirstName + ' ' + u.LastName as UserName,
-                       b.Name as BusinessName
+            var query = @"
+                SELECT r.*, u.Username, u.FirstName, u.LastName 
                 FROM Reviews r
                 JOIN Users u ON r.UserId = u.Id
-                JOIN Businesses b ON r.BusinessId = b.Id
-                WHERE r.BusinessId = @BusinessId
-                ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<Review>(sql, new { BusinessId = businessId });
+                WHERE r.Id = @Id";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<Review>(query, new { Id = id });
         }
 
-        public async Task<IEnumerable<Review>> GetByStatusAsync(string status)
+        public async Task<Review?> GetReviewByUserAndBusinessAsync(int userId, int businessId)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT r.*, 
-                       u.FirstName + ' ' + u.LastName as UserName,
-                       b.Name as BusinessName
+            var query = @"
+                SELECT r.*, u.Username, u.FirstName, u.LastName 
                 FROM Reviews r
                 JOIN Users u ON r.UserId = u.Id
-                JOIN Businesses b ON r.BusinessId = b.Id
-                WHERE r.Status = @Status
-                ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<Review>(sql, new { Status = status });
+                WHERE r.UserId = @UserId AND r.BusinessId = @BusinessId";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<Review>(query, new { UserId = userId, BusinessId = businessId });
         }
 
-        public async Task<IEnumerable<Review>> GetFlaggedAsync()
+        public async Task<int> CreateReviewAsync(Review review)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT r.*, 
-                       u.FirstName + ' ' + u.LastName as UserName,
-                       b.Name as BusinessName
-                FROM Reviews r
-                JOIN Users u ON r.UserId = u.Id
-                JOIN Businesses b ON r.BusinessId = b.Id
-                WHERE r.IsFlagged = 1
-                ORDER BY r.CreatedAt DESC";
-            return await connection.QueryAsync<Review>(sql);
+            var query = @"
+                INSERT INTO Reviews (BusinessId, UserId, Rating, Comment, CreatedAt) 
+                OUTPUT INSERTED.Id
+                VALUES (@BusinessId, @UserId, @Rating, @Comment, @CreatedAt)";
+
+            using var connection = _context.CreateConnection();
+            var id = await connection.ExecuteScalarAsync<int>(query, review);
+
+            // Update business average rating
+            await _businessRepository.UpdateBusinessRatingAsync(review.BusinessId);
+
+            return id;
         }
 
-        public async Task<int> CreateAsync(Review review)
+        public async Task<bool> UpdateReviewAsync(Review review)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                INSERT INTO Reviews (UserId, BusinessId, Rating, Comment, IsFlagged, Status, CreatedAt)
-                VALUES (@UserId, @BusinessId, @Rating, @Comment, @IsFlagged, @Status, @CreatedAt);
-                SELECT CAST(SCOPE_IDENTITY() as int)";
-            
-            review.CreatedAt = DateTime.UtcNow;
-            return await connection.QuerySingleAsync<int>(sql, review);
-        }
-
-        public async Task<bool> UpdateAsync(Review review)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                UPDATE Reviews
-                SET Rating = @Rating,
-                    Comment = @Comment,
+            var query = @"
+                UPDATE Reviews 
+                SET Rating = @Rating, 
+                    Comment = @Comment, 
                     UpdatedAt = @UpdatedAt
-                WHERE Id = @Id";
-            
+                WHERE Id = @Id AND UserId = @UserId";
+
             review.UpdatedAt = DateTime.UtcNow;
-            int rowsAffected = await connection.ExecuteAsync(sql, review);
-            return rowsAffected > 0;
+
+            using var connection = _context.CreateConnection();
+            var affectedRows = await connection.ExecuteAsync(query, review);
+
+            if (affectedRows > 0)
+            {
+                // Update business average rating
+                await _businessRepository.UpdateBusinessRatingAsync(review.BusinessId);
+                return true;
+            }
+
+            return false;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteReviewAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = "DELETE FROM Reviews WHERE Id = @Id";
-            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
-            return rowsAffected > 0;
-        }
+            // First get the review to know which business to update
+            var getQuery = "SELECT BusinessId FROM Reviews WHERE Id = @Id";
 
-        public async Task<bool> FlagReviewAsync(int id, string flagReason)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                UPDATE Reviews
-                SET IsFlagged = 1,
-                    FlagReason = @FlagReason,
-                    UpdatedAt = @UpdatedAt
-                WHERE Id = @Id";
-            
-            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, FlagReason = flagReason, UpdatedAt = DateTime.UtcNow });
-            return rowsAffected > 0;
-        }
+            using var connection = _context.CreateConnection();
+            var businessId = await connection.ExecuteScalarAsync<int>(getQuery, new { Id = id });
 
-        public async Task<bool> UnflagReviewAsync(int id)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                UPDATE Reviews
-                SET IsFlagged = 0,
-                    FlagReason = NULL,
-                    UpdatedAt = @UpdatedAt
-                WHERE Id = @Id";
-            
-            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, UpdatedAt = DateTime.UtcNow });
-            return rowsAffected > 0;
-        }
+            // Delete the review
+            var deleteQuery = "DELETE FROM Reviews WHERE Id = @Id";
+            var affectedRows = await connection.ExecuteAsync(deleteQuery, new { Id = id });
 
-        public async Task<bool> UpdateStatusAsync(int id, string status)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                UPDATE Reviews
-                SET Status = @Status,
-                    UpdatedAt = @UpdatedAt
-                WHERE Id = @Id";
-            
-            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, Status = status, UpdatedAt = DateTime.UtcNow });
-            return rowsAffected > 0;
+            if (affectedRows > 0)
+            {
+                // Update business average rating
+                await _businessRepository.UpdateBusinessRatingAsync(businessId);
+                return true;
+            }
+
+            return false;
         }
     }
 }

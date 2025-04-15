@@ -1,17 +1,17 @@
 using IntelliBiz.API.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
     public interface IAppointmentRepository
     {
-        Task<Appointment?> GetByIdAsync(int id);
-        Task<IEnumerable<Appointment>> GetAllAsync();
-        Task<IEnumerable<Appointment>> GetByUserIdAsync(int userId);
-        Task<IEnumerable<Appointment>> GetByBusinessIdAsync(int businessId);
-        Task<IEnumerable<Appointment>> GetByStatusAsync(string status);
-        Task<int> CreateAsync(Appointment appointment);
-        Task<bool> UpdateAsync(Appointment appointment);
-        Task<bool> DeleteAsync(int id);
-        Task<bool> UpdateStatusAsync(int id, string status);
+        Task<IEnumerable<Appointment>> GetAppointmentsByBusinessIdAsync(int businessId);
+        Task<IEnumerable<Appointment>> GetAppointmentsByUserIdAsync(int userId);
+        Task<Appointment?> GetAppointmentByIdAsync(int id);
+        Task<int> CreateAppointmentAsync(Appointment appointment);
+        Task<bool> UpdateAppointmentAsync(Appointment appointment);
+        Task<bool> UpdateAppointmentStatusAsync(int id, string status);
+        Task<bool> DeleteAppointmentAsync(int id);
+        Task<IEnumerable<Appointment>> GetBusinessAppointmentsByDateAsync(int businessId, DateTime date);
+        Task<IEnumerable<Appointment>> GetUserAppointmentsByDateRangeAsync(int userId, DateTime startDate, DateTime endDate);
     }
 }

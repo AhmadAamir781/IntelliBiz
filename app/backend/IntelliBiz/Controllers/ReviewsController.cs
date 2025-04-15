@@ -1,215 +1,259 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
+using IntelliBiz.API.Models;
+using IntelliBiz.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class ReviewsController : ControllerBase
     {
-        private readonly IReviewService _reviewService;
-        private readonly IBusinessService _businessService;
+        private readonly IReviewRepository _reviewRepository;
+        private readonly IBusinessRepository _businessRepository;
+        private readonly ILogger<ReviewsController> _logger;
 
-        public ReviewsController(IReviewService reviewService, IBusinessService businessService)
+        public ReviewsController(
+            IReviewRepository reviewRepository,
+            IBusinessRepository businessRepository,
+            ILogger<ReviewsController> logger)
         {
-            _reviewService = reviewService;
-            _businessService = businessService;
+            _reviewRepository = reviewRepository;
+            _businessRepository = businessRepository;
+            _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReviewDto>>> GetAll()
-        {
-            var reviews = await _reviewService.GetAllAsync();
-            return Ok(reviews);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ReviewDto>> GetById(int id)
-        {
-            var review = await _reviewService.GetByIdAsync(id);
-            if (review == null)
-            {
-                return NotFound(new { message = "Review not found" });
-            }
-
-            return Ok(review);
-        }
-
+        // GET: api/reviews/business/{businessId}
         [HttpGet("business/{businessId}")]
-        public async Task<ActionResult<IEnumerable<ReviewDto>>> GetByBusinessId(int businessId)
+        public async Task<ActionResult<IEnumerable<Review>>> GetBusinessReviews(int businessId)
         {
-            var reviews = await _reviewService.GetByBusinessIdAsync(businessId);
-            return Ok(reviews);
-        }
-
-        [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<ReviewDto>>> GetByUserId(int userId)
-        {
-            // Check if user is requesting their own reviews or is an admin
-            var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            if (currentUserId != userId && userRole != "Admin")
+            try
             {
-                return Forbid();
+                var business = await _businessRepository.GetBusinessByIdAsync(businessId);
+                if (business == null)
+                {
+                    return NotFound($"Business with ID {businessId} not found");
+                }
+
+                var reviews = await _reviewRepository.GetReviewsByBusinessIdAsync(businessId);
+                return Ok(reviews);
             }
-
-            var reviews = await _reviewService.GetByUserIdAsync(userId);
-            return Ok(reviews);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving reviews for business {BusinessId}", businessId);
+                return StatusCode(500, "An error occurred while retrieving reviews");
+            }
         }
 
-        [HttpGet("pending")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<ReviewDto>>> GetPendingReviews()
+        // GET: api/reviews/user
+        [HttpGet("user")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Review>>> GetUserReviews()
         {
-            var reviews = await _reviewService.GetPendingReviewsAsync();
-            return Ok(reviews);
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var reviews = await _reviewRepository.GetReviewsByUserIdAsync(userId);
+                return Ok(reviews);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving user reviews");
+                return StatusCode(500, "An error occurred while retrieving reviews");
+            }
         }
 
-        [HttpGet("flagged")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<ReviewDto>>> GetFlaggedReviews()
+        // GET: api/reviews/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Review>> GetReview(int id)
         {
-            var reviews = await _reviewService.GetFlaggedReviewsAsync();
-            return Ok(reviews);
+            try
+            {
+                var review = await _reviewRepository.GetReviewByIdAsync(id);
+
+                if (review == null)
+                {
+                    return NotFound($"Review with ID {id} not found");
+                }
+
+                return Ok(review);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving review with ID {Id}", id);
+                return StatusCode(500, "An error occurred while retrieving the review");
+            }
         }
 
+        // POST: api/reviews
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<ApiResponseDto<ReviewDto>>> Create([FromBody] ReviewDto reviewDto)
+        public async Task<ActionResult<Review>> CreateReview(Review review)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ApiResponseDto<ReviewDto>.ErrorResponse("Invalid review data"));
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var business = await _businessRepository.GetBusinessByIdAsync(review.BusinessId);
+                if (business == null)
+                {
+                    return NotFound($"Business with ID {review.BusinessId} not found");
+                }
+
+                // Check if user has already reviewed this business
+                var existingReview = await _reviewRepository.GetReviewByUserAndBusinessAsync(userId, review.BusinessId);
+                if (existingReview != null)
+                {
+                    return BadRequest("You have already reviewed this business");
+                }
+
+                // Validate rating
+                if (review.Rating < 1 || review.Rating > 5)
+                {
+                    return BadRequest("Rating must be between 1 and 5");
+                }
+
+                review.UserId = userId;
+                review.CreatedAt = DateTime.UtcNow;
+
+                var id = await _reviewRepository.CreateReviewAsync(review);
+                review.Id = id;
+
+                return CreatedAtAction(nameof(GetReview), new { id }, review);
             }
-
-            // Set user ID from the authenticated user
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            reviewDto.UserId = userId;
-
-            var response = await _reviewService.CreateAsync(reviewDto);
-            if (!response.Success)
+            catch (Exception ex)
             {
-                return BadRequest(response);
+                _logger.LogError(ex, "Error creating review");
+                return StatusCode(500, "An error occurred while creating the review");
             }
-
-            return CreatedAtAction(nameof(GetById), new { id = response.Data.Id }, response);
         }
 
+        // PUT: api/reviews/{id}
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResponseDto<ReviewDto>>> Update(int id, [FromBody] ReviewDto reviewDto)
+        public async Task<IActionResult> UpdateReview(int id, Review review)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ApiResponseDto<ReviewDto>.ErrorResponse("Invalid review data"));
+                if (id != review.Id)
+                {
+                    return BadRequest("ID in URL does not match ID in request body");
+                }
+
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var existingReview = await _reviewRepository.GetReviewByIdAsync(id);
+                if (existingReview == null)
+                {
+                    return NotFound($"Review with ID {id} not found");
+                }
+
+                // Check if user is the author of the review or an admin
+                if (existingReview.UserId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid("You don't have permission to update this review");
+                }
+
+                // Validate rating
+                if (review.Rating < 1 || review.Rating > 5)
+                {
+                    return BadRequest("Rating must be between 1 and 5");
+                }
+
+                review.UserId = existingReview.UserId;
+                review.BusinessId = existingReview.BusinessId;
+                review.CreatedAt = existingReview.CreatedAt;
+                review.UpdatedAt = DateTime.UtcNow;
+
+                var success = await _reviewRepository.UpdateReviewAsync(review);
+
+                if (!success)
+                {
+                    return StatusCode(500, "Failed to update review");
+                }
+
+                return NoContent();
             }
-
-            // Check if user is the author of the review or an admin
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var review = await _reviewService.GetByIdAsync(id);
-
-            if (review == null)
+            catch (Exception ex)
             {
-                return NotFound(ApiResponseDto<ReviewDto>.ErrorResponse("Review not found"));
+                _logger.LogError(ex, "Error updating review with ID {Id}", id);
+                return StatusCode(500, "An error occurred while updating the review");
             }
-
-            if (review.UserId != userId && userRole != "Admin")
-            {
-                return Forbid();
-            }
-
-            var response = await _reviewService.UpdateAsync(id, reviewDto);
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-
-            return Ok(response);
         }
 
+        // DELETE: api/reviews/{id}
         [HttpDelete("{id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResponseDto<bool>>> Delete(int id)
+        public async Task<IActionResult> DeleteReview(int id)
         {
-            // Check if user is the author of the review or an admin
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var review = await _reviewService.GetByIdAsync(id);
-
-            if (review == null)
+            try
             {
-                return NotFound(ApiResponseDto<bool>.ErrorResponse("Review not found"));
-            }
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("User ID not found in token");
+                }
 
-            if (review.UserId != userId && userRole != "Admin")
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return BadRequest("Invalid user ID format");
+                }
+
+                var existingReview = await _reviewRepository.GetReviewByIdAsync(id);
+                if (existingReview == null)
+                {
+                    return NotFound($"Review with ID {id} not found");
+                }
+
+                // Check if user is the author of the review or an admin
+                if (existingReview.UserId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid("You don't have permission to delete this review");
+                }
+
+                var success = await _reviewRepository.DeleteReviewAsync(id);
+
+                if (!success)
+                {
+                    return StatusCode(500, "Failed to delete review");
+                }
+
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return Forbid();
+                _logger.LogError(ex, "Error deleting review with ID {Id}", id);
+                return StatusCode(500, "An error occurred while deleting the review");
             }
-
-            var response = await _reviewService.DeleteAsync(id);
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-
-            return Ok(response);
-        }
-
-        [HttpPatch("{id}/approve")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponseDto<bool>>> ApproveReview(int id)
-        {
-            var response = await _reviewService.ApproveReviewAsync(id);
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-
-            return Ok(response);
-        }
-
-        [HttpPatch("{id}/reject")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponseDto<bool>>> RejectReview(int id)
-        {
-            var response = await _reviewService.RejectReviewAsync(id);
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-
-            return Ok(response);
-        }
-
-        [HttpPatch("{id}/flag")]
-        [Authorize]
-        public async Task<ActionResult<ApiResponseDto<bool>>> FlagReview(int id)
-        {
-            var response = await _reviewService.FlagReviewAsync(id,"no reason");
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-
-            return Ok(response);
-        }
-
-        [HttpPatch("{id}/unflag")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponseDto<bool>>> UnflagReview(int id)
-        {
-            var response = await _reviewService.UnflagReviewAsync(id);
-            if (!response.Success)
-            {
-                return BadRequest(response);
-            }
-
-            return Ok(response);
         }
     }
 }

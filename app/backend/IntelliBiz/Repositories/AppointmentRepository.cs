@@ -1,157 +1,151 @@
 using Dapper;
-using IntelliBiz.API.Data;
 using IntelliBiz.API.Models;
+using IntelliBiz.Database;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
     public class AppointmentRepository : IAppointmentRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
+        private readonly DapperContext _context;
 
-        public AppointmentRepository(IDatabaseConnectionFactory connectionFactory)
+        public AppointmentRepository(DapperContext context)
         {
-            _connectionFactory = connectionFactory;
+            _context = context;
         }
 
-        public async Task<Appointment?> GetByIdAsync(int id)
+        public async Task<IEnumerable<Appointment>> GetAppointmentsByBusinessIdAsync(int businessId)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT a.*, 
-                       u.FirstName + ' ' + u.LastName as CustomerName,
-                       u.Email as CustomerEmail,
-                       u.Phone as CustomerPhone,
-                       b.Name as BusinessName,
-                       s.Name as ServiceName
+            var query = @"
+                SELECT a.*, u.Username, u.FirstName, u.LastName, u.Email, u.PhoneNumber,
+                       s.Name as ServiceName, s.Price as ServicePrice, s.DurationMinutes as ServiceDuration
                 FROM Appointments a
                 JOIN Users u ON a.UserId = u.Id
-                JOIN Businesses b ON a.BusinessId = b.Id
-                JOIN Services s ON a.ServiceId = s.Id
-                WHERE a.Id = @Id";
-            return await connection.QueryFirstOrDefaultAsync<Appointment>(sql, new { Id = id });
-        }
-
-        public async Task<IEnumerable<Appointment>> GetAllAsync()
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT a.*, 
-                       u.FirstName + ' ' + u.LastName as CustomerName,
-                       u.Email as CustomerEmail,
-                       b.Name as BusinessName,
-                       s.Name as ServiceName
-                FROM Appointments a
-                JOIN Users u ON a.UserId = u.Id
-                JOIN Businesses b ON a.BusinessId = b.Id
-                JOIN Services s ON a.ServiceId = s.Id
-                ORDER BY a.AppointmentDate DESC, a.StartTime DESC";
-            return await connection.QueryAsync<Appointment>(sql);
-        }
-
-        public async Task<IEnumerable<Appointment>> GetByUserIdAsync(int userId)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT a.*, 
-                       u.FirstName + ' ' + u.LastName as CustomerName,
-                       u.Email as CustomerEmail,
-                       b.Name as BusinessName,
-                       s.Name as ServiceName
-                FROM Appointments a
-                JOIN Users u ON a.UserId = u.Id
-                JOIN Businesses b ON a.BusinessId = b.Id
-                JOIN Services s ON a.ServiceId = s.Id
-                WHERE a.UserId = @UserId
-                ORDER BY a.AppointmentDate DESC, a.StartTime DESC";
-            return await connection.QueryAsync<Appointment>(sql, new { UserId = userId });
-        }
-
-        public async Task<IEnumerable<Appointment>> GetByBusinessIdAsync(int businessId)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT a.*, 
-                       u.FirstName + ' ' + u.LastName as CustomerName,
-                       u.Email as CustomerEmail,
-                       u.Phone as CustomerPhone,
-                       b.Name as BusinessName,
-                       s.Name as ServiceName
-                FROM Appointments a
-                JOIN Users u ON a.UserId = u.Id
-                JOIN Businesses b ON a.BusinessId = b.Id
-                JOIN Services s ON a.ServiceId = s.Id
+                LEFT JOIN BusinessServices s ON a.ServiceId = s.Id
                 WHERE a.BusinessId = @BusinessId
-                ORDER BY a.AppointmentDate DESC, a.StartTime DESC";
-            return await connection.QueryAsync<Appointment>(sql, new { BusinessId = businessId });
+                ORDER BY a.AppointmentDate, a.StartTime";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<Appointment>(query, new { BusinessId = businessId });
         }
 
-        public async Task<IEnumerable<Appointment>> GetByStatusAsync(string status)
+        public async Task<IEnumerable<Appointment>> GetAppointmentsByUserIdAsync(int userId)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                SELECT a.*, 
-                       u.FirstName + ' ' + u.LastName as CustomerName,
-                       u.Email as CustomerEmail,
-                       b.Name as BusinessName,
-                       s.Name as ServiceName
+            var query = @"
+                SELECT a.*, b.Name as BusinessName, b.Address as BusinessAddress, b.City as BusinessCity,
+                       s.Name as ServiceName, s.Price as ServicePrice, s.DurationMinutes as ServiceDuration
+                FROM Appointments a
+                JOIN Businesses b ON a.BusinessId = b.Id
+                LEFT JOIN BusinessServices s ON a.ServiceId = s.Id
+                WHERE a.UserId = @UserId
+                ORDER BY a.AppointmentDate, a.StartTime";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<Appointment>(query, new { UserId = userId });
+        }
+
+        public async Task<Appointment?> GetAppointmentByIdAsync(int id)
+        {
+            var query = @"
+                SELECT a.*, u.Username, u.FirstName, u.LastName, u.Email, u.PhoneNumber,
+                       b.Name as BusinessName, b.Address as BusinessAddress, b.City as BusinessCity,
+                       s.Name as ServiceName, s.Price as ServicePrice, s.DurationMinutes as ServiceDuration
                 FROM Appointments a
                 JOIN Users u ON a.UserId = u.Id
                 JOIN Businesses b ON a.BusinessId = b.Id
-                JOIN Services s ON a.ServiceId = s.Id
-                WHERE a.Status = @Status
-                ORDER BY a.AppointmentDate DESC, a.StartTime DESC";
-            return await connection.QueryAsync<Appointment>(sql, new { Status = status });
+                LEFT JOIN BusinessServices s ON a.ServiceId = s.Id
+                WHERE a.Id = @Id";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<Appointment>(query, new { Id = id });
         }
 
-        public async Task<int> CreateAsync(Appointment appointment)
+        public async Task<int> CreateAppointmentAsync(Appointment appointment)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                INSERT INTO Appointments (UserId, BusinessId, ServiceId, AppointmentDate, StartTime, EndTime, Status, Notes, CreatedAt)
-                VALUES (@UserId, @BusinessId, @ServiceId, @AppointmentDate, @StartTime, @EndTime, @Status, @Notes, @CreatedAt);
-                SELECT CAST(SCOPE_IDENTITY() as int)";
-            
-            appointment.CreatedAt = DateTime.UtcNow;
-            return await connection.QuerySingleAsync<int>(sql, appointment);
+            var query = @"
+                INSERT INTO Appointments (BusinessId, UserId, ServiceId, AppointmentDate, StartTime, EndTime, 
+                                        Notes, Status, CreatedAt) 
+                OUTPUT INSERTED.Id
+                VALUES (@BusinessId, @UserId, @ServiceId, @AppointmentDate, @StartTime, @EndTime, 
+                       @Notes, @Status, @CreatedAt)";
+
+            using var connection = _context.CreateConnection();
+            return await connection.ExecuteScalarAsync<int>(query, appointment);
         }
 
-        public async Task<bool> UpdateAsync(Appointment appointment)
+        public async Task<bool> UpdateAppointmentAsync(Appointment appointment)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                UPDATE Appointments
-                SET AppointmentDate = @AppointmentDate,
-                    StartTime = @StartTime,
-                    EndTime = @EndTime,
-                    Status = @Status,
-                    Notes = @Notes,
+            var query = @"
+                UPDATE Appointments 
+                SET ServiceId = @ServiceId, 
+                    AppointmentDate = @AppointmentDate, 
+                    StartTime = @StartTime, 
+                    EndTime = @EndTime, 
+                    Notes = @Notes, 
+                    Status = @Status, 
                     UpdatedAt = @UpdatedAt
-                WHERE Id = @Id";
-            
+                WHERE Id = @Id AND (BusinessId = @BusinessId OR UserId = @UserId)";
+
             appointment.UpdatedAt = DateTime.UtcNow;
-            int rowsAffected = await connection.ExecuteAsync(sql, appointment);
-            return rowsAffected > 0;
+
+            using var connection = _context.CreateConnection();
+            var affectedRows = await connection.ExecuteAsync(query, appointment);
+            return affectedRows > 0;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> UpdateAppointmentStatusAsync(int id, string status)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = "DELETE FROM Appointments WHERE Id = @Id";
-            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
-            return rowsAffected > 0;
-        }
-
-        public async Task<bool> UpdateStatusAsync(int id, string status)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            const string sql = @"
-                UPDATE Appointments
-                SET Status = @Status,
+            var query = @"
+                UPDATE Appointments 
+                SET Status = @Status, 
                     UpdatedAt = @UpdatedAt
                 WHERE Id = @Id";
-            
-            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id, Status = status, UpdatedAt = DateTime.UtcNow });
-            return rowsAffected > 0;
+
+            using var connection = _context.CreateConnection();
+            var affectedRows = await connection.ExecuteAsync(query,
+                new { Id = id, Status = status, UpdatedAt = DateTime.UtcNow });
+            return affectedRows > 0;
+        }
+
+        public async Task<bool> DeleteAppointmentAsync(int id)
+        {
+            var query = "DELETE FROM Appointments WHERE Id = @Id";
+
+            using var connection = _context.CreateConnection();
+            var affectedRows = await connection.ExecuteAsync(query, new { Id = id });
+            return affectedRows > 0;
+        }
+
+        public async Task<IEnumerable<Appointment>> GetBusinessAppointmentsByDateAsync(int businessId, DateTime date)
+        {
+            var query = @"
+                SELECT a.*, u.Username, u.FirstName, u.LastName, u.Email, u.PhoneNumber,
+                       s.Name as ServiceName, s.Price as ServicePrice, s.DurationMinutes as ServiceDuration
+                FROM Appointments a
+                JOIN Users u ON a.UserId = u.Id
+                LEFT JOIN BusinessServices s ON a.ServiceId = s.Id
+                WHERE a.BusinessId = @BusinessId AND CAST(a.AppointmentDate AS DATE) = CAST(@Date AS DATE)
+                ORDER BY a.StartTime";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<Appointment>(query, new { BusinessId = businessId, Date = date });
+        }
+
+        public async Task<IEnumerable<Appointment>> GetUserAppointmentsByDateRangeAsync(int userId, DateTime startDate, DateTime endDate)
+        {
+            var query = @"
+                SELECT a.*, b.Name as BusinessName, b.Address as BusinessAddress, b.City as BusinessCity,
+                       s.Name as ServiceName, s.Price as ServicePrice, s.DurationMinutes as ServiceDuration
+                FROM Appointments a
+                JOIN Businesses b ON a.BusinessId = b.Id
+                LEFT JOIN BusinessServices s ON a.ServiceId = s.Id
+                WHERE a.UserId = @UserId 
+                  AND a.AppointmentDate >= @StartDate 
+                  AND a.AppointmentDate <= @EndDate
+                ORDER BY a.AppointmentDate, a.StartTime";
+
+            using var connection = _context.CreateConnection();
+            return await connection.QueryAsync<Appointment>(query,
+                new { UserId = userId, StartDate = startDate, EndDate = endDate });
         }
     }
 }
