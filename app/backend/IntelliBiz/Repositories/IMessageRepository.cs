@@ -1,18 +1,17 @@
 using IntelliBiz.API.Models;
 
-namespace IntelliBiz.Repositories
+namespace IntelliBiz.API.Repositories
 {
     public interface IMessageRepository
     {
-        Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(int conversationId);
-        Task<IEnumerable<Conversation>> GetUserConversationsAsync(int userId);
-        Task<IEnumerable<Conversation>> GetBusinessConversationsAsync(int businessId);
-        Task<Conversation?> GetConversationByIdAsync(int id);
-        Task<Conversation?> GetConversationByUserAndBusinessAsync(int userId, int businessId);
-        Task<int> CreateConversationAsync(Conversation conversation);
-        Task<int> CreateMessageAsync(Message message);
-        Task<bool> MarkConversationAsReadAsync(int conversationId, int userId);
-        Task<int> GetUnreadMessageCountAsync(int conversationId, int userId);
-        Task<int> GetTotalUnreadMessageCountAsync(int userId);
+        Task<Message?> GetByIdAsync(int id);
+        Task<IEnumerable<Message>> GetAllAsync();
+        Task<IEnumerable<Message>> GetBySenderIdAsync(int senderId);
+        Task<IEnumerable<Message>> GetByReceiverIdAsync(int receiverId);
+        Task<IEnumerable<Message>> GetConversationAsync(int user1Id, int user2Id);
+        Task<int> CreateAsync(Message message);
+        Task<bool> DeleteAsync(int id);
+        Task<bool> MarkAsReadAsync(int id);
+        Task<bool> MarkAllAsReadAsync(int receiverId, int senderId);
     }
 }

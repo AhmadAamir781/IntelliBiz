@@ -6,27 +6,36 @@ export interface Business {
   id: number;
   name: string;
   category: string;
-  owner: string;
-  location: string;
-  status: string;
-  registrationDate: string;
+  rating: number;
+  reviewCount: number;
+  description: string;
+  address: string;
+  phone: string;
+  image: string;
   verified: boolean;
 }
 
 export interface CreateBusinessRequest {
   name: string;
   category: string;
-  owner: string;
-  location: string;
+  rating: number;
+  reviewCount: number;
+  description: string;
+  address: string;
+  phone: string;
+  image: string;
   verified: boolean;
 }
 
 export interface UpdateBusinessRequest {
   name: string;
   category: string;
-  owner: string;
-  location: string;
-  status: string;
+  rating: number;
+  reviewCount: number;
+  description: string;
+  address: string;
+  phone: string;
+  image: string;
   verified: boolean;
 }
 

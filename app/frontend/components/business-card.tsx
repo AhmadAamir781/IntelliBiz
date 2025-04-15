@@ -1,8 +1,7 @@
-import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
+import { Business } from "@/services/businessService"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, MapPin, Phone, CheckCircle2 } from "lucide-react"
+import { Star } from "lucide-react"
 
 // Business category images mapping
 const categoryImages = {
@@ -17,87 +16,56 @@ const categoryImages = {
   default: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop",
 }
 
-interface Business {
-  id: string
-  name: string
-  category: string
-  rating: number
-  reviewCount: number
-  description: string
-  address: string
-  phone: string
-  image?: string
-  verified?: boolean
-}
-
 interface BusinessCardProps {
   business: Business
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
-  // Get image based on category or use provided image or default
-  const imageUrl =
-    business.image || categoryImages[business.category as keyof typeof categoryImages] || categoryImages.default
-
   return (
-    <Card className="overflow-hidden h-full flex flex-col shadow-md hover:shadow-lg transition-shadow">
-      <div className="relative aspect-video">
-        <img src={imageUrl || "/placeholder.svg"} alt={business.name} className="object-cover w-full h-full" />
+    <Card className="overflow-hidden">
+      <div className="aspect-video relative">
+        <img
+          src={business.image}
+          alt={business.name}
+          className="object-cover w-full h-full"
+        />
         {business.verified && (
-          <Badge
-            variant="outline"
-            className="absolute top-2 right-2 bg-white text-primary border-primary flex items-center gap-1"
-          >
-            <CheckCircle2 className="h-3 w-3" />
+          <Badge className="absolute top-2 right-2 bg-blue-500">
             Verified
           </Badge>
         )}
       </div>
-      <CardContent className="p-4 flex-1 flex flex-col">
-        <div className="mb-2">
-          <Badge variant="outline" className="bg-accent text-accent-foreground">
-            {business.category}
-          </Badge>
-        </div>
-        <h3 className="font-medium text-lg mb-1">{business.name}</h3>
-        <div className="flex items-center gap-1 mb-2">
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-4 w-4 ${
-                  i < Math.floor(business.rating)
-                    ? "text-yellow-400 fill-yellow-400"
-                    : i < business.rating
-                      ? "text-yellow-400 fill-yellow-400 opacity-50"
-                      : "text-muted-foreground"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm">{business.rating}</span>
-          <span className="text-sm text-muted-foreground">({business.reviewCount})</span>
-        </div>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{business.description}</p>
-        <div className="space-y-2 mt-auto">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span className="text-sm text-muted-foreground truncate">{business.address}</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <Phone className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span className="text-sm text-muted-foreground">{business.phone}</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          <Button className="w-full" asChild>
-            <Link href={`/businesses/${business.id}`}>View Details</Link>
-          </Button>
-          <Button variant="outline" className="w-full">
-            Contact
-          </Button>
+      <CardHeader>
+        <CardTitle className="text-xl">{business.name}</CardTitle>
+        <CardDescription className="flex items-center gap-2">
+          <span className="flex items-center">
+            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
+            {business.rating.toFixed(1)}
+          </span>
+          <span className="text-muted-foreground">
+            ({business.reviewCount} reviews)
+          </span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-2">{business.description}</p>
+        <div className="space-y-1">
+          <p className="text-sm">
+            <span className="font-medium">Category:</span> {business.category}
+          </p>
+          <p className="text-sm">
+            <span className="font-medium">Address:</span> {business.address}
+          </p>
+          <p className="text-sm">
+            <span className="font-medium">Phone:</span> {business.phone}
+          </p>
         </div>
       </CardContent>
+      <CardFooter>
+        <Badge variant="outline" className="text-sm">
+          {business.category}
+        </Badge>
+      </CardFooter>
     </Card>
   )
 }

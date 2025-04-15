@@ -1,152 +1,134 @@
 using Dapper;
+using IntelliBiz.API.Data;
 using IntelliBiz.API.Models;
-using IntelliBiz.Database;
 
-namespace IntelliBiz.Repositories
+namespace IntelliBiz.API.Repositories
 {
     public class MessageRepository : IMessageRepository
     {
-        private readonly DapperContext _context;
+        private readonly IDatabaseConnectionFactory _connectionFactory;
 
-        public MessageRepository(DapperContext context)
+        public MessageRepository(IDatabaseConnectionFactory connectionFactory)
         {
-            _context = context;
+            _connectionFactory = connectionFactory;
         }
 
-        public async Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(int conversationId)
+        public async Task<Message?> GetByIdAsync(int id)
         {
-            var query = @"
-                SELECT m.*, u.Username, u.FirstName, u.LastName
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT m.*,
+                       s.FirstName + ' ' + s.LastName as SenderName,
+                       r.FirstName + ' ' + r.LastName as ReceiverName
                 FROM Messages m
-                JOIN Users u ON m.SenderId = u.Id
-                WHERE m.ConversationId = @ConversationId
-                ORDER BY m.CreatedAt";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<Message>(query, new { ConversationId = conversationId });
+                JOIN Users s ON m.SenderId = s.Id
+                JOIN Users r ON m.ReceiverId = r.Id
+                WHERE m.Id = @Id";
+            return await connection.QueryFirstOrDefaultAsync<Message>(sql, new { Id = id });
         }
 
-        public async Task<IEnumerable<Conversation>> GetUserConversationsAsync(int userId)
+        public async Task<IEnumerable<Message>> GetAllAsync()
         {
-            var query = @"
-                SELECT c.*, b.Name as BusinessName, b.LogoUrl as BusinessLogoUrl,
-                       (SELECT COUNT(*) FROM Messages m WHERE m.ConversationId = c.Id AND m.IsRead = 0 AND m.SenderId != @UserId) as UnreadCount,
-                       (SELECT TOP 1 m.Content FROM Messages m WHERE m.ConversationId = c.Id ORDER BY m.CreatedAt DESC) as LastMessage,
-                       (SELECT TOP 1 m.CreatedAt FROM Messages m WHERE m.ConversationId = c.Id ORDER BY m.CreatedAt DESC) as LastMessageDate
-                FROM Conversations c
-                JOIN Businesses b ON c.BusinessId = b.Id
-                WHERE c.UserId = @UserId
-                ORDER BY LastMessageDate DESC";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<Conversation>(query, new { UserId = userId });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT m.*,
+                       s.FirstName + ' ' + s.LastName as SenderName,
+                       r.FirstName + ' ' + r.LastName as ReceiverName
+                FROM Messages m
+                JOIN Users s ON m.SenderId = s.Id
+                JOIN Users r ON m.ReceiverId = r.Id
+                ORDER BY m.CreatedAt DESC";
+            return await connection.QueryAsync<Message>(sql);
         }
 
-        public async Task<IEnumerable<Conversation>> GetBusinessConversationsAsync(int businessId)
+        public async Task<IEnumerable<Message>> GetBySenderIdAsync(int senderId)
         {
-            var query = @"
-                SELECT c.*, u.Username, u.FirstName, u.LastName,
-                       (SELECT COUNT(*) FROM Messages m WHERE m.ConversationId = c.Id AND m.IsRead = 0 AND m.SenderId != b.OwnerId) as UnreadCount,
-                       (SELECT TOP 1 m.Content FROM Messages m WHERE m.ConversationId = c.Id ORDER BY m.CreatedAt DESC) as LastMessage,
-                       (SELECT TOP 1 m.CreatedAt FROM Messages m WHERE m.ConversationId = c.Id ORDER BY m.CreatedAt DESC) as LastMessageDate
-                FROM Conversations c
-                JOIN Users u ON c.UserId = u.Id
-                JOIN Businesses b ON c.BusinessId = b.Id
-                WHERE c.BusinessId = @BusinessId
-                ORDER BY LastMessageDate DESC";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<Conversation>(query, new { BusinessId = businessId });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT m.*,
+                       s.FirstName + ' ' + s.LastName as SenderName,
+                       r.FirstName + ' ' + r.LastName as ReceiverName
+                FROM Messages m
+                JOIN Users s ON m.SenderId = s.Id
+                JOIN Users r ON m.ReceiverId = r.Id
+                WHERE m.SenderId = @SenderId
+                ORDER BY m.CreatedAt DESC";
+            return await connection.QueryAsync<Message>(sql, new { SenderId = senderId });
         }
 
-        public async Task<Conversation?> GetConversationByIdAsync(int id)
+        public async Task<IEnumerable<Message>> GetByReceiverIdAsync(int receiverId)
         {
-            var query = @"
-                SELECT c.*, u.Username as UserUsername, u.FirstName as UserFirstName, u.LastName as UserLastName,
-                       b.Name as BusinessName, b.LogoUrl as BusinessLogoUrl
-                FROM Conversations c
-                JOIN Users u ON c.UserId = u.Id
-                JOIN Businesses b ON c.BusinessId = b.Id
-                WHERE c.Id = @Id";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QuerySingleOrDefaultAsync<Conversation>(query, new { Id = id });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT m.*,
+                       s.FirstName + ' ' + s.LastName as SenderName,
+                       r.FirstName + ' ' + r.LastName as ReceiverName
+                FROM Messages m
+                JOIN Users s ON m.SenderId = s.Id
+                JOIN Users r ON m.ReceiverId = r.Id
+                WHERE m.ReceiverId = @ReceiverId
+                ORDER BY m.CreatedAt DESC";
+            return await connection.QueryAsync<Message>(sql, new { ReceiverId = receiverId });
         }
 
-        public async Task<Conversation?> GetConversationByUserAndBusinessAsync(int userId, int businessId)
+        public async Task<IEnumerable<Message>> GetConversationAsync(int user1Id, int user2Id)
         {
-            var query = @"
-                SELECT c.*, u.Username as UserUsername, u.FirstName as UserFirstName, u.LastName as UserLastName,
-                       b.Name as BusinessName, b.LogoUrl as BusinessLogoUrl
-                FROM Conversations c
-                JOIN Users u ON c.UserId = u.Id
-                JOIN Businesses b ON c.BusinessId = b.Id
-                WHERE c.UserId = @UserId AND c.BusinessId = @BusinessId";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QuerySingleOrDefaultAsync<Conversation>(query,
-                new { UserId = userId, BusinessId = businessId });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT m.*,
+                       s.FirstName + ' ' + s.LastName as SenderName,
+                       r.FirstName + ' ' + r.LastName as ReceiverName
+                FROM Messages m
+                JOIN Users s ON m.SenderId = s.Id
+                JOIN Users r ON m.ReceiverId = r.Id
+                WHERE (m.SenderId = @User1Id AND m.ReceiverId = @User2Id)
+                   OR (m.SenderId = @User2Id AND m.ReceiverId = @User1Id)
+                ORDER BY m.CreatedAt ASC";
+            return await connection.QueryAsync<Message>(sql, new { User1Id = user1Id, User2Id = user2Id });
         }
 
-        public async Task<int> CreateConversationAsync(Conversation conversation)
+        public async Task<int> CreateAsync(Message message)
         {
-            var query = @"
-                INSERT INTO Conversations (UserId, BusinessId, CreatedAt) 
-                OUTPUT INSERTED.Id
-                VALUES (@UserId, @BusinessId, @CreatedAt)";
-
-            using var connection = _context.CreateConnection();
-            return await connection.ExecuteScalarAsync<int>(query, conversation);
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                INSERT INTO Messages (SenderId, ReceiverId, Content, IsRead, CreatedAt)
+                VALUES (@SenderId, @ReceiverId, @Content, @IsRead, @CreatedAt);
+                SELECT CAST(SCOPE_IDENTITY() as int)";
+            
+            message.CreatedAt = DateTime.UtcNow;
+            return await connection.QuerySingleAsync<int>(sql, message);
         }
 
-        public async Task<int> CreateMessageAsync(Message message)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var query = @"
-                INSERT INTO Messages (ConversationId, SenderId, Content, IsRead, CreatedAt) 
-                OUTPUT INSERTED.Id
-                VALUES (@ConversationId, @SenderId, @Content, @IsRead, @CreatedAt)";
-
-            using var connection = _context.CreateConnection();
-            return await connection.ExecuteScalarAsync<int>(query, message);
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "DELETE FROM Messages WHERE Id = @Id";
+            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+            return rowsAffected > 0;
         }
 
-        public async Task<bool> MarkConversationAsReadAsync(int conversationId, int userId)
+        public async Task<bool> MarkAsReadAsync(int id)
         {
-            var query = @"
-                UPDATE Messages 
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                UPDATE Messages
                 SET IsRead = 1
-                WHERE ConversationId = @ConversationId AND SenderId != @UserId AND IsRead = 0";
-
-            using var connection = _context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(query,
-                new { ConversationId = conversationId, UserId = userId });
-            return affectedRows > 0;
+                WHERE Id = @Id";
+            
+            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+            return rowsAffected > 0;
         }
 
-        public async Task<int> GetUnreadMessageCountAsync(int conversationId, int userId)
+        public async Task<bool> MarkAllAsReadAsync(int receiverId, int senderId)
         {
-            var query = @"
-                SELECT COUNT(*) 
-                FROM Messages 
-                WHERE ConversationId = @ConversationId AND SenderId != @UserId AND IsRead = 0";
-
-            using var connection = _context.CreateConnection();
-            return await connection.ExecuteScalarAsync<int>(query,
-                new { ConversationId = conversationId, UserId = userId });
-        }
-
-        public async Task<int> GetTotalUnreadMessageCountAsync(int userId)
-        {
-            var query = @"
-                SELECT COUNT(*) 
-                FROM Messages m
-                JOIN Conversations c ON m.ConversationId = c.Id
-                WHERE (c.UserId = @UserId OR c.BusinessId IN (SELECT Id FROM Businesses WHERE OwnerId = @UserId))
-                  AND m.SenderId != @UserId 
-                  AND m.IsRead = 0";
-
-            using var connection = _context.CreateConnection();
-            return await connection.ExecuteScalarAsync<int>(query, new { UserId = userId });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                UPDATE Messages
+                SET IsRead = 1
+                WHERE ReceiverId = @ReceiverId AND SenderId = @SenderId AND IsRead = 0";
+            
+            int rowsAffected = await connection.ExecuteAsync(sql, new { ReceiverId = receiverId, SenderId = senderId });
+            return rowsAffected > 0;
         }
     }
 }

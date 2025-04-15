@@ -1,107 +1,89 @@
 using Dapper;
+using IntelliBiz.API.Data;
 using IntelliBiz.API.Models;
-using IntelliBiz.Database;
 
-namespace IntelliBiz.Repositories
+namespace IntelliBiz.API.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly DapperContext _context;
+        private readonly IDatabaseConnectionFactory _connectionFactory;
 
-        public UserRepository(DapperContext context)
+        public UserRepository(IDatabaseConnectionFactory connectionFactory)
         {
-            _context = context;
+            _connectionFactory = connectionFactory;
         }
 
-        public async Task<User?> GetUserByIdAsync(int id)
+        public async Task<User?> GetByIdAsync(int id)
         {
-            var query = "SELECT * FROM Users WHERE Id = @Id";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QuerySingleOrDefaultAsync<User>(query, new { Id = id });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM Users WHERE Id = @Id";
+            return await connection.QueryFirstOrDefaultAsync<User>(sql, new { Id = id });
         }
 
-        public async Task<User?> GetUserByEmailAsync(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            var query = "SELECT * FROM Users WHERE Email = @Email";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QuerySingleOrDefaultAsync<User>(query, new { Email = email });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM Users WHERE Email = @Email";
+            return await connection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
         }
 
-        public async Task<User?> GetUserByUsernameAsync(string username)
+        public async Task<IEnumerable<User>> GetAllAsync()
         {
-            var query = "SELECT * FROM Users WHERE Username = @Username";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QuerySingleOrDefaultAsync<User>(query, new { Username = username });
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM Users ORDER BY CreatedAt DESC";
+            return await connection.QueryAsync<User>(sql);
         }
 
-        public async Task<int> CreateUserAsync(User user)
+        public async Task<IEnumerable<User>> GetByRoleAsync(string role)
         {
-            var query = @"
-                INSERT INTO Users (Username, Email, PasswordHash, FirstName, LastName, PhoneNumber, Role, CreatedAt)
-                OUTPUT INSERTED.Id
-                VALUES (@Username, @Email, @PasswordHash, @FirstName, @LastName, @PhoneNumber, @Role, @CreatedAt)";
-
-            using var connection = _context.CreateConnection();
-            return await connection.ExecuteScalarAsync<int>(query, user);
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM Users WHERE Role = @Role ORDER BY CreatedAt DESC";
+            return await connection.QueryAsync<User>(sql, new { Role = role });
         }
 
-        public async Task<bool> UpdateUserAsync(User user)
+        public async Task<int> CreateAsync(User user)
         {
-            var query = @"
-                UPDATE Users 
-                SET Username = @Username, 
-                    Email = @Email, 
-                    FirstName = @FirstName, 
-                    LastName = @LastName, 
-                    PhoneNumber = @PhoneNumber, 
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                INSERT INTO Users (FirstName, LastName, Email, PasswordHash, Role, CreatedAt)
+                VALUES (@FirstName, @LastName, @Email, @PasswordHash, @Role, @CreatedAt);
+                SELECT CAST(SCOPE_IDENTITY() as int)";
+            
+            user.CreatedAt = DateTime.UtcNow;
+            return await connection.QuerySingleAsync<int>(sql, user);
+        }
+
+        public async Task<bool> UpdateAsync(User user)
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                UPDATE Users
+                SET FirstName = @FirstName,
+                    LastName = @LastName,
+                    Email = @Email,
+                    Role = @Role,
                     UpdatedAt = @UpdatedAt
                 WHERE Id = @Id";
-
+            
             user.UpdatedAt = DateTime.UtcNow;
-
-            using var connection = _context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(query, user);
-            return affectedRows > 0;
+            int rowsAffected = await connection.ExecuteAsync(sql, user);
+            return rowsAffected > 0;
         }
 
-        public async Task<bool> UpdateUserRoleAsync(int id, string role)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var query = "UPDATE Users SET Role = @Role, UpdatedAt = @UpdatedAt WHERE Id = @Id";
-
-            using var connection = _context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(query,
-                new { Id = id, Role = role, UpdatedAt = DateTime.UtcNow });
-            return affectedRows > 0;
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "DELETE FROM Users WHERE Id = @Id";
+            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+            return rowsAffected > 0;
         }
 
-        public async Task<bool> DeleteUserAsync(int id)
+        public async Task<bool> EmailExistsAsync(string email)
         {
-            var query = "DELETE FROM Users WHERE Id = @Id";
-
-            using var connection = _context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(query, new { Id = id });
-            return affectedRows > 0;
-        }
-
-        public async Task<IEnumerable<User>> GetAllUsersAsync()
-        {
-            var query = "SELECT * FROM Users ORDER BY CreatedAt DESC";
-
-            using var connection = _context.CreateConnection();
-            return await connection.QueryAsync<User>(query);
-        }
-
-        public async Task<bool> ChangePasswordAsync(int userId, string newPasswordHash)
-        {
-            var query = "UPDATE Users SET PasswordHash = @PasswordHash, UpdatedAt = @UpdatedAt WHERE Id = @Id";
-
-            using var connection = _context.CreateConnection();
-            var affectedRows = await connection.ExecuteAsync(query,
-                new { Id = userId, PasswordHash = newPasswordHash, UpdatedAt = DateTime.UtcNow });
-            return affectedRows > 0;
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT COUNT(1) FROM Users WHERE Email = @Email";
+            int count = await connection.ExecuteScalarAsync<int>(sql, new { Email = email });
+            return count > 0;
         }
     }
 }
