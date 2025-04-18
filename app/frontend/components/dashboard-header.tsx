@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Search, MessageSquare, HelpCircle, Star } from "lucide-react"
+import { Bell, Search, MessageSquare, HelpCircle } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,6 @@ export function DashboardHeader({ title }: DashboardHeaderProps) {
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                         {i === 0 && <MessageSquare className="h-4 w-4 text-primary" />}
                         {i === 1 && <Calendar className="h-4 w-4 text-primary" />}
-                        {i === 2 && <Star className="h-4 w-4 text-primary" />}
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">
@@ -111,4 +110,3 @@ export function DashboardHeader({ title }: DashboardHeaderProps) {
     </header>
   )
 }
-

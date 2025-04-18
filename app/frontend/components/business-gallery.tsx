@@ -117,4 +117,3 @@ export function BusinessGallery({ images, businessName }: BusinessGalleryProps) 
     </div>
   )
 }
-

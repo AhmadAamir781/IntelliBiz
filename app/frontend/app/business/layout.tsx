@@ -307,4 +307,3 @@ export default function BusinessLayout({ children }: BusinessLayoutProps) {
     </div>
   )
 }
-

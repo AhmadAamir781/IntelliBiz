@@ -1,113 +1,63 @@
 "use client"
 
 import { useState } from "react"
+import { useParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Users, Star, Calendar, Eye } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useBusinessAnalytics } from "@/hooks/useBusinessAnalytics"
 
 export default function BusinessAnalytics() {
+  const params = useParams()
+  const businessId = Number(params.id)
   const [timeRange, setTimeRange] = useState("30days")
   const [activeTab, setActiveTab] = useState("overview")
 
-  // Mock analytics data
-  const overviewData = {
-    profileViews: {
-      total: 1248,
-      change: 12,
-      positive: true,
-    },
-    appointments: {
-      total: 156,
-      change: 8,
-      positive: true,
-    },
-    reviews: {
-      total: 124,
-      change: 15,
-      positive: true,
-    },
-    messages: {
-      total: 38,
-      change: -5,
-      positive: false,
-    },
+  const {
+    overviewData,
+    topServices,
+    customerDemographics,
+    customerSources,
+    loading,
+    error,
+    refresh
+  } = useBusinessAnalytics(businessId, timeRange)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading analytics data...</p>
+        </div>
+      </div>
+    )
   }
 
-  const topServices = [
-    {
-      name: "Pipe Repair",
-      views: 450,
-      bookings: 32,
-      revenue: "$4,800",
-      growth: 15,
-      positive: true,
-    },
-    {
-      name: "Drain Cleaning",
-      views: 380,
-      bookings: 28,
-      revenue: "$4,200",
-      growth: 10,
-      positive: true,
-    },
-    {
-      name: "Water Heater Installation",
-      views: 320,
-      bookings: 18,
-      revenue: "$9,000",
-      growth: 25,
-      positive: true,
-    },
-    {
-      name: "Leak Detection",
-      views: 280,
-      bookings: 15,
-      revenue: "$3,000",
-      growth: -5,
-      positive: false,
-    },
-    {
-      name: "Faucet Replacement",
-      views: 250,
-      bookings: 12,
-      revenue: "$1,800",
-      growth: 8,
-      positive: true,
-    },
-  ]
-
-  const customerDemographics = {
-    age: [
-      { group: "18-24", percentage: 10 },
-      { group: "25-34", percentage: 35 },
-      { group: "35-44", percentage: 25 },
-      { group: "45-54", percentage: 15 },
-      { group: "55-64", percentage: 10 },
-      { group: "65+", percentage: 5 },
-    ],
-    gender: [
-      { group: "Male", percentage: 55 },
-      { group: "Female", percentage: 45 },
-    ],
-    location: [
-      { area: "Manhattan", percentage: 40 },
-      { area: "Brooklyn", percentage: 25 },
-      { area: "Queens", percentage: 20 },
-      { area: "Bronx", percentage: 10 },
-      { area: "Staten Island", percentage: 5 },
-    ],
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-destructive">{error}</p>
+          <Button onClick={refresh} className="mt-4">Retry</Button>
+        </div>
+      </div>
+    )
   }
 
-  const customerSources = [
-    { source: "Search", percentage: 45 },
-    { source: "Direct", percentage: 20 },
-    { source: "Referral", percentage: 15 },
-    { source: "Social Media", percentage: 12 },
-    { source: "Email", percentage: 8 },
-  ]
+  if (!overviewData || !customerDemographics || !customerSources) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-muted-foreground">No analytics data available</p>
+          <Button onClick={refresh} className="mt-4">Refresh</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -126,7 +76,6 @@ export default function BusinessAnalytics() {
               <SelectItem value="30days">Last 30 days</SelectItem>
               <SelectItem value="90days">Last 90 days</SelectItem>
               <SelectItem value="year">Last year</SelectItem>
-              <SelectItem value="all">All time</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline">Export</Button>
@@ -447,4 +396,3 @@ export default function BusinessAnalytics() {
     </div>
   )
 }
-

@@ -23,8 +23,8 @@ import { format } from "date-fns"
 
 interface BookingDialogProps {
   businessName: string
-  businessId: string
-  trigger?: React.ReactNode
+  businessId: number
+  trigger: React.ReactNode
 }
 
 export function BookingDialog({ businessName, businessId, trigger }: BookingDialogProps) {
@@ -94,7 +94,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
     }
   }
 
-  const services = getServicesForBusiness(businessId)
+  const services = getServicesForBusiness(businessId.toString())
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -366,4 +366,3 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
     </Dialog>
   )
 }
-

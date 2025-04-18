@@ -18,9 +18,9 @@ interface Message {
 
 interface MessageDialogProps {
   businessName: string
-  businessId: string
+  businessId: number
   businessAvatar?: string
-  trigger?: React.ReactNode
+  trigger: React.ReactNode
 }
 
 export function MessageDialog({ businessName, businessId, businessAvatar, trigger }: MessageDialogProps) {
@@ -164,4 +164,3 @@ export function MessageDialog({ businessName, businessId, businessAvatar, trigge
     </Dialog>
   )
 }
-

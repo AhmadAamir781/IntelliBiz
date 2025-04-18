@@ -1,201 +1,196 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { BusinessCard } from "@/components/business-card"
-import { BusinessFilters } from "@/components/business-filters"
-import { Search, MapPin, SlidersHorizontal } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+'use client';
 
-// Mock data for businesses
-const businesses = [
-  {
-    id: "1",
-    name: "Smith Plumbing Services",
-    category: "Plumbing",
-    rating: 4.8,
-    reviewCount: 124,
-    description:
-      "Professional plumbing services with 15+ years of experience. Specializing in repairs, installations, and emergency services.",
-    address: "123 Main St, New York, NY",
-    phone: "(555) 123-4567",
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: "2",
-    name: "Elite Electrical Solutions",
-    category: "Electrical",
-    rating: 4.6,
-    reviewCount: 98,
-    description:
-      "Licensed electricians providing residential and commercial electrical services. Available 24/7 for emergencies.",
-    address: "456 Oak Ave, New York, NY",
-    phone: "(555) 234-5678",
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: "3",
-    name: "Green Thumb Landscaping",
-    category: "Landscaping",
-    rating: 4.9,
-    reviewCount: 156,
-    description:
-      "Complete landscaping services including lawn care, garden design, tree trimming, and seasonal maintenance.",
-    address: "789 Pine Rd, New York, NY",
-    phone: "(555) 345-6789",
-    image: "/placeholder.svg?height=300&width=300",
-    verified: false,
-  },
-  {
-    id: "4",
-    name: "Precision Auto Repair",
-    category: "Automotive",
-    rating: 4.7,
-    reviewCount: 112,
-    description:
-      "Full-service auto repair shop with certified mechanics. Specializing in domestic and foreign vehicles.",
-    address: "101 Maple Dr, New York, NY",
-    phone: "(555) 456-7890",
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: "5",
-    name: "Sparkle Cleaning Services",
-    category: "Cleaning",
-    rating: 4.5,
-    reviewCount: 87,
-    description:
-      "Professional cleaning services for homes and businesses. Regular cleaning, deep cleaning, and move-in/move-out services.",
-    address: "202 Elm St, New York, NY",
-    phone: "(555) 567-8901",
-    image: "/placeholder.svg?height=300&width=300",
-    verified: true,
-  },
-  {
-    id: "6",
-    name: "Master Carpentry",
-    category: "Carpentry",
-    rating: 4.8,
-    reviewCount: 103,
-    description: "Custom carpentry and woodworking. Specializing in cabinets, furniture, and home renovations.",
-    address: "303 Cedar Ln, New York, NY",
-    phone: "(555) 678-9012",
-    image: "/placeholder.svg?height=300&width=300",
-    verified: false,
-  },
-]
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, MapPin, Filter, Star, ChevronRight } from 'lucide-react';
+import { useBusinesses } from '@/hooks/useBusinesses';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
+
+const categories = [
+  'All',
+  'Beauty & Spa',
+  'Health & Wellness',
+  'Fitness',
+  'Education',
+  'Professional Services',
+  'Retail',
+  'Food & Beverage',
+  'Entertainment',
+  'Other'
+];
 
 export default function BusinessesPage() {
-  return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="container px-4 py-8 md:px-6 md:py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-4">Find Local Businesses</h1>
-          <p className="text-muted-foreground">Browse and connect with trusted local service providers in your area</p>
-        </div>
+  const router = useRouter();
+  const {
+    businesses,
+    loading,
+    error,
+    searchTerm,
+    category,
+    location,
+    handleSearch,
+    handleCategoryChange,
+    handleLocationChange,
+    refetch
+  } = useBusinesses();
 
-        {/* Search and Filter Section */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1 flex gap-2">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search businesses, services..." className="pl-9" />
-            </div>
-            <div className="relative w-full md:max-w-[200px]">
-              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Location" className="pl-9" />
-            </div>
-          </div>
-          <div className="flex gap-2 items-center">
-            <select className="text-sm border rounded-md px-3 py-2 bg-background h-10">
-              <option>Relevance</option>
-              <option>Rating: High to Low</option>
-              <option>Rating: Low to High</option>
-              <option>Name: A to Z</option>
-            </select>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="flex gap-2">
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <BusinessFilters />
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const handleBusinessClick = (id: number) => {
+    router.push(`/businesses/${id}`);
+  };
 
-        {/* Results Count */}
-        <div className="flex justify-between items-center mb-6">
-          <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{businesses.length}</span> businesses
-          </p>
-        </div>
-
-        {/* Business Listings */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {businesses.map((business) => (
-            <BusinessCard key={business.id} business={business} />
-          ))}
-        </div>
-
-        {/* Pagination */}
-        <div className="flex justify-center mt-12">
-          <div className="flex gap-1">
-            <Button variant="outline" size="icon" disabled>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </Button>
-            <Button variant="outline" size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              1
-            </Button>
-            <Button variant="outline" size="sm">
-              2
-            </Button>
-            <Button variant="outline" size="sm">
-              3
-            </Button>
-            <Button variant="outline" size="sm">
-              4
-            </Button>
-            <Button variant="outline" size="sm">
-              5
-            </Button>
-            <Button variant="outline" size="icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </Button>
-          </div>
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-red-500">
+          <p>{error}</p>
+          <Button onClick={refetch} className="mt-4">
+            Try Again
+          </Button>
         </div>
       </div>
-    </div>
-  )
-}
+    );
+  }
 
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">Find Local Businesses</h1>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search businesses..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="relative flex-1">
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Location"
+              value={location}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            Filters
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+        {categories.map((cat) => (
+          <Badge
+            key={cat}
+            variant={category === cat ? 'default' : 'outline'}
+            className="cursor-pointer"
+            onClick={() => handleCategoryChange(cat === 'All' ? null : cat)}
+          >
+            {cat}
+          </Badge>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <Skeleton className="h-48 w-full" />
+              <CardContent className="p-4">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-full" />
+              </CardContent>
+            </Card>
+          ))
+        ) : businesses.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <p className="text-gray-500">No businesses found</p>
+          </div>
+        ) : (
+          businesses.map((business) => (
+            <Card
+              key={business.id}
+              className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => handleBusinessClick(business.id)}
+            >
+              <div className="relative h-48">
+                <img
+                  src={business.imageUrl || '/placeholder-business.jpg'}
+                  alt={business.name}
+                  className="w-full h-full object-cover"
+                />
+                {business.isVerified && (
+                  <Badge className="absolute top-2 right-2">Verified</Badge>
+                )}
+              </div>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-semibold text-lg">{business.name}</h3>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span>{5}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-2">{business.category}</p>
+                <p className="text-sm line-clamp-2 mb-4">{business.description}</p>
+                <div className="flex items-center text-sm text-gray-500">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  <span>{business.address}</span>
+                </div>
+              </CardContent>
+              <CardFooter className="p-4 border-t">
+                <Button variant="ghost" className="w-full justify-between">
+                  View Details
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {!loading && businesses.length > 0 && (
+        <div className="mt-8 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {Array.from({ length: Math.ceil(businesses.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    isActive={currentPage === page}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(businesses.length / itemsPerPage), prev + 1))}
+                  className={currentPage === Math.ceil(businesses.length / itemsPerPage) ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+    </div>
+  );
+}

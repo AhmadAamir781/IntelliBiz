@@ -489,4 +489,3 @@ export function AIChatbot() {
     </div>
   )
 }
-

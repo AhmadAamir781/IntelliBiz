@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ export default function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const { showSuccessToast, showErrorToast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -34,17 +36,25 @@ export default function ContactPage() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500))
 
-    setIsSubmitting(false)
-    setIsSubmitted(true)
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    })
+      setIsSubmitting(false)
+      setIsSubmitted(true)
+      showSuccessToast("Message sent successfully!", "We'll get back to you shortly.")
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      })
+    } catch (error: any) {
+      console.error("Contact form submission failed:", error)
+      showErrorToast("Message sending failed", error.response?.data?.message || "An error occurred")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -356,4 +366,3 @@ export default function ContactPage() {
     </div>
   )
 }
-

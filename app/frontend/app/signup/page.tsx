@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, CheckCircle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Logo } from "@/components/logo"
+import { authApi } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -28,6 +30,7 @@ export default function SignupPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [step, setStep] = useState(1)
+  const { showSuccessToast, showErrorToast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -128,20 +131,30 @@ export default function SignupPage() {
     setIsLoading(true)
 
     try {
-      // This is where you would integrate your actual signup API
-      console.log("Signup data:", { ...formData, accountType })
+      const response = await authApi.register({
+        ...formData,
+        role: accountType,
+      })
 
-      // Simulate a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (response.data.success) {
+        // Store token and user data
+        localStorage.setItem("token", response.data.token)
+        localStorage.setItem("user", JSON.stringify(response.data.user))
 
-      // Redirect after successful signup
-      if (accountType === "business") {
-        router.push("/register-business")
+        showSuccessToast("Signup successful", `Welcome, ${response.data.user.firstName}!`)
+
+        // Redirect after successful signup
+        if (accountType === "business") {
+          router.push("/register-business")
+        } else {
+          router.push("/dashboard")
+        }
       } else {
-        router.push("/dashboard")
+        showErrorToast("Signup failed", response.data.message || "An error occurred")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup failed:", error)
+      showErrorToast("Signup failed", error.response?.data?.message || "An error occurred")
     } finally {
       setIsLoading(false)
     }
@@ -421,7 +434,7 @@ export default function SignupPage() {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`mt-1 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    className={`${errors.confirmPassword ? "border-red-500" : ""}`}
                   />
                   {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>}
                 </div>
@@ -487,7 +500,7 @@ export default function SignupPage() {
           <div className="text-center mt-6">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
+              <Link href="/login-portal" className="font-medium text-primary hover:text-primary/80 transition-colors">
                 Sign in
               </Link>
             </p>
@@ -497,4 +510,3 @@ export default function SignupPage() {
     </div>
   )
 }
-

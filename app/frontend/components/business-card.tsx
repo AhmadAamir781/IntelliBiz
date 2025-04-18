@@ -101,4 +101,3 @@ export function BusinessCard({ business }: BusinessCardProps) {
     </Card>
   )
 }
-

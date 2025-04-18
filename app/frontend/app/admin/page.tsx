@@ -18,8 +18,20 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useAdminDashboard } from "@/hooks/useAdminDashboard"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function AdminDashboard() {
+  const { stats, pendingBusinesses, recentActivity, loading, error } = useAdminDashboard()
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -42,17 +54,25 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Businesses</p>
-                <p className="text-2xl font-bold">1,248</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats?.totalBusinesses || 0}</p>
+                )}
               </div>
               <div className="p-2 bg-primary/10 rounded-full">
                 <Store className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500 font-medium">12%</span>
-              <span className="ml-1">from last month</span>
-            </div>
+            {loading ? (
+              <Skeleton className="h-4 w-24 mt-4" />
+            ) : (
+              <div className="mt-4 flex items-center text-xs text-muted-foreground">
+                <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-green-500 font-medium">{stats?.businessGrowth || 0}%</span>
+                <span className="ml-1">from last month</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -61,17 +81,25 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">8,549</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
+                )}
               </div>
               <div className="p-2 bg-primary/10 rounded-full">
                 <Users className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500 font-medium">8%</span>
-              <span className="ml-1">from last month</span>
-            </div>
+            {loading ? (
+              <Skeleton className="h-4 w-24 mt-4" />
+            ) : (
+              <div className="mt-4 flex items-center text-xs text-muted-foreground">
+                <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-green-500 font-medium">{stats?.userGrowth || 0}%</span>
+                <span className="ml-1">from last month</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -80,17 +108,25 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Reviews</p>
-                <p className="text-2xl font-bold">4,827</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats?.totalReviews || 0}</p>
+                )}
               </div>
               <div className="p-2 bg-primary/10 rounded-full">
                 <Star className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500 font-medium">24%</span>
-              <span className="ml-1">from last month</span>
-            </div>
+            {loading ? (
+              <Skeleton className="h-4 w-24 mt-4" />
+            ) : (
+              <div className="mt-4 flex items-center text-xs text-muted-foreground">
+                <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-green-500 font-medium">{stats?.reviewGrowth || 0}%</span>
+                <span className="ml-1">from last month</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -99,17 +135,25 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Messages</p>
-                <p className="text-2xl font-bold">12,938</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats?.totalMessages || 0}</p>
+                )}
               </div>
               <div className="p-2 bg-primary/10 rounded-full">
                 <MessageSquare className="h-5 w-5 text-primary" />
               </div>
             </div>
-            <div className="mt-4 flex items-center text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500 font-medium">18%</span>
-              <span className="ml-1">from last month</span>
-            </div>
+            {loading ? (
+              <Skeleton className="h-4 w-24 mt-4" />
+            ) : (
+              <div className="mt-4 flex items-center text-xs text-muted-foreground">
+                <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
+                <span className="text-green-500 font-medium">{stats?.messageGrowth || 0}%</span>
+                <span className="ml-1">from last month</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -141,54 +185,45 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[
-                    {
-                      name: "Quick Plumbing Solutions",
-                      category: "Plumbing",
-                      date: "2023-03-15",
-                      status: "pending",
-                    },
-                    {
-                      name: "Elite Electrical Services",
-                      category: "Electrical",
-                      date: "2023-03-14",
-                      status: "pending",
-                    },
-                    {
-                      name: "Green Gardens Landscaping",
-                      category: "Landscaping",
-                      date: "2023-03-13",
-                      status: "pending",
-                    },
-                    {
-                      name: "Sparkle Home Cleaning",
-                      category: "Cleaning",
-                      date: "2023-03-12",
-                      status: "pending",
-                    },
-                  ].map((business) => (
-                    <TableRow key={business.name}>
-                      <TableCell className="font-medium">{business.name}</TableCell>
-                      <TableCell className="hidden md:table-cell">{business.category}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {new Date(business.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-yellow-50 text-yellow-700 border-yellow-200 whitespace-nowrap"
-                        >
-                          <Clock className="mr-1 h-3 w-3" />
-                          Pending
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" className="h-8 px-2 text-xs" asChild>
-                          <Link href={`/admin/businesses/review`}>Review</Link>
-                        </Button>
+                  {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell colSpan={5}>
+                          <Skeleton className="h-12 w-full" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : pendingBusinesses.length > 0 ? (
+                    pendingBusinesses.map((business) => (
+                      <TableRow key={business.id}>
+                        <TableCell className="font-medium">{business.name}</TableCell>
+                        <TableCell className="hidden md:table-cell">{business.category}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {new Date(business.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="bg-yellow-50 text-yellow-700 border-yellow-200 whitespace-nowrap"
+                          >
+                            <Clock className="mr-1 h-3 w-3" />
+                            Pending
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="outline" className="h-8 px-2 text-xs" asChild>
+                            <Link href={`/admin/businesses/review/${business.id}`}>Review</Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No pending approvals
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -209,252 +244,50 @@ export default function AdminDashboard() {
             <CardDescription>Latest actions and events on the platform</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  type: "approval",
-                  user: "Admin",
-                  action: "Approved business registration",
-                  target: "City Plumbers Inc.",
-                  time: "10 minutes ago",
-                  icon: CheckCircle,
-                  iconClass: "text-green-500",
-                },
-                {
-                  type: "flag",
-                  user: "Moderator",
-                  action: "Flagged review for moderation",
-                  target: "Elite Electrical Services",
-                  time: "45 minutes ago",
-                  icon: AlertTriangle,
-                  iconClass: "text-yellow-500",
-                },
-                {
-                  type: "rejection",
-                  user: "Admin",
-                  action: "Rejected business registration",
-                  target: "Fake Business LLC",
-                  time: "2 hours ago",
-                  icon: AlertTriangle,
-                  iconClass: "text-red-500",
-                },
-                {
-                  type: "update",
-                  user: "System",
-                  action: "Updated category listings",
-                  target: "All businesses",
-                  time: "5 hours ago",
-                  icon: TrendingUp,
-                  iconClass: "text-blue-500",
-                },
-                {
-                  type: "approval",
-                  user: "Admin",
-                  action: "Approved business registration",
-                  target: "Green Gardens Landscaping",
-                  time: "1 day ago",
-                  icon: CheckCircle,
-                  iconClass: "text-green-500",
-                },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-start gap-4">
-                  <div className={`p-2 rounded-full bg-muted ${activity.iconClass} flex-shrink-0`}>
-                    <activity.icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {activity.user} {activity.action}
-                    </p>
-                    <p className="text-sm text-muted-foreground truncate">{activity.target}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Businesses */}
-        <Card className="lg:col-span-2 overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-lg md:text-xl">Top Performing Businesses</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
-                <Link href="/admin/analytics/businesses">
-                  View Report <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-              </Button>
-            </div>
-            <CardDescription>Businesses with highest engagement and ratings</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Business</TableHead>
-                    <TableHead className="hidden md:table-cell">Category</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead className="hidden md:table-cell">Bookings</TableHead>
-                    <TableHead>Growth</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    {
-                      name: "Smith Plumbing Services",
-                      category: "Plumbing",
-                      rating: 4.9,
-                      bookings: 156,
-                      growth: 24,
-                      positive: true,
-                    },
-                    {
-                      name: "Elite Electrical Solutions",
-                      category: "Electrical",
-                      rating: 4.8,
-                      bookings: 142,
-                      growth: 18,
-                      positive: true,
-                    },
-                    {
-                      name: "Green Thumb Landscaping",
-                      category: "Landscaping",
-                      rating: 4.7,
-                      bookings: 128,
-                      growth: 15,
-                      positive: true,
-                    },
-                    {
-                      name: "Precision Auto Repair",
-                      category: "Automotive",
-                      rating: 4.6,
-                      bookings: 112,
-                      growth: -3,
-                      positive: false,
-                    },
-                    {
-                      name: "Sparkle Cleaning Services",
-                      category: "Cleaning",
-                      rating: 4.5,
-                      bookings: 98,
-                      growth: 12,
-                      positive: true,
-                    },
-                  ].map((business) => (
-                    <TableRow key={business.name}>
-                      <TableCell className="font-medium">{business.name}</TableCell>
-                      <TableCell className="hidden md:table-cell">{business.category}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 mr-1" />
-                          {business.rating}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{business.bookings}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {business.positive ? (
-                            <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
-                          ) : (
-                            <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
-                          )}
-                          <span
-                            className={business.positive ? "text-green-500 font-medium" : "text-red-500 font-medium"}
-                          >
-                            {business.positive ? "+" : ""}
-                            {business.growth}%
-                          </span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Reviews */}
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-lg md:text-xl">Recent Reviews</CardTitle>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
-                <Link href="/admin/reviews">
-                  View All <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-              </Button>
-            </div>
-            <CardDescription>Latest customer reviews</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  user: "John D.",
-                  business: "Smith Plumbing Services",
-                  rating: 5,
-                  comment: "Excellent service! Fixed my issue quickly and professionally.",
-                  time: "2 hours ago",
-                },
-                {
-                  user: "Sarah M.",
-                  business: "Elite Electrical Solutions",
-                  rating: 4,
-                  comment: "Good work but arrived a bit late. Otherwise very professional.",
-                  time: "5 hours ago",
-                },
-                {
-                  user: "Michael T.",
-                  business: "Green Thumb Landscaping",
-                  rating: 5,
-                  comment: "Transformed my garden completely. Very satisfied with the results!",
-                  time: "1 day ago",
-                },
-                {
-                  user: "Emily R.",
-                  business: "Sparkle Cleaning Services",
-                  rating: 3,
-                  comment: "Decent cleaning but missed some spots. Had to point them out.",
-                  time: "1 day ago",
-                },
-              ].map((review, i) => (
-                <div key={i} className="border-b pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarFallback>{review.user[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">{review.user}</p>
-                        <p className="text-xs text-muted-foreground">{review.business}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3 w-3 ${
-                              i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"
-                            }`}
-                          />
-                        ))}
-                      </div>
+            {loading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
                     </div>
                   </div>
-                  <p className="mt-2 text-sm line-clamp-2">{review.comment}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{review.time}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : recentActivity.length > 0 ? (
+              <div className="space-y-4">
+                {recentActivity.map((activity) => {
+                  const Icon = activity.type === 'approval' ? CheckCircle :
+                    activity.type === 'flag' || activity.type === 'rejection' ? AlertTriangle :
+                    TrendingUp;
+                  const iconClass = activity.type === 'approval' ? 'text-green-500' :
+                    activity.type === 'flag' ? 'text-yellow-500' :
+                    activity.type === 'rejection' ? 'text-red-500' :
+                    'text-blue-500';
+
+                  return (
+                    <div key={activity.id} className="flex items-center gap-3">
+                      <div className={`p-2 bg-primary/10 rounded-full ${iconClass}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.action}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.user} • {activity.target} • {activity.time}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No recent activity</p>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
   )
 }
-

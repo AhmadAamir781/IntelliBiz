@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Eye, EyeOff, Users, Store, ShieldCheck } from "lucide-react"
 import { Logo } from "@/components/logo"
+import { authApi } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPortalPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState("customer")
@@ -24,6 +28,7 @@ export default function LoginPortalPage() {
     password: "",
     rememberMe: false,
   })
+  const { showSuccessToast, showErrorToast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -45,19 +50,29 @@ export default function LoginPortalPage() {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const response = await authApi.login(formData.email, formData.password, formData.rememberMe)
 
-      // Redirect based on user type
-      if (activeTab === "admin") {
-        router.push("/admin")
-      } else if (activeTab === "business") {
-        router.push("/business")
+      if (response.data.success) {
+        // Store token and user data
+        localStorage.setItem("token", response.data.token)
+        localStorage.setItem("user", JSON.stringify(response.data.user))
+
+        showSuccessToast("Login successful", `Welcome back, ${response.data.user.firstName}!`)
+
+        // Redirect based on user type
+        if (response.data.user.role === "Admin") {
+          router.push("/admin")
+        } else if (response.data.user.role === "Shopkeeper") {
+          router.push("/business")
+        } else {
+          router.push(callbackUrl)
+        }
       } else {
-        router.push("/dashboard")
+        showErrorToast("Login failed", response.data.message || "Invalid credentials")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error)
+      showErrorToast("Login failed", error.response?.data?.message || "An error occurred")
     } finally {
       setIsLoading(false)
     }
@@ -78,7 +93,7 @@ export default function LoginPortalPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="customer" className="flex flex-col items-center gap-1 py-2">
                 <Users className="h-4 w-4" />
                 <span>Customer</span>
@@ -202,4 +217,3 @@ export default function LoginPortalPage() {
     </div>
   )
 }
-

@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import { Logo } from "@/components/logo"
+import { authApi } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,6 +23,7 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   })
+  const { showSuccessToast, showErrorToast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -41,18 +44,30 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
     try {
-      // This is where you would integrate your actual login API
-      console.log("Login data:", formData)
+      const response = await authApi.login(formData)
 
-      // Simulate a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (response.data.success) {
+        // Store token and user data
+        localStorage.setItem("token", response.data.token)
+        localStorage.setItem("user", JSON.stringify(response.data.user))
 
-      // Redirect to dashboard after successful login
-      router.push("/dashboard")
-    } catch (error) {
+        showSuccessToast("Login successful", `Welcome back, ${response.data.user.firstName}!`)
+
+        // Redirect based on user type
+        if (response.data.user.role === "Admin") {
+          router.push("/admin")
+        } else if (response.data.user.role === "Shopkeeper") {
+          router.push("/business")
+        } else {
+          router.push("/dashboard")
+        }
+      } else {
+        showErrorToast("Login failed", response.data.message || "Invalid credentials")
+      }
+    } catch (error: any) {
       console.error("Login failed:", error)
+      showErrorToast("Login failed", error.response?.data?.message || "An error occurred")
     } finally {
       setIsLoading(false)
     }
@@ -270,4 +285,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

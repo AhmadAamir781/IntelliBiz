@@ -1,8 +1,18 @@
 import { openai } from "@ai-sdk/openai"
 import { streamText } from "ai"
+import { NextResponse } from "next/server"
+import { Ratelimit } from "@upstash/ratelimit"
+import { Redis } from "@upstash/redis"
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30
+
+// Initialize rate limiter
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s"), // 10 requests per 10 seconds
+  analytics: true,
+})
 
 // Enhanced website information for the AI to reference
 const websiteInfo = {
@@ -63,7 +73,41 @@ const websiteInfo = {
 
 export async function POST(req: Request) {
   try {
+    // Get the IP address for rate limiting
+    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1"
+    
+    // Check rate limit
+    const { success, limit, reset, remaining } = await ratelimit.limit(ip)
+    
+    if (!success) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "Too many requests. Please try again later.",
+          limit,
+          reset,
+          remaining,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": reset.toString(),
+          },
+        }
+      )
+    }
+
     const { messages } = await req.json()
+
+    // Validate request
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new NextResponse(
+        JSON.stringify({ error: "Invalid request format" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      )
+    }
 
     // Create an enhanced system prompt that includes detailed information about the website
     const systemPrompt = `
@@ -103,6 +147,9 @@ RESPONSE GUIDELINES:
 - For queries about "near me", explain you're showing businesses in the user's area
 - For queries about "new" or "newly registered" businesses, mention you're showing recently added businesses
 - For specific service needs (like "tap repair"), mention you're showing businesses that specialize in that service
+- Format business recommendations as a list with bullet points
+- Include relevant business details like rating, location, and services offered
+- Always provide a call-to-action (e.g., "Click here to view more details" or "Would you like me to help you book an appointment?")
 
 SPECIAL QUERY HANDLING:
 - "Find me the best plumber for my tap" - Respond about showing top-rated plumbers specializing in tap repairs
@@ -113,19 +160,24 @@ Always provide helpful, accurate information and guide users to the appropriate 
 `
 
     const result = streamText({
-      model: openai("gpt-4o"),
+      model: openai("gpt-4"),
       messages: [{ role: "system", content: systemPrompt }, ...messages],
-      temperature: 0.7, // Slightly increased temperature for more natural responses
-      maxTokens: 500, // Limit token length to ensure faster responses
+      temperature: 0.7,
+      maxTokens: 500,
     })
 
     return result.toDataStreamResponse()
   } catch (error) {
     console.error("Error in chat API:", error)
-    return new Response(JSON.stringify({ error: "Failed to process your request" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    return new NextResponse(
+      JSON.stringify({ 
+        error: "Failed to process your request",
+        details: error instanceof Error ? error.message : "Unknown error"
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    )
   }
 }
-

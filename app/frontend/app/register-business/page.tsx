@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, MapPin, Phone, Mail, Clock, Info, Building, User } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { businessApi } from "@/lib/api"
 
 // Business categories
 const businessCategories = [
@@ -84,6 +86,7 @@ export default function RegisterBusinessPage() {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const { showSuccessToast, showErrorToast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -137,6 +140,7 @@ export default function RegisterBusinessPage() {
     const newErrors: Record<string, string> = {}
 
     if (step === 1) {
+
       if (!formData.businessName.trim()) {
         newErrors.businessName = "Business name is required"
       }
@@ -208,16 +212,16 @@ export default function RegisterBusinessPage() {
     setIsLoading(true)
 
     try {
-      // This is where you would integrate your actual business registration API
-      console.log("Business registration data:", formData)
-
-      // Simulate a delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Redirect to dashboard after successful registration
-      router.push("/dashboard")
-    } catch (error) {
+      const response = await businessApi.createBusiness(formData)
+      if (response.data.success) {
+        showSuccessToast("Business registered successfully!")
+        router.push("/dashboard")
+      } else {
+        showErrorToast("Business registration failed", response.data.message || "An error occurred")
+      }
+    } catch (error: any) {
       console.error("Business registration failed:", error)
+      showErrorToast("Business registration failed", error.response?.data?.message || "An error occurred")
     } finally {
       setIsLoading(false)
     }
@@ -700,4 +704,3 @@ export default function RegisterBusinessPage() {
     </div>
   )
 }
-

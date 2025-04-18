@@ -64,7 +64,7 @@ const reviews = [
 ]
 
 interface BusinessReviewsProps {
-  businessId: string
+  businessId: number
 }
 
 export function BusinessReviews({ businessId }: BusinessReviewsProps) {
@@ -273,4 +273,3 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
     </div>
   )
 }
-
