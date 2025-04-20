@@ -129,29 +129,28 @@ export default function SignupPage() {
     }
 
     setIsLoading(true)
-
+debugger
     try {
       const response = await authApi.register({
-        ...formData,
-        role: accountType,
+        ...formData
       })
 
-      if (response.data.success) {
-        // Store token and user data
-        localStorage.setItem("token", response.data.token)
-        localStorage.setItem("user", JSON.stringify(response.data.user))
+    //   if (response.data.success) {
+    //     // Store token and user data
+    //     localStorage.setItem("token", response.data.token)
+    //     localStorage.setItem("user", JSON.stringify(response.data.user))
 
-        showSuccessToast("Signup successful", `Welcome, ${response.data.user.firstName}!`)
+    //     showSuccessToast("Signup successful", `Welcome, ${response.data.user.firstName}!`)
 
-        // Redirect after successful signup
-        if (accountType === "business") {
-          router.push("/register-business")
-        } else {
-          router.push("/dashboard")
-        }
-      } else {
-        showErrorToast("Signup failed", response.data.message || "An error occurred")
-      }
+    //     // Redirect after successful signup
+    //     if (accountType === "business") {
+    //       router.push("/register-business")
+    //     } else {
+    //       router.push("/dashboard")
+    //     }
+    //   } else {
+    //     showErrorToast("Signup failed", response.data.message || "An error occurred")
+    //   }
     } catch (error: any) {
       console.error("Signup failed:", error)
       showErrorToast("Signup failed", error.response?.data?.message || "An error occurred")

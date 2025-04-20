@@ -15,7 +15,7 @@ import { any } from "zod"
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
-  baseURL: "https://localhost:7106/api",
+  baseURL: "http://localhost:5075/api",
   headers: {
     "Content-Type": "application/json",
   },

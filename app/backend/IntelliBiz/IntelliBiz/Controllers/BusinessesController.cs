@@ -70,7 +70,7 @@ namespace IntelliBiz.API.Controllers
             if (businessDto.OwnerId == 0)
             {
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-                businessDto.OwnerId = 3;
+                businessDto.OwnerId = 1;
             }
 
             var response = await _businessService.CreateAsync(businessDto);

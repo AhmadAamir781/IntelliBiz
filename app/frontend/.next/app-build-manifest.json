@@ -11,6 +11,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/loading.js"
     ],
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
     "/businesses/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -21,20 +26,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/businesses/page.js"
     ],
-    "/businesses/[id]/page": [
+    "/register-business/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/businesses/[id]/page.js"
-    ],
-    "/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/login/page.js"
+      "static/chunks/app/register-business/page.js"
     ],
     "/signup/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/signup/page.js"
+    ],
+    "/login-portal/loading": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login-portal/loading.js"
+    ],
+    "/login-portal/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login-portal/page.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
     ],
     "/dashboard/page": [
       "static/chunks/webpack.js",
