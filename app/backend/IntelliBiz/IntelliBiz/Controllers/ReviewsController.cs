@@ -78,7 +78,6 @@ namespace IntelliBiz.API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task<ActionResult<ApiResponseDto<ReviewDto>>> Create([FromBody] ReviewDto reviewDto)
         {
             if (!ModelState.IsValid)

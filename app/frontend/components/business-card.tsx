@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Star, MapPin, Phone, CheckCircle2 } from "lucide-react"
+import { Business as ApiBusinessType } from "@/lib/types"
 
 // Business category images mapping
 const categoryImages = {
@@ -17,33 +18,27 @@ const categoryImages = {
   default: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop",
 }
 
-interface Business {
-  id: string
-  name: string
-  category: string
-  rating: number
-  reviewCount: number
-  description: string
-  address: string
-  phone: string
-  image?: string
-  verified?: boolean
-}
-
+// Type for the business card that can accept both our mock data and API business data
 interface BusinessCardProps {
-  business: Business
+  business: ApiBusinessType
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
   // Get image based on category or use provided image or default
   const imageUrl =
-    business.image || categoryImages[business.category as keyof typeof categoryImages] || categoryImages.default
+    business.imageUrl || categoryImages[business.category as keyof typeof categoryImages] || categoryImages.default
+
+  // Calculate how many reviews based on either reviewCount from mock data or actual data
+  const reviewCount = 0; // Default to 0 as the API doesn't provide this directly
+
+  // Format the address from the components in the API data
+  const formattedAddress = `${business.address}, ${business.city}, ${business.state} ${business.zipCode}`;
 
   return (
     <Card className="overflow-hidden h-full flex flex-col shadow-md hover:shadow-lg transition-shadow">
       <div className="relative aspect-video">
         <img src={imageUrl || "/placeholder.svg"} alt={business.name} className="object-cover w-full h-full" />
-        {business.verified && (
+        {business.isVerified && (
           <Badge
             variant="outline"
             className="absolute top-2 right-2 bg-white text-primary border-primary flex items-center gap-1"
@@ -76,17 +71,17 @@ export function BusinessCard({ business }: BusinessCardProps) {
             ))}
           </div>
           <span className="text-sm">{business.rating}</span>
-          <span className="text-sm text-muted-foreground">({business.reviewCount})</span>
+          <span className="text-sm text-muted-foreground">({reviewCount})</span>
         </div>
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{business.description}</p>
         <div className="space-y-2 mt-auto">
           <div className="flex items-start gap-2">
             <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span className="text-sm text-muted-foreground truncate">{business.address}</span>
+            <span className="text-sm text-muted-foreground truncate">{formattedAddress}</span>
           </div>
           <div className="flex items-start gap-2">
             <Phone className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span className="text-sm text-muted-foreground">{business.phone}</span>
+            <span className="text-sm text-muted-foreground">{business.phoneNumber}</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 mt-4">

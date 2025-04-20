@@ -1,49 +1,66 @@
-import { BusinessCard } from "@/components/business-card"
+"use client"
 
-// Mock data for featured businesses
-const featuredBusinesses = [
-  {
-    id: "1",
-    name: "Smith Plumbing Services",
-    category: "Plumbing",
-    rating: 4.8,
-    reviewCount: 124,
-    description: "Professional plumbing services with 15+ years of experience.",
-    address: "123 Main St, New York, NY",
-    phone: "(555) 123-4567",
-    image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?q=80&w=600&auto=format&fit=crop",
-    verified: true,
-  },
-  {
-    id: "2",
-    name: "Elite Electrical Solutions",
-    category: "Electrical",
-    rating: 4.6,
-    reviewCount: 98,
-    description: "Licensed electricians providing residential and commercial services.",
-    address: "456 Oak Ave, New York, NY",
-    phone: "(555) 234-5678",
-    image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop",
-    verified: true,
-  },
-  {
-    id: "3",
-    name: "Green Thumb Landscaping",
-    category: "Landscaping",
-    rating: 4.9,
-    reviewCount: 156,
-    description: "Complete landscaping services including lawn care and garden design.",
-    address: "789 Pine Rd, New York, NY",
-    phone: "(555) 345-6789",
-    image: "https://images.unsplash.com/photo-1600240644455-3edc55c375fe?q=80&w=600&auto=format&fit=crop",
-    verified: false,
-  },
-]
+import { useState, useEffect } from "react"
+import { BusinessCard } from "@/components/business-card"
+import { businessApi } from "@/lib/api"
+import { Business } from "@/lib/types"
 
 export function FeaturedBusinesses() {
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFeaturedBusinesses = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Use the getAllBusinesses API to fetch businesses
+        const response = await businessApi.getAllBusinesses();
+        
+        if (response.data) {
+          // Sort by rating and take top 3 or 6 businesses
+          const featuredBusinesses = response.data
+            .filter(business => business.isVerified)
+            .sort((a, b) => b.rating - a.rating)
+            .slice(0, 6);
+            
+          setBusinesses(featuredBusinesses);
+        } else {
+          setError("Failed to fetch featured businesses");
+        }
+      } catch (error) {
+        console.error("Error fetching featured businesses:", error);
+        setError("An error occurred while fetching businesses");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeaturedBusinesses();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="h-[300px] rounded-lg bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500">{error}</div>;
+  }
+
+  if (businesses.length === 0) {
+    return <div className="text-center">No featured businesses found.</div>;
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {featuredBusinesses.map((business) => (
+      {businesses.map((business) => (
         <BusinessCard key={business.id} business={business} />
       ))}
     </div>

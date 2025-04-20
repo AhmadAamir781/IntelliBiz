@@ -107,8 +107,8 @@ namespace IntelliBiz.API.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             const string sql = @"
-                INSERT INTO Appointments (UserId, BusinessId, ServiceId, AppointmentDate, StartTime, EndTime, Status, Notes, CreatedAt)
-                VALUES (@UserId, @BusinessId, @ServiceId, @AppointmentDate, @StartTime, @EndTime, @Status, @Notes, @CreatedAt);
+                INSERT INTO Appointments (UserId, BusinessId, ServiceId, AppointmentDate, Status, Notes, CreatedAt)
+                VALUES (@UserId, @BusinessId, @ServiceId, @AppointmentDate, @Status, @Notes, @CreatedAt);
                 SELECT CAST(SCOPE_IDENTITY() as int)";
             
             appointment.CreatedAt = DateTime.UtcNow;

@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { CheckCircle } from "lucide-react"
 import { format } from "date-fns"
+import { appointmentApi } from "@/lib/api"
 
 interface BookingDialogProps {
   businessName: string
@@ -37,6 +38,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<"date" | "details">("date")
 
@@ -96,45 +98,131 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
 
   const services = getServicesForBusiness(businessId.toString())
 
+  // Convert time from AM/PM format to TimeSpan format with 7 decimal places for milliseconds
+  const convertToTimeSpanFormat = (timeStr: string): string => {
+    const [time, period] = timeStr.split(' ');
+    const [hourStr, minuteStr] = time.split(':');
+    
+    let hour = parseInt(hourStr);
+    const minute = parseInt(minuteStr);
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hour < 12) {
+      hour += 12;
+    } else if (period === 'AM' && hour === 12) {
+      hour = 0;
+    }
+    
+    // Return in TimeSpan format with 7 decimal places for milliseconds (HH:mm:ss.0000000)
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00.0000000`;
+  }
+
+  // Calculate endTime (30 minutes after start time)
+  const calculateEndTime = (startTime: string): string => {
+    // Convert from AM/PM format to 24-hour format for TimeSpan
+    const [timeStr, period] = startTime.split(' ');
+    const [hourStr, minuteStr] = timeStr.split(':');
+    
+    let hour = parseInt(hourStr);
+    let minute = parseInt(minuteStr);
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hour < 12) {
+      hour += 12;
+    } else if (period === 'AM' && hour === 12) {
+      hour = 0;
+    }
+    
+    // Add 30 minutes
+    minute += 30;
+    
+    if (minute >= 60) {
+      minute -= 60;
+      hour += 1;
+    }
+    
+    if (hour >= 24) {
+      hour -= 24;
+    }
+    
+    // Return in TimeSpan format with 7 decimal places for milliseconds (HH:mm:ss.0000000)
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00.0000000`;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError(null)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      if (!date) {
+        throw new Error("Date is required");
+      }
 
-      console.log({
-        businessId,
-        date,
-        time,
-        name,
-        email,
-        phone,
-        service,
-        notes,
-      })
+      // Format the date as a string in YYYY-MM-DD format
+      const dateString = format(date, 'yyyy-MM-dd');
+      
+      // Convert times to TimeSpan format
+      const startTimeFormatted = convertToTimeSpanFormat(time);
+      const endTimeFormatted = calculateEndTime(time);
 
-      setIsSubmitting(false)
-      setIsSuccess(true)
+      console.log("Date being sent:", dateString);
+      console.log("Start time being sent:", startTimeFormatted);
+      console.log("End time being sent:", endTimeFormatted);
+
+      // Prepare the payload according to the API requirements and type definition
+      const appointmentData = {
+        userId: 0, // This would normally come from the authenticated user
+        businessId: businessId,
+        serviceId: 0, // This would normally be the actual service ID
+        date: dateString,
+        time: startTimeFormatted, // Use TimeSpan format for the time field too
+        startTime: startTimeFormatted,
+        endTime: endTimeFormatted,
+        status: 'pending' as const,
+        notes: notes,
+        customer: {
+          id: 0,
+          name: name,
+          email: email,
+          phone: phone
+        },
+        service: {
+          id: 0,
+          name: service,
+          duration: 30 // Default duration in minutes
+        }
+      };
+
+      console.log("Appointment data:", appointmentData);
+
+      // Send the request to the API
+      const response = await appointmentApi.createAppointment(appointmentData);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to book appointment");
+      }
+
+      setIsSubmitting(false);
+      setIsSuccess(true);
 
       // Reset form after 3 seconds and close dialog
       setTimeout(() => {
-        setIsSuccess(false)
-        setDate(undefined)
-        setTime("")
-        setName("")
-        setEmail("")
-        setPhone("")
-        setService("")
-        setNotes("")
-        setStep("date")
-        setOpen(false)
-      }, 3000)
+        setIsSuccess(false);
+        setDate(undefined);
+        setTime("");
+        setName("");
+        setEmail("");
+        setPhone("");
+        setService("");
+        setNotes("");
+        setStep("date");
+        setOpen(false);
+      }, 3000);
     } catch (error) {
-      console.error("Booking error:", error)
-      setIsSubmitting(false)
-      // Handle error state here
+      console.error("Booking error:", error);
+      setIsSubmitting(false);
+      setError(error instanceof Error ? error.message : "Failed to book appointment");
     }
   }
 
@@ -158,6 +246,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
     setNotes("")
     setStep("date")
     setIsSuccess(false)
+    setError(null)
   }
 
   return (
@@ -319,6 +408,12 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
                     </p>
                   </div>
                 </div>
+
+                {error && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                    {error}
+                  </div>
+                )}
 
                 <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 mt-6">
                   <Button type="button" variant="outline" onClick={handleBackStep} className="w-full sm:w-auto">
