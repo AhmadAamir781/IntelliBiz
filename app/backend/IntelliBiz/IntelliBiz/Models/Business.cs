@@ -77,7 +77,10 @@ namespace IntelliBiz.API.Models
         public string? Hours { get; set; }
 
         public BusinessHoursDto Hour =>
-            JsonSerializer.Deserialize<BusinessHoursDto>(Hours) ?? new();
+    string.IsNullOrWhiteSpace(Hours)
+        ? new BusinessHoursDto()
+        : JsonSerializer.Deserialize<BusinessHoursDto>(Hours) ?? new BusinessHoursDto();
+
 
         public bool IsVerified { get; set; }
         public int ViewCount { get; set; }

@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarProvider,
+  SidebarRail,
 } from "@/components/ui/sidebar"
 
 interface DashboardSidebarProps {
@@ -34,31 +35,31 @@ export function DashboardSidebar({ activeItem = "dashboard" }: DashboardSidebarP
     {
       id: "appointments",
       name: "Appointments",
-      href: "/dashboard/appointments",
+      href: "/business/appointments",
       icon: Calendar,
     },
     {
       id: "messages",
       name: "Messages",
-      href: "/dashboard/messages",
+      href: "/business/messages",
       icon: MessageSquare,
     },
     {
       id: "favorites",
       name: "Favorites",
-      href: "/dashboard/favorites",
+      href: "/business/favorites",
       icon: Heart,
     },
     {
       id: "reviews",
       name: "Reviews",
-      href: "/dashboard/reviews",
+      href: "/business/reviews",
       icon: Star,
     },
     {
       id: "settings",
       name: "Settings",
-      href: "/dashboard/settings",
+      href: "/business/settings",
       icon: Settings,
     },
   ]
@@ -118,7 +119,11 @@ export function DashboardSidebar({ activeItem = "dashboard" }: DashboardSidebarP
       <MobileSidebar />
 
       <SidebarProvider defaultOpen={true}>
-        <Sidebar className="hidden border-r bg-background md:flex">
+        <Sidebar 
+          variant="sidebar"
+          collapsible="icon"
+          className="hidden border-r bg-background md:flex"
+        >
           <SidebarHeader className="p-4">
             <Logo />
           </SidebarHeader>
@@ -126,7 +131,11 @@ export function DashboardSidebar({ activeItem = "dashboard" }: DashboardSidebarP
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton asChild isActive={isActive(item.id)}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.id)}
+                    tooltip={item.name}
+                  >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.name}</span>
@@ -139,7 +148,7 @@ export function DashboardSidebar({ activeItem = "dashboard" }: DashboardSidebarP
           <SidebarFooter className="p-4">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild tooltip="Help & Support">
                   <Link href="/help">
                     <HelpCircle className="h-4 w-4" />
                     <span>Help & Support</span>
@@ -147,7 +156,7 @@ export function DashboardSidebar({ activeItem = "dashboard" }: DashboardSidebarP
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild tooltip="Sign out">
                   <Link href="/login">
                     <LogOut className="h-4 w-4" />
                     <span>Sign out</span>
@@ -157,6 +166,7 @@ export function DashboardSidebar({ activeItem = "dashboard" }: DashboardSidebarP
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
+        <SidebarRail />
       </SidebarProvider>
     </>
   )

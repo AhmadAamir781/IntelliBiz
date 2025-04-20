@@ -199,7 +199,7 @@ export default function AdminDashboard() {
                         <TableCell className="font-medium">{business.name}</TableCell>
                         <TableCell className="hidden md:table-cell">{business.category}</TableCell>
                         <TableCell className="hidden md:table-cell">
-                          {new Date(business.date).toLocaleDateString()}
+                          {new Date(business.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <Badge

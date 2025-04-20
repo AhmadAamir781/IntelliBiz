@@ -71,7 +71,7 @@ export const userApi = {
   getUsersByRole: (role: string): Promise<ApiResponse<User[]>> =>
     api.get(`/users/role/${role}`),
 
-  getUsersByEmail: (email: string): Promise<ApiResponse<User[]>> =>
+  getUsersByEmail: (email: string): Promise<ApiResponse<User>> =>
     api.get(`/users/email/${email}`),
 
   deleteUser: (userId: number): Promise<ApiResponse<void>> =>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import { Logo } from "@/components/logo"
-import { authApi } from "@/lib/api"
+import { authApi, userApi } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
@@ -24,6 +24,59 @@ export default function LoginPage() {
     rememberMe: false,
   })
   const { showSuccessToast, showErrorToast } = useToast()
+
+  // Check if user is already logged in and redirect based on role
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem("token")
+      if (!token) return
+      
+      try {
+        // Get user from localStorage for initial data
+        const userStr = localStorage.getItem("user")
+        if (userStr) {
+          const user = JSON.parse(userStr)
+          
+          try {
+            // Also verify with backend to get the most up-to-date role
+            const userResponse = await userApi.getUsersByEmail(user.email)
+            const verifiedUser = userResponse.data
+            
+            // Use the verified role if it exists, otherwise fallback to stored role
+            const role = verifiedUser?.role || user.role
+            
+            // Redirect based on user role
+            if (role === "Admin") {
+              router.push("/admin")
+            } else if (role === "Shopkeeper") {
+              router.push("/business")
+            } else {
+              router.push("/dashboard")
+            }
+          } catch (apiError) {
+            // If API fails, still use stored user data
+            console.error("Error verifying user with API:", apiError)
+            
+            // Redirect based on stored user role
+            if (user.role === "Admin") {
+              router.push("/admin")
+            } else if (user.role === "Shopkeeper") {
+              router.push("/business") 
+            } else {
+              router.push("/dashboard")
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error)
+        // Clear potentially corrupted data
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      }
+    }
+    
+    checkAuthStatus()
+  }, [router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -45,25 +98,52 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await authApi.login(formData)
+      // First attempt login
+      const authResponse = await authApi.login(formData)
 
-      if (response.data.success) {
-        // Store token and user data
-        localStorage.setItem("token", response.data.token)
-        localStorage.setItem("user", JSON.stringify(response.data.user))
+      if (authResponse.data.success) {
+        // Store token and basic user data
+        localStorage.setItem("token", authResponse.data.token)
+        localStorage.setItem("user", JSON.stringify(authResponse.data.user))
 
-        showSuccessToast("Login successful", `Welcome back, ${response.data.user.firstName}!`)
+        try {
+          // Get complete user profile from API to ensure we have the latest role
+          const userResponse = await userApi.getUsersByEmail(formData.email)
+          const userData = userResponse.data
+          
+          // Show success toast
+          showSuccessToast("Login successful", `Welcome back, ${userData.firstName || authResponse.data.user.firstName}!`)
 
-        // Redirect based on user type
-        if (response.data.user.role === "Admin") {
-          router.push("/admin")
-        } else if (response.data.user.role === "Shopkeeper") {
-          router.push("/business")
-        } else {
-          router.push("/dashboard")
+          // Use the verified role from API for redirection
+          const userRole = userData.role
+
+          // Redirect based on user role
+          if (userRole === "Admin") {
+            router.push("/admin")
+          } else if (userRole === "Shopkeeper") {
+            router.push("/business")
+          } else {
+            router.push("/dashboard")
+          }
+        } catch (profileError) {
+          console.error("Error fetching user profile:", profileError)
+          
+          // Fallback to using the role from the auth response
+          const fallbackRole = authResponse.data.user.role
+          
+          showSuccessToast("Login successful", `Welcome back, ${authResponse.data.user.firstName}!`)
+          
+          // Redirect based on role from auth response
+          if (fallbackRole === "Admin") {
+            router.push("/admin")
+          } else if (fallbackRole === "Shopkeeper") {
+            router.push("/business")
+          } else {
+            router.push("/dashboard")
+          }
         }
       } else {
-        showErrorToast("Login failed", response.data.message || "Invalid credentials")
+        showErrorToast("Login failed", authResponse.data.message || "Invalid credentials")
       }
     } catch (error: any) {
       console.error("Login failed:", error)
