@@ -68,3 +68,4 @@ yarn.lock
 # Additional Configuration for Versioning
 !/important-config/
 /app/frontend/.next
+/app/frontend/.next
