@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using IntelliBiz.API.DTOs;
+using IntelliBiz.API.Models;
 using IntelliBiz.API.Repositories;
 using IntelliBiz.DTOs;
 
@@ -50,20 +51,20 @@ namespace IntelliBiz.API.Services
                 Services = services.Select(s => s.Name).ToList(),
                 Hours = new BusinessHoursDto
                 {
-                    Monday = new DailyHoursDto { Open = business.Hours.Monday.Open, Close = business.Hours.Monday.Close },
-                    Tuesday = new DailyHoursDto { Open = business.Hours.Tuesday.Open, Close = business.Hours.Tuesday.Close },
-                    Wednesday = new DailyHoursDto { Open = business.Hours.Wednesday.Open, Close = business.Hours.Wednesday.Close },
-                    Thursday = new DailyHoursDto { Open = business.Hours.Thursday.Open, Close = business.Hours.Thursday.Close },
-                    Friday = new DailyHoursDto { Open = business.Hours.Friday.Open, Close = business.Hours.Friday.Close },
-                    Saturday = new DailyHoursDto { Open = business.Hours.Saturday.Open, Close = business.Hours.Saturday.Close },
-                    Sunday = new DailyHoursDto { Open = business.Hours.Sunday.Open, Close = business.Hours.Sunday.Close },
+                    Monday = new DailyHoursDto { Open = business.Hour.Monday.Open, Close = business.Hour.Monday.Close },
+                    Tuesday = new DailyHoursDto { Open = business.Hour.Tuesday.Open, Close = business.Hour.Tuesday.Close },
+                    Wednesday = new DailyHoursDto { Open = business.Hour.Wednesday.Open, Close = business.Hour.Wednesday.Close },
+                    Thursday = new DailyHoursDto { Open = business.Hour.Thursday.Open, Close = business.Hour.Thursday.Close },
+                    Friday = new DailyHoursDto { Open = business.Hour.Friday.Open, Close = business.Hour.Friday.Close },
+                    Saturday = new DailyHoursDto { Open = business.Hour.Saturday.Open, Close = business.Hour.Saturday.Close },
+                    Sunday = new DailyHoursDto { Open = business.Hour.Sunday.Open, Close = business.Hour.Sunday.Close },
                 }
 ,
-                Images = business.Images,
+                Images = business.Images.ToList(),
                 Verified = business.IsVerified,
                 Licenses = business.Licenses,
-                PaymentMethods = business.PaymentMethods,
-                ServiceAreas = business.ServiceAreas
+                PaymentMethods = business.PaymentMethod,
+                ServiceAreas = business.ServiceArea
             };
         }
     }

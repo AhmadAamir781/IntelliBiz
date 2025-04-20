@@ -135,8 +135,8 @@ export interface BusinessDetailDto {
   phone: string;
   email: string;
   website: string;
-  founded: string;
-  owner: string;
+  state: string;
+  ownerName: string;
   employees: string;
   services: string[];
   hours: BusinessHoursDto;
@@ -144,7 +144,7 @@ export interface BusinessDetailDto {
   verified: boolean;
   licenses: string;
   paymentMethods: string[];
-  serviceAreas: string[];
+  serviceArea?: string[];
 }
 
 export interface BusinessHoursDto {

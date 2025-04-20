@@ -17,8 +17,10 @@ export function useBusinesses() {
       setError(null);
   
       let axiosResponse;
-      if (searchTerm || category) {
-        axiosResponse = await businessApi.searchBusinesses(searchTerm, category || undefined);
+      if (searchTerm) {
+        axiosResponse = await businessApi.searchBusinesses(searchTerm);
+      } else if(category){
+        axiosResponse = await businessApi.getBusinessesByCategory(category);
       } else {
         axiosResponse = await businessApi.getAllBusinesses();
       }

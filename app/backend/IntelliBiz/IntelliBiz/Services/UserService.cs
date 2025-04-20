@@ -34,6 +34,12 @@ namespace IntelliBiz.API.Services
             return users.Select(MapToDto);
         }
 
+        public async Task<UserDto?> GetByEmailAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            return user is not null ? MapToDto(user) : null;
+        }
+
         public async Task<ApiResponseDto<UserDto>> UpdateAsync(int id, UserDto userDto)
         {
             var existingUser = await _userRepository.GetByIdAsync(id);

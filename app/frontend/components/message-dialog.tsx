@@ -95,7 +95,7 @@ export function MessageDialog({ businessName, businessId, businessAvatar, trigge
           <div className="flex items-center gap-2">
             <Avatar>
               <AvatarImage src={businessAvatar || "/placeholder.svg?height=40&width=40"} alt={businessName} />
-              <AvatarFallback>{businessName.charAt(0)}</AvatarFallback>
+              {/* <AvatarFallback>{businessName.charAt(0)}</AvatarFallback> */}
             </Avatar>
             <DialogTitle className="text-base">{businessName}</DialogTitle>
           </div>

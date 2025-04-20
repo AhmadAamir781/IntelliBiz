@@ -1,16 +1,16 @@
 interface BusinessHoursProps {
-  hours: {
-    monday: { open: string; close: string }
-    tuesday: { open: string; close: string }
-    wednesday: { open: string; close: string }
-    thursday: { open: string; close: string }
-    friday: { open: string; close: string }
-    saturday: { open: string; close: string }
-    sunday: { open: string; close: string }
+  hours?: {
+    monday?: { open: string; close: string }
+    tuesday?: { open: string; close: string }
+    wednesday?: { open: string; close: string }
+    thursday?: { open: string; close: string }
+    friday?: { open: string; close: string }
+    saturday?: { open: string; close: string }
+    sunday?: { open: string; close: string }
   }
 }
 
-export function BusinessHours({ hours }: BusinessHoursProps) {
+export function BusinessHours({ hours = {} }: BusinessHoursProps) {
   const formatTime = (time: string) => {
     if (!time) return ""
 
@@ -25,14 +25,17 @@ export function BusinessHours({ hours }: BusinessHoursProps) {
     }
   }
 
+  // Default empty object for all days
+  const emptyDay = { open: "", close: "" };
+
   const days = [
-    { name: "Monday", data: hours.monday },
-    { name: "Tuesday", data: hours.tuesday },
-    { name: "Wednesday", data: hours.wednesday },
-    { name: "Thursday", data: hours.thursday },
-    { name: "Friday", data: hours.friday },
-    { name: "Saturday", data: hours.saturday },
-    { name: "Sunday", data: hours.sunday },
+    { name: "Monday", data: hours?.monday || emptyDay },
+    { name: "Tuesday", data: hours?.tuesday || emptyDay },
+    { name: "Wednesday", data: hours?.wednesday || emptyDay },
+    { name: "Thursday", data: hours?.thursday || emptyDay },
+    { name: "Friday", data: hours?.friday || emptyDay },
+    { name: "Saturday", data: hours?.saturday || emptyDay },
+    { name: "Sunday", data: hours?.sunday || emptyDay },
   ]
 
   // Get current day of week (0 = Sunday, 1 = Monday, etc.)

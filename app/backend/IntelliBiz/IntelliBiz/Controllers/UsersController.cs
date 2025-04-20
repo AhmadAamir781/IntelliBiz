@@ -55,6 +55,13 @@ namespace IntelliBiz.API.Controllers
             return Ok(users);
         }
 
+        [HttpGet("email/{email}")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetByEmail(string email)
+        {
+            var users = await _userService.GetByEmailAsync(email);
+            return Ok(users);
+        }
+
         [HttpPut("{id}")]
         public async Task<ActionResult<ApiResponseDto<UserDto>>> Update(int id, [FromBody] UserDto userDto)
         {

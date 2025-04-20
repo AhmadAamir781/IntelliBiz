@@ -8,6 +8,7 @@ namespace IntelliBiz.API.Repositories
         Task<IEnumerable<Business>> GetAllAsync();
         Task<IEnumerable<Business>> GetByOwnerIdAsync(int ownerId);
         Task<IEnumerable<Business>> GetByCategoryAsync(string category);
+        Task<IEnumerable<string>> GetCategoriesAsync();
         Task<IEnumerable<Business>> SearchAsync(string searchTerm, string? category = null);
         Task<int> CreateAsync(Business business);
         Task<bool> UpdateAsync(Business business);

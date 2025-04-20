@@ -215,7 +215,7 @@ export default function RegisterBusinessPage() {
       const response = await businessApi.createBusiness(formData)
       if (response.data.success) {
         showSuccessToast("Business registered successfully!")
-        router.push("/dashboard")
+        router.push("/businesses")
       } else {
         showErrorToast("Business registration failed", response.data.message || "An error occurred")
       }

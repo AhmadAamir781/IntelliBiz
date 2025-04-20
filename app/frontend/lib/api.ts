@@ -53,7 +53,7 @@ export const authApi = {
   login: (data: any): Promise<ApiResponse<any>> =>
     api.post("/auth/login", data),
 
-  register: (data: RegisterRequest): Promise<ApiResponse<User>> =>
+  register: (data: RegisterRequest): Promise<ApiResponse<any>> =>
     api.post("/auth/register", data),
 }
 
@@ -71,6 +71,9 @@ export const userApi = {
   getUsersByRole: (role: string): Promise<ApiResponse<User[]>> =>
     api.get(`/users/role/${role}`),
 
+  getUsersByEmail: (email: string): Promise<ApiResponse<User[]>> =>
+    api.get(`/users/email/${email}`),
+
   deleteUser: (userId: number): Promise<ApiResponse<void>> =>
     api.delete(`/users/${userId}`),
 }
@@ -79,7 +82,8 @@ export const userApi = {
 export const businessApi = {
   getAllBusinesses: (): Promise<ApiResponse<Business[]>> =>
     api.get("/businesses"),
-
+getAllCategories:(): Promise<ApiResponse<string[]>> =>
+  api.get("/businesses/categories"),
   getBusinessById: (businessId: number): Promise<ApiResponse<Business>> =>
     api.get(`/businesses/${businessId}`),
 
@@ -129,7 +133,6 @@ export const businessApi = {
   }>> => {
     return api.get(`/businesses/analytics/${businessId}?timeRange=${timeRange}`);
   },
-
   getBusinessDetail: async (businessId: number): Promise<ApiResponse<any>> => {
     return api.get(`/businesses/${businessId}`);
   },

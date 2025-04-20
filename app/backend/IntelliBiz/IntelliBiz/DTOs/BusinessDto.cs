@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using IntelliBiz.DTOs;
+using System.Text.Json;
 
 namespace IntelliBiz.API.DTOs
 {
@@ -52,6 +54,8 @@ namespace IntelliBiz.API.DTOs
         
         public bool IsVerified { get; set; }
         
+        public BusinessHoursDto? Hours {get; set;}
+        public List<string>? ServiceArea {get;set;}
         public string? OwnerName { get; set; }
     }
 }

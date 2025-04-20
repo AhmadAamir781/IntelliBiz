@@ -59,6 +59,15 @@ namespace IntelliBiz.API.Repositories
             return await connection.QueryAsync<Business>(sql, new { Category = category });
         }
 
+        public async Task<IEnumerable<string>> GetCategoriesAsync()
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT Category FROM Businesses";
+            return await connection.QueryAsync<string>(sql);
+        }
+
+
         public async Task<IEnumerable<Business>> SearchAsync(string searchTerm, string? category = null)
         {
             using var connection = _connectionFactory.CreateConnection();

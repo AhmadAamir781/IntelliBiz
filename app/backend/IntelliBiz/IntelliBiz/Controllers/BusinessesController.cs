@@ -49,6 +49,12 @@ namespace IntelliBiz.API.Controllers
             var businesses = await _businessService.GetByCategoryAsync(category);
             return Ok(businesses);
         }
+        [HttpGet("categories")]
+        public async Task<ActionResult<IEnumerable<string>>> GetCategories()
+        {
+            var categories = await _businessService.GetCategoriesAsync();
+            return Ok(categories);
+        }
 
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<BusinessDto>>> Search([FromQuery] string term, [FromQuery] string? category = null)
@@ -70,7 +76,7 @@ namespace IntelliBiz.API.Controllers
             if (businessDto.OwnerId == 0)
             {
                 var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-                businessDto.OwnerId = 1;
+                businessDto.OwnerId = userId;
             }
 
             var response = await _businessService.CreateAsync(businessDto);

@@ -39,7 +39,11 @@ namespace IntelliBiz.API.Services
             var businesses = await _businessRepository.GetByCategoryAsync(category);
             return businesses.Select(MapToDto);
         }
-
+        public async Task<IEnumerable<string>> GetCategoriesAsync()
+        {
+            var categories = await _businessRepository.GetCategoriesAsync();
+            return categories;
+        }
         public async Task<IEnumerable<BusinessDto>> SearchAsync(string searchTerm, string? category = null)
         {
             var businesses = await _businessRepository.SearchAsync(searchTerm, category);
@@ -154,7 +158,9 @@ namespace IntelliBiz.API.Services
                 Email = business.Email,
                 Website = business.Website,
                 IsVerified = business.IsVerified,
-                OwnerName = business.OwnerName
+                Hours = business.Hour,
+                OwnerName = business.OwnerName,
+                ServiceArea = business.ServiceArea,
             };
         }
     }
