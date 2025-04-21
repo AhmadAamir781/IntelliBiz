@@ -27,6 +27,7 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
     agreeTerms: false,
+    role: "customer",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [step, setStep] = useState(1)
@@ -47,6 +48,14 @@ export default function SignupPage() {
         return newErrors
       })
     }
+  }
+
+  const handleAccountTypeChange = (value: string) => {
+    setAccountType(value)
+    setFormData(prev => ({
+      ...prev,
+      role: value
+    }))
   }
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -132,7 +141,6 @@ export default function SignupPage() {
     try {
       const response = await authApi.register({
         ...formData
-      
       })
 
       if (response.data.success) {
@@ -249,10 +257,10 @@ export default function SignupPage() {
             <p className="mt-2 text-sm text-gray-600">Join IntelliBiz to connect with local businesses</p>
           </div>
 
-          <Tabs defaultValue="customer" onValueChange={setAccountType} className="w-full">
+          <Tabs defaultValue="customer" onValueChange={handleAccountTypeChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="customer">Customer</TabsTrigger>
-              <TabsTrigger value="business">Business Owner</TabsTrigger>
+              <TabsTrigger value="Customer">Customer</TabsTrigger>
+              <TabsTrigger value="BusinessOwner">Business Owner</TabsTrigger>
             </TabsList>
             <TabsContent value="customer">
               <p className="text-sm text-gray-600 mb-6">Create an account to find and connect with local businesses.</p>
