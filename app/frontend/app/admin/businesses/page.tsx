@@ -62,7 +62,7 @@ export default function BusinessManagement() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [businessToDelete, setBusinessToDelete] = useState<string | null>(null)
+  const [businessToDelete, setBusinessToDelete] = useState<number | null>(null)
 
   const { businesses, stats, loading, error, totalPages, updateBusinessStatus, deleteBusiness } = useAdminBusinesses({
     status: filter as 'all' | 'approved' | 'pending' | 'rejected',
@@ -72,17 +72,17 @@ export default function BusinessManagement() {
     pageSize: 10,
   })
 
-  const { businesses: businessesApi, loading: businessesApiLoading, error: businessesApiError, filters, updateFilters, refresh } = useBusinesses()
+  const { businesses: businessesApi, loading: businessesApiLoading, error: businessesApiError, refetch } = useBusinesses()
   const [selectedBusiness, setSelectedBusiness] = useState<number | null>(null)
 
-  const handleDeleteBusiness = (id: string) => {
+  const handleDeleteBusiness = (id: number) => {
     setBusinessToDelete(id)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = async () => {
     if (businessToDelete) {
-      await deleteBusiness(businessToDelete)
+      await deleteBusiness(Number(businessToDelete))
       setDeleteDialogOpen(false)
       setBusinessToDelete(null)
     }
@@ -96,7 +96,7 @@ export default function BusinessManagement() {
   }
 
   const handleSearch = (value: string) => {
-    updateFilters({ searchTerm: value })
+    setSearchQuery(value)
   }
 
   const handleApprove = async (id: number) => {
@@ -104,7 +104,7 @@ export default function BusinessManagement() {
       const response = await businessApi.verifyBusiness(id)
       if (response.success) {
         toast.success('Business verified successfully')
-        refresh()
+        refetch()
       } else {
         toast.error(response.message || 'Failed to verify business')
       }
@@ -118,7 +118,7 @@ export default function BusinessManagement() {
       const response = await businessApi.deleteBusiness(id)
       if (response.success) {
         toast.success('Business deleted successfully')
-        refresh()
+        refetch()
       } else {
         toast.error(response.message || 'Failed to delete business')
       }
@@ -260,7 +260,7 @@ export default function BusinessManagement() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-red-600"
-                                onClick={() => handleDeleteBusiness(business.id.toString())}
+                                onClick={() => handleDeleteBusiness(business.id)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete

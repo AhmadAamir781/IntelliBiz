@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuthContext } from '../lib/AuthContext';
 import { reviewApi } from '../lib/api';
 import { Review, ApiResponse } from '../lib/types';
 
@@ -19,7 +18,6 @@ interface ReviewStats {
 }
 
 export const useAdminReviews = (filters: ReviewFilters = {}) => {
-  const { user } = useAuthContext();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +26,6 @@ export const useAdminReviews = (filters: ReviewFilters = {}) => {
 
   useEffect(() => {
     const fetchReviews = async () => {
-      if (!user) return;
-
       try {
         setLoading(true);
         setError(null);
@@ -44,35 +40,59 @@ export const useAdminReviews = (filters: ReviewFilters = {}) => {
           response = await reviewApi.getAllReviews();
         }
 
-        const data = (response.data as unknown as ApiResponse<Review[]>).data;
-        setReviews(data);
+        // Make sure we have valid data before proceeding
+        if (response.data) {
+          const data = (response.data as unknown as ApiResponse<Review[]>).data || [];
+          setReviews(data);
 
-        // Calculate stats from the reviews
-        const reviewStats: ReviewStats = {
-          total: data.length,
-          published: data.filter(r => r.status === 'approved').length,
-          pending: data.filter(r => r.status === 'pending').length,
-          flagged: data.filter(r => r.isFlagged).length,
-          averageRating: data.reduce((acc, r) => acc + r.rating, 0) / data.length || 0,
-        };
-        setStats(reviewStats);
+          // Calculate stats from the reviews
+          const reviewStats: ReviewStats = {
+            total: data.length,
+            published: data.filter(r => r.status === 'approved').length,
+            pending: data.filter(r => r.status === 'pending').length,
+            flagged: data.filter(r => r.isFlagged).length,
+            averageRating: data.length > 0 ? data.reduce((acc, r) => acc + r.rating, 0) / data.length : 0,
+          };
+          setStats(reviewStats);
+        } else {
+          // Initialize with empty data
+          setReviews([]);
+          setStats({
+            total: 0,
+            published: 0,
+            pending: 0,
+            flagged: 0,
+            averageRating: 0
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch reviews');
+        // Initialize with empty data on error
+        setReviews([]);
+        setStats({
+          total: 0,
+          published: 0,
+          pending: 0,
+          flagged: 0,
+          averageRating: 0
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchReviews();
-  }, [user, filters.status]);
+  }, [filters.status]);
 
   const approveReview = async (id: number) => {
     try {
       await reviewApi.approveReview(id);
       // Refresh the reviews list
       const response = await reviewApi.getAllReviews();
-      const data = (response.data as unknown as ApiResponse<Review[]>).data;
-      setReviews(data);
+      if (response.data) {
+        const data = (response.data as unknown as ApiResponse<Review[]>).data || [];
+        setReviews(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve review');
     }
@@ -83,8 +103,10 @@ export const useAdminReviews = (filters: ReviewFilters = {}) => {
       await reviewApi.rejectReview(id);
       // Refresh the reviews list
       const response = await reviewApi.getAllReviews();
-      const data = (response.data as unknown as ApiResponse<Review[]>).data;
-      setReviews(data);
+      if (response.data) {
+        const data = (response.data as unknown as ApiResponse<Review[]>).data || [];
+        setReviews(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reject review');
     }
@@ -95,8 +117,10 @@ export const useAdminReviews = (filters: ReviewFilters = {}) => {
       await reviewApi.deleteReview(id);
       // Refresh the reviews list
       const response = await reviewApi.getAllReviews();
-      const data = (response.data as unknown as ApiResponse<Review[]>).data;
-      setReviews(data);
+      if (response.data) {
+        const data = (response.data as unknown as ApiResponse<Review[]>).data || [];
+        setReviews(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete review');
     }
@@ -107,8 +131,10 @@ export const useAdminReviews = (filters: ReviewFilters = {}) => {
       await reviewApi.unflagReview(id);
       // Refresh the reviews list
       const response = await reviewApi.getAllReviews();
-      const data = (response.data as unknown as ApiResponse<Review[]>).data;
-      setReviews(data);
+      if (response.data) {
+        const data = (response.data as unknown as ApiResponse<Review[]>).data || [];
+        setReviews(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to unflag review');
     }

@@ -44,7 +44,7 @@ namespace IntelliBiz.API.Repositories
                 JOIN Users u ON a.UserId = u.Id
                 JOIN Businesses b ON a.BusinessId = b.Id
                 JOIN Services s ON a.ServiceId = s.Id
-                ORDER BY a.AppointmentDate DESC, a.StartTime DESC";
+                ORDER BY a.AppointmentDate DESC";
             return await connection.QueryAsync<Appointment>(sql);
         }
 
@@ -62,7 +62,7 @@ namespace IntelliBiz.API.Repositories
                 JOIN Businesses b ON a.BusinessId = b.Id
                 JOIN Services s ON a.ServiceId = s.Id
                 WHERE a.UserId = @UserId
-                ORDER BY a.AppointmentDate DESC, a.StartTime DESC";
+                ORDER BY a.AppointmentDate DESC";
             return await connection.QueryAsync<Appointment>(sql, new { UserId = userId });
         }
 

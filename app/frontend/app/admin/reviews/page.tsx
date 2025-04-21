@@ -55,7 +55,7 @@ export default function ReviewManagement() {
   })
 
   // Filter reviews based on search query
-  const filteredReviews = reviews.filter((review) => {
+  const filteredReviews = reviews?.filter((review) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       return (
@@ -65,7 +65,7 @@ export default function ReviewManagement() {
       )
     }
     return true
-  })
+  }) || [];
 
   const handleDeleteReview = (id: number) => {
     setReviewToDelete(id)
