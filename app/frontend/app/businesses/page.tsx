@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { useBusinesses } from '@/hooks/useBusinesses';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BusinessCard } from "@/components/business-card";
 import { BusinessFilters } from "@/components/business-filters";
-import { Search, MapPin, SlidersHorizontal, Star, ChevronRight } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, Star, ChevronRight, Link as LucideLink, ArrowLeft } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -80,6 +81,12 @@ export default function BusinessesPage() {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container px-4 py-8 md:px-6 md:py-12">
+      <div className="mb-6">
+          <Link href="/" className="text-primary hover:underline flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
+          </Link>
+        </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-4">Find Local Businesses</h1>
           <p className="text-muted-foreground">Browse and connect with trusted local service providers in your area</p>

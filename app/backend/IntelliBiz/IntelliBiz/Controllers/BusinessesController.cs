@@ -150,7 +150,6 @@ namespace IntelliBiz.API.Controllers
         }
 
         [HttpPatch("{id}/verify")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponseDto<bool>>> VerifyBusiness(int id)
         {
             var response = await _businessService.VerifyBusinessAsync(id);

@@ -1,11 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet"
+import { businessApi } from "@/lib/api"
+import { Business } from "@/lib/types"
+import { toast } from "sonner"
 
 // Business categories
 const categories = [
@@ -25,11 +28,17 @@ const categories = [
   "Other",
 ]
 
-export function BusinessFilters() {
+interface BusinessFiltersProps {
+  onFiltersApplied?: (businesses: Business[]) => void
+  onClose?: () => void
+}
+
+export function BusinessFilters({ onFiltersApplied, onClose }: BusinessFiltersProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [rating, setRating] = useState([4])
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [distance, setDistance] = useState([10])
+  const [loading, setLoading] = useState(false)
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     if (checked) {
@@ -46,14 +55,68 @@ export function BusinessFilters() {
     setDistance([10])
   }
 
-  const handleApply = () => {
-    // Here you would typically apply the filters and close the sheet
-    console.log({
-      categories: selectedCategories,
-      rating: rating[0],
-      verifiedOnly,
-      distance: distance[0],
-    })
+  const handleApply = async () => {
+    try {
+      setLoading(true)
+      
+      if (selectedCategories.length === 0) {
+        // If no categories selected, get all businesses
+        const response = await businessApi.getAllBusinesses()
+        
+        // Apply additional filters
+        let filteredBusinesses = response.data.filter((business: Business) => {
+          // Filter by rating
+          if (business.rating && business.rating < rating[0]) return false
+          // Filter by verified status
+          if (verifiedOnly && !business.isVerified) return false
+          // Distance filtering would be handled here if we had location data
+          return true
+        })
+        
+        if (onFiltersApplied) {
+          onFiltersApplied(filteredBusinesses)
+        }
+      } else {
+        // Get businesses for each selected category and combine results
+        let allBusinesses: Business[] = []
+        debugger
+        for (const category of selectedCategories) {
+          const response = await businessApi.getBusinessesByCategory(category)
+          if (response.data) {
+            allBusinesses = [...allBusinesses, ...response.data]
+          }
+        }
+        
+        // Remove duplicates (if a business belongs to multiple categories)
+        const uniqueBusinesses = Array.from(
+          new Map(allBusinesses.map(business => [business.id, business])).values()
+        )
+        
+        // Apply additional filters
+        let filteredBusinesses = uniqueBusinesses.filter((business: Business) => {
+          // Filter by rating
+          if (business.rating && business.rating < rating[0]) return false
+          // Filter by verified status
+          if (verifiedOnly && !business.isVerified) return false
+          // Distance filtering would be handled here if we had location data
+          return true
+        })
+        
+        if (onFiltersApplied) {
+          onFiltersApplied(filteredBusinesses)
+        }
+      }
+      
+      // Close the filter sheet if provided
+      if (onClose) {
+        onClose()
+      }
+    } catch (error) {
+      console.error("Error applying filters:", error)
+      toast.error("Failed to apply filters. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -128,8 +191,8 @@ export function BusinessFilters() {
         <Button variant="outline" onClick={handleReset} className="w-full">
           Reset Filters
         </Button>
-        <Button onClick={handleApply} className="w-full">
-          Apply Filters
+        <Button onClick={handleApply} disabled={loading} className="w-full">
+          {loading ? "Applying..." : "Apply Filters"}
         </Button>
       </SheetFooter>
     </div>

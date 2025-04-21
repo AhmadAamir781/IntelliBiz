@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Star, MessageSquare, Calendar, TrendingUp, Eye, ArrowRight, ArrowUpRight, CheckCircle, Clock } from "lucide-react"
+import { Star, MessageSquare, Calendar, TrendingUp, Eye, ArrowRight, ArrowUpRight, CheckCircle, Clock, ArrowLeft } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -25,6 +25,12 @@ export default function BusinessDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="mb-6">
+          <Link href="/" className="text-primary hover:underline flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
+          </Link>
+        </div>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Business Dashboard</h1>
           <p className="text-muted-foreground">
@@ -207,7 +213,7 @@ export default function BusinessDashboard() {
                         <TableCell className="font-medium">{appointment.customer?.name || 'Unknown'}</TableCell>
                         <TableCell className="hidden md:table-cell">{appointment.service?.name || 'Unknown'}</TableCell>
                         <TableCell className="whitespace-nowrap">
-                          {new Date(appointment.date).toLocaleDateString()} at {appointment.time}
+                          {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.time}
                         </TableCell>
                         <TableCell>
                           {appointment.status === "confirmed" ? (
