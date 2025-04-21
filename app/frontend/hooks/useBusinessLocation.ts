@@ -13,7 +13,7 @@ export function useBusinessLocation(businessId: number) {
       setLoading(true);
       setError(null);
 
-      const response = await businessApi.getBusinessById(2021);
+      const response = await businessApi.getBusinessById(businessId); //TODO
       if (response.data) {
         setBusiness(response.data);
       } else {
@@ -45,7 +45,7 @@ export function useBusinessLocation(businessId: number) {
       };
 
       const response = await businessApi.updateBusiness(businessId, updatedBusiness);
-      if (response.success) {
+      if (response.data) {
         setBusiness(response.data);
         toast.success('Location updated successfully');
         return response.data;

@@ -11,8 +11,7 @@ export function useBusinessDetail(businessId: number) {
     try {
       setLoading(true);
       setError(null);
-      const response = await businessApi.getBusinessDetail(businessId);
-      response.success
+      const response = await businessApi.getBusinessDetail(businessId); //TODO
       setBusiness(response.data);
 
     } catch (err) {
