@@ -62,7 +62,7 @@ export interface Appointment {
   userId: number;
   businessId: number;
   serviceId: number;
-  date: string;
+  appointmentDate: string;
   time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;

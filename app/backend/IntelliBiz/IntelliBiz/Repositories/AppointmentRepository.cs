@@ -20,7 +20,6 @@ namespace IntelliBiz.API.Repositories
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
                        u.Email as CustomerEmail,
-                       u.Phone as CustomerPhone,
                        b.Name as BusinessName,
                        s.Name as ServiceName
                 FROM Appointments a
@@ -107,11 +106,12 @@ namespace IntelliBiz.API.Repositories
         {
             using var connection = _connectionFactory.CreateConnection();
             const string sql = @"
-                INSERT INTO Appointments (UserId, BusinessId, ServiceId, AppointmentDate,  Status, Notes, CreatedAt)
-                VALUES (@UserId, @BusinessId, @ServiceId, @AppointmentDate, @Status, @Notes, @CreatedAt);
+                INSERT INTO Appointments (UserId, BusinessId, ServiceId, AppointmentDate, StartTime, EndTime, Status, Notes, CreatedAt)
+                VALUES (@UserId, @BusinessId, @ServiceId, @AppointmentDate, @StartTime, @EndTime, @Status, @Notes, @CreatedAt);
                 SELECT CAST(SCOPE_IDENTITY() as int)";
             
             appointment.CreatedAt = DateTime.UtcNow;
+            appointment.ServiceId = 1;
             return await connection.QuerySingleAsync<int>(sql, appointment);
         }
 

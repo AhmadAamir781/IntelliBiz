@@ -29,7 +29,7 @@ interface BookingDialogProps {
 }
 
 export function BookingDialog({ businessName, businessId, trigger }: BookingDialogProps) {
-  const [date, setDate] = useState<Date | undefined>(undefined)
+  const [appointmentDate, setDate] = useState<Date | undefined>(new Date())
   const [time, setTime] = useState<string>("")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -155,12 +155,18 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
     setError(null)
 
     try {
-      if (!date) {
+      // Log the current date value
+      console.log("Current date state:", appointmentDate);
+      
+      if (!appointmentDate) {
         throw new Error("Date is required");
       }
 
       // Format the date as a string in YYYY-MM-DD format
-      const dateString = format(date, 'yyyy-MM-dd');
+      const dateString = format(appointmentDate, 'yyyy-MM-dd');
+      
+      // Log formatted date string
+      console.log("Formatted date string:", dateString);
       
       // Convert times to TimeSpan format
       const startTimeFormatted = convertToTimeSpanFormat(time);
@@ -175,7 +181,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
         userId: 0, // This would normally come from the authenticated user
         businessId: businessId,
         serviceId: 0, // This would normally be the actual service ID
-        date: dateString,
+        appointmentDate: dateString, // Using just the date string format: YYYY-MM-DD
         time: startTimeFormatted, // Use TimeSpan format for the time field too
         startTime: startTimeFormatted,
         endTime: endTimeFormatted,
@@ -199,7 +205,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
       // Send the request to the API
       const response = await appointmentApi.createAppointment(appointmentData);
 
-      if (!response.success) {
+      if (!response.data) {
         throw new Error(response.message || "Failed to book appointment");
       }
 
@@ -209,7 +215,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
       // Reset form after 3 seconds and close dialog
       setTimeout(() => {
         setIsSuccess(false);
-        setDate(undefined);
+        setDate(new Date());
         setTime("");
         setName("");
         setEmail("");
@@ -227,7 +233,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
   }
 
   const handleNextStep = () => {
-    if (date && time && service) {
+    if (appointmentDate && time && service) {
       setStep("details")
     }
   }
@@ -237,7 +243,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
   }
 
   const resetDialog = () => {
-    setDate(undefined)
+    setDate(new Date())
     setTime("")
     setName("")
     setEmail("")
@@ -269,7 +275,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
             <DialogTitle className="text-center mb-2">Appointment Booked!</DialogTitle>
             <DialogDescription className="text-center">
               Your appointment with {businessName} has been scheduled for{" "}
-              {date && time ? `${format(date, "MMMM d, yyyy")} at ${time}` : "the selected date and time"}.
+              {appointmentDate && time ? `${format(appointmentDate, "MMMM d, yyyy")} at ${time}` : "the selected date and time"}.
               <br />
               You will receive a confirmation email shortly.
             </DialogDescription>
@@ -293,8 +299,11 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
                   <div className="border rounded-md p-2 mx-auto max-w-[350px]">
                     <Calendar
                       mode="single"
-                      selected={date}
-                      onSelect={setDate}
+                      selected={appointmentDate}
+                      onSelect={(selected) => {
+                        console.log("Date selected:", selected);
+                        setDate(selected || new Date());
+                      }}
                       disabled={(date) =>
                         date < new Date() || date > new Date(new Date().setMonth(new Date().getMonth() + 2))
                       }
@@ -340,7 +349,7 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
                   <Button
                     type="button"
                     onClick={handleNextStep}
-                    disabled={!date || !time || !service}
+                    disabled={!appointmentDate || !time || !service}
                     className="w-full sm:w-auto"
                   >
                     Continue
@@ -398,13 +407,13 @@ export function BookingDialog({ businessName, businessId, trigger }: BookingDial
                   <h4 className="text-sm font-medium mb-2">Appointment Summary</h4>
                   <div className="text-sm">
                     <p>
-                      <span className="font-medium">Date:</span> {date ? format(date, "MMMM d, yyyy") : ""}
+                      <span className="font-medium">Date:</span> {appointmentDate ? format(appointmentDate, "MMMM d, yyyy") : "Not selected"}
                     </p>
                     <p>
-                      <span className="font-medium">Time:</span> {time}
+                      <span className="font-medium">Time:</span> {time || "Not selected"}
                     </p>
                     <p>
-                      <span className="font-medium">Service:</span> {service}
+                      <span className="font-medium">Service:</span> {service || "Not selected"}
                     </p>
                   </div>
                 </div>
