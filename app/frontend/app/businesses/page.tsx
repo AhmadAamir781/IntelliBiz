@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 import { useBusinesses } from '@/hooks/useBusinesses';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +13,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { businessApi } from '@/lib/api';
+import { businessApi, reviewApi } from '@/lib/api';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
+import { Review } from '@/lib/types';
+
 export default function BusinessesPage() {
   
  
     const [categories, setCategories] = useState<string[]>([]);
-  
+   const [businessReviews, setBusinessReviews] = useState<Review[]>([]);
     useEffect(() => {
       const fetchCategories = async () => {
         try {
@@ -51,6 +54,14 @@ export default function BusinessesPage() {
   const itemsPerPage = 10;
   const handleBusinessClick = (id: number) => {
     router.push(`/businesses/${id}`);
+    // Get reviews asynchronously
+    reviewApi.getReviewsByBusiness(id).then(response => {
+      if (response.data) {
+        setBusinessReviews(response.data);
+      }
+    }).catch(error => {
+      console.error("Error fetching reviews:", error);
+    });
   };
 
   if (error) {
@@ -117,6 +128,7 @@ export default function BusinessesPage() {
           </div>
         </div>
 
+
         <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
       {categories.map((cat) => (
         <Badge
@@ -160,16 +172,25 @@ export default function BusinessesPage() {
               <div key={business.id} onClick={() => handleBusinessClick(business.id)}>
                 <BusinessCard 
                   business={{
-                    id: business.id.toString(),
+                    id: parseInt(business.id.toString()),
                     name: business.name,
                     category: business.category,
-                    rating: 5, // Using placeholder rating until real data is available
-                    reviewCount: 100, // Using placeholder count until real data is available
+                    rating: businessReviews.length > 0 ? businessReviews.reduce((sum, review) => sum + review.rating, 0) / businessReviews.length : 0, // Using placeholder rating until real data is available
+                    reviewCount: businessReviews.length, // Using placeholder count until real data is available
                     description: business.description,
                     address: business.address,
-                    phone: business.phoneNumber || "(555) 123-4567", // Using placeholder if no phone
-                    image: business.imageUrl,
-                    verified: business.isVerified
+                    phoneNumber: business.phoneNumber || "(555) 123-4567", // Using placeholder if no phone
+                    imageUrl: business.imageUrl,
+                    isVerified: business.isVerified,
+                    city: business.city,
+                    state: business.state,
+                    zipCode: business.zipCode,
+                    email: business.email,
+                    website: business.website,
+                    ownerId: business.ownerId,
+                    createdAt: business.createdAt,
+                    updatedAt: business.updatedAt,
+                    status: business.status
                   }} 
                 />
               </div>

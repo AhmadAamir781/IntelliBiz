@@ -1,9 +1,16 @@
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Star, MapPin, Phone, CheckCircle2 } from "lucide-react"
-import { Business as ApiBusinessType } from "@/lib/types"
+import { Business as ApiBusinessType, Review } from "@/lib/types"
+import { reviewApi } from "@/lib/api"
+
+// Extended business type that includes reviewCount
+interface BusinessWithReviewCount extends ApiBusinessType {
+  reviewCount?: number;
+}
 
 // Business category images mapping
 const categoryImages = {
@@ -20,17 +27,40 @@ const categoryImages = {
 
 // Type for the business card that can accept both our mock data and API business data
 interface BusinessCardProps {
-  business: ApiBusinessType
+  business: BusinessWithReviewCount
 }
 
 export function BusinessCard({ business }: BusinessCardProps) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  
+  // Fetch reviews on component mount
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await reviewApi.getReviewsByBusiness(business.id);
+        if (response.data) {
+          setReviews(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+    
+    fetchReviews();
+  }, [business.id]);
+  
   // Get image based on category or use provided image or default
   const imageUrl =
     business.imageUrl || categoryImages[business.category as keyof typeof categoryImages] || categoryImages.default
 
-  // Calculate how many reviews based on either reviewCount from mock data or actual data
-  const reviewCount = 0; // Default to 0 as the API doesn't provide this directly
-
+  // Use either provided reviewCount or calculate from fetched reviews
+  const reviewCount = business.reviewCount !== undefined ? business.reviewCount : reviews.length;
+  
+  // Calculate average rating from reviews
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    : business.rating || 0;
+  
   // Format the address from the components in the API data
   const formattedAddress = `${business.address}, ${business.city}, ${business.state} ${business.zipCode}`;
 
@@ -61,16 +91,16 @@ export function BusinessCard({ business }: BusinessCardProps) {
               <Star
                 key={i}
                 className={`h-4 w-4 ${
-                  i < Math.floor(business.rating)
+                  i < Math.floor(averageRating)
                     ? "text-yellow-400 fill-yellow-400"
-                    : i < business.rating
+                    : i < averageRating
                       ? "text-yellow-400 fill-yellow-400 opacity-50"
                       : "text-muted-foreground"
                 }`}
               />
             ))}
           </div>
-          <span className="text-sm">{business.rating}</span>
+          <span className="text-sm">{averageRating.toFixed(1)}</span>
           <span className="text-sm text-muted-foreground">({reviewCount})</span>
         </div>
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{business.description}</p>
