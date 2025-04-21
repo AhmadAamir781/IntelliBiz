@@ -72,7 +72,6 @@ namespace IntelliBiz.API.Repositories
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
                        u.Email as CustomerEmail,
-                       u.Phone as CustomerPhone,
                        b.Name as BusinessName,
                        s.Name as ServiceName
                 FROM Appointments a

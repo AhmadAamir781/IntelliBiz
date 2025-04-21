@@ -48,7 +48,7 @@ export const useAuth = () => {
       const response = await authApi.login(data);
       const apiResponse = response.data as unknown as ApiResponse<LoginResponse>;
       
-      if (apiResponse.success) {
+      if (apiResponse.data) {
         const { token, user } = apiResponse.data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
@@ -79,7 +79,7 @@ export const useAuth = () => {
       const response = await authApi.register(data);
       const apiResponse = response.data as unknown as ApiResponse<User>;
       
-      if (apiResponse.success) {
+      if (apiResponse.data) {
         // After successful registration, automatically log in the user
         await login({
           email: data.email,

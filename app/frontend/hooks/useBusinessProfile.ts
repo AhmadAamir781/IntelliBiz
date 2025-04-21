@@ -15,7 +15,7 @@ export function useBusinessProfile(businessId: number) {
       setError(null);
 
       const response = await businessApi.getBusinessById(businessId);
-      if (response.success) {
+      if (response.data) {
         setBusiness(response.data);
       } else {
         setError(response.message || 'Failed to fetch business profile');
@@ -35,7 +35,7 @@ export function useBusinessProfile(businessId: number) {
       setError(null);
 
       const response = await businessApi.updateBusiness(businessId, businessData);
-      if (response.success) {
+      if (response.data) {
         setBusiness(response.data);
         toast.success('Business profile updated successfully');
         return response.data;

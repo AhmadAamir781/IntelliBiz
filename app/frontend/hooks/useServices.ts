@@ -18,7 +18,7 @@ export function useServices(businessId: number) {
         isActive: true
       });
 
-      if (response.success) {
+      if (response.data) {
         toast.success('Service created successfully');
         return response.data;
       } else {

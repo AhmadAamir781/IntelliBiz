@@ -91,7 +91,7 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
       debugger
       console.log("Review submission response:", response);
       
-      // Consider the review submission successful even if response.success is false
+      // Consider the review submission successful even if response.data is false
       // but there's a response.data object (which indicates the data was saved)
       if (response.data) {
         // Add the new review to the list
@@ -110,10 +110,10 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
       }
       
       // If we got here, there was no data in the response, check if success is true
-      if (response.success) {
+      if (response. data) {
         // Refresh reviews to get the newly submitted one
         const refreshResponse = await reviewApi.getReviewsByBusiness(businessId);
-        if (refreshResponse.success && refreshResponse.data) {
+        if (refreshResponse.data) {
           setReviews(refreshResponse.data);
           
           // Recalculate average rating
@@ -137,7 +137,7 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
         setTimeout(async () => {
           try {
             const checkResponse = await reviewApi.getReviewsByBusiness(businessId);
-            if (checkResponse.success && checkResponse.data) {
+              if (checkResponse.data) {
               setReviews(checkResponse.data);
               
               // Recalculate average rating
@@ -159,7 +159,7 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
       setTimeout(async () => {
         try {
           const refreshResponse = await reviewApi.getReviewsByBusiness(businessId);
-          if (refreshResponse.success && refreshResponse.data) {
+          if (refreshResponse.data) {
             setReviews(refreshResponse.data);
             
             // Recalculate average rating

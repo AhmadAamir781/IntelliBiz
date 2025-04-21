@@ -12,7 +12,7 @@ export function useBusinessDetail(businessId: number) {
       setLoading(true);
       setError(null);
       const response = await businessApi.getBusinessDetail(businessId);
-
+      response.success
       setBusiness(response.data);
 
     } catch (err) {

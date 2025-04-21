@@ -13,8 +13,8 @@ export function useBusinessLocation(businessId: number) {
       setLoading(true);
       setError(null);
 
-      const response = await businessApi.getBusinessById(businessId);
-      if (response.success) {
+      const response = await businessApi.getBusinessById(2021);
+      if (response.data) {
         setBusiness(response.data);
       } else {
         setError(response.message || 'Failed to fetch business details');

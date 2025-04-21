@@ -17,7 +17,7 @@ export function useBusinessSettings(businessId: number) {
         id: businessId
       });
 
-      if (response.success) {
+      if (response.data) {
         toast.success('Business settings updated successfully');
         return response.data;
       } else {

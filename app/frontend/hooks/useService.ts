@@ -15,7 +15,7 @@ export function useService(serviceId: number) {
       setError(null);
 
       const response = await serviceApi.getServiceById(serviceId);
-      if (response.success) {
+      if (response.data) {
         setService(response.data);
       } else {
         setError(response.message || 'Failed to fetch service');
@@ -35,7 +35,7 @@ export function useService(serviceId: number) {
       setError(null);
 
       const response = await serviceApi.updateService(serviceId, serviceData);
-      if (response.success) {
+      if (response.data) {
         setService(response.data);
         toast.success('Service updated successfully');
         return response.data;
@@ -59,7 +59,7 @@ export function useService(serviceId: number) {
       setError(null);
 
       const response = await serviceApi.toggleServiceActive(serviceId);
-      if (response.success) {
+      if (response.data) {
         setService(response.data);
         toast.success('Service status updated successfully');
         return response.data;

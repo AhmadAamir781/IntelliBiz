@@ -22,9 +22,9 @@ export function useBusinessMessages(businessId: number) {
     try {
       setLoading(true);
       setError(null);
-
+debugger
       const response = await messageApi.getBusinessMessages(businessId);
-      if (response.success) {
+      if (response.data) {
         setMessages(response.data);
         
         // Group messages by user to create conversations
@@ -72,7 +72,7 @@ export function useBusinessMessages(businessId: number) {
         isFromBusiness: true
       });
 
-      if (response.success) {
+      if (response.data) {
         await fetchMessages();
         toast.success('Message sent successfully');
         return response.data;
@@ -91,7 +91,7 @@ export function useBusinessMessages(businessId: number) {
       const unreadMessages = messages.filter(m => m.userId === userId && !m.isRead && !m.isFromBusiness);
       for (const message of unreadMessages) {
         const response = await messageApi.markAsRead(message.id);
-        if (!response.success) {
+        if (!response.data) {
           toast.error(response.message || 'Failed to mark message as read');
         }
       }
@@ -104,11 +104,11 @@ export function useBusinessMessages(businessId: number) {
   const deleteMessage = async (messageId: number) => {
     try {
       const response = await messageApi.deleteMessage(messageId);
-      if (response.success) {
+      if (response) {
         await fetchMessages();
         toast.success('Message deleted successfully');
       } else {
-        toast.error(response.message || 'Failed to delete message');
+        toast.error(response || 'Failed to delete message');
       }
     } catch (err) {
       toast.error('An error occurred while deleting message');

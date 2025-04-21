@@ -20,7 +20,7 @@ export function useAppointments(businessId?: number) {
         response = await appointmentApi.getUserAppointments();
       }
 
-      if (response.success) {
+      if (response.data) {
         setAppointments(response.data);
       } else {
         setError(response.message || 'Failed to fetch appointments');
@@ -37,7 +37,7 @@ export function useAppointments(businessId?: number) {
   const createAppointment = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const response = await appointmentApi.createAppointment(appointmentData);
-      if (response.success) {
+      if (response.data) {
         toast.success('Appointment created successfully');
         await fetchAppointments();
         return response.data;
@@ -54,7 +54,7 @@ export function useAppointments(businessId?: number) {
   const updateAppointment = async (appointmentId: number, appointmentData: Partial<Appointment>) => {
     try {
       const response = await appointmentApi.updateAppointment(appointmentId, appointmentData);
-      if (response.success) {
+        if (response.data) {
         toast.success('Appointment updated successfully');
         await fetchAppointments();
         return response.data;
@@ -71,12 +71,12 @@ export function useAppointments(businessId?: number) {
   const deleteAppointment = async (appointmentId: number) => {
     try {
       const response = await appointmentApi.deleteAppointment(appointmentId);
-      if (response.success) {
+      if (response) {
         toast.success('Appointment deleted successfully');
         await fetchAppointments();
       } else {
-        toast.error(response.message || 'Failed to delete appointment');
-        throw new Error(response.message || 'Failed to delete appointment');
+        toast.error(response || 'Failed to delete appointment');
+        throw new Error(response || 'Failed to delete appointment');
       }
     } catch (err) {
       toast.error('An error occurred while deleting appointment');
@@ -87,7 +87,7 @@ export function useAppointments(businessId?: number) {
   const updateStatus = async (appointmentId: number, status: Appointment['status']) => {
     try {
       const response = await appointmentApi.updateAppointmentStatus(appointmentId, status);
-      if (response.success) {
+      if (response.data) {
         toast.success('Appointment status updated successfully');
         await fetchAppointments();
         return response.data;

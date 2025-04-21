@@ -8,7 +8,6 @@ namespace IntelliBiz.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class MessagesController : ControllerBase
     {
         private readonly IMessageService _messageService;
@@ -21,7 +20,6 @@ namespace IntelliBiz.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetAll()
         {
             var messages = await _messageService.GetAllAsync();

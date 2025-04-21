@@ -102,7 +102,7 @@ export default function BusinessManagement() {
   const handleApprove = async (id: number) => {
     try {
       const response = await businessApi.verifyBusiness(id)
-      if (response.success) {
+      if (response.data) {
         toast.success('Business verified successfully')
         refetch()
       } else {
@@ -116,11 +116,11 @@ export default function BusinessManagement() {
   const handleDelete = async (id: number) => {
     try {
       const response = await businessApi.deleteBusiness(id)
-      if (response.success) {
+      if (response) {
         toast.success('Business deleted successfully')
         refetch()
       } else {
-        toast.error(response.message || 'Failed to delete business')
+        toast.error(response || 'Failed to delete business')
       }
     } catch (err) {
       toast.error('An error occurred while deleting the business')
