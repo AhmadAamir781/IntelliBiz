@@ -19,16 +19,15 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Review } from '@/lib/types';
 
 export default function BusinessesPage() {
-
-
   const [categories, setCategories] = useState<string[]>([]);
   const [businessReviews, setBusinessReviews] = useState<Review[]>([]);
+  
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await businessApi.getAllCategories();
         if (response.data) {
-          setCategories(response.data); // or response?.data depending on your API response shape
+          setCategories(response.data);
         }
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -37,6 +36,7 @@ export default function BusinessesPage() {
 
     fetchCategories();
   }, []);
+  
   const router = useRouter();
   const {
     businesses,
@@ -53,6 +53,7 @@ export default function BusinessesPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
   const handleBusinessClick = (id: number) => {
     router.push(`/businesses/${id}`);
     // Get reviews asynchronously
@@ -79,80 +80,96 @@ export default function BusinessesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="container px-4 py-8 md:px-6 md:py-12">
-      <div className="mb-6">
-          <Link href="/" className="text-primary hover:underline flex items-center gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            Back to home
-          </Link>
-        </div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-4">Find Local Businesses</h1>
-          <p className="text-muted-foreground">Browse and connect with trusted local service providers in your area</p>
-        </div>
-
-        {/* Search and Filter Section */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1 flex gap-2">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search businesses, services..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-            </div>
-            <div className="relative w-full md:max-w-[200px]">
-              <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Location"
-                className="pl-9"
-                value={location}
-                onChange={(e) => handleLocationChange(e.target.value)}
-              />
-            </div>
+    <div className="min-h-screen">
+      {/* Gradient Header Section */}
+      <section className="bg-gradient-to-r from-primary/90 to-primary py-12 md:py-16 text-primary-foreground">
+        <div className="container px-4 md:px-6">
+          <div className="mb-6">
+            <Link href="/" className="text-primary-foreground hover:text-primary-foreground/90 flex items-center gap-1 transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              Back to home
+            </Link>
           </div>
-          <div className="flex gap-2 items-center">
-            <select className="text-sm border rounded-md px-3 py-2 bg-background h-10">
-              <option>Relevance</option>
-              <option>Rating: High to Low</option>
-              <option>Rating: Low to High</option>
-              <option>Name: A to Z</option>
-            </select>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="flex gap-2">
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <BusinessFilters />
-              </SheetContent>
-            </Sheet>
+          
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight mb-4 text-primary-foreground">Find Local Businesses</h1>
+            <p className="text-primary-foreground/80">Browse and connect with trusted local service providers in your area</p>
           </div>
+
+          {/* Search and Filter Section */}
+          <Card className="border-none bg-gradient-to-r from-primary/90 to-primary">
+            <CardContent className="p-0">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="border-none flex-1 flex gap-2">
+                  <div className="relative w-full md:max-w-md">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search businesses, services..."
+                      className="pl-9 border-input"
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className="relative w-full md:max-w-[200px]">
+                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Location"
+                      className="pl-9 border-input"
+                      value={location}
+                      onChange={(e) => handleLocationChange(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <select className="text-sm border rounded-md px-3 py-2 bg-background h-10 border-input">
+                    <option>Relevance</option>
+                    <option>Rating: High to Low</option>
+                    <option>Rating: Low to High</option>
+                    <option>Name: A to Z</option>
+                  </select>
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="flex gap-2 h-10">
+                        <SlidersHorizontal className="h-4 w-4" />
+                        <span className="hidden sm:inline">Filters</span>
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="border-l border-border">
+                      <BusinessFilters />
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </section>
 
-
-        <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+      <div className="container px-4 py-8 md:px-6">
+        {/* Categories */}
+        <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
+          <Badge
+            key="all-categories"
+            variant={category === null ? 'default' : 'outline'}
+            className="cursor-pointer whitespace-nowrap hover:bg-primary/90 transition-colors"
+            onClick={() => handleCategoryChange(null)}
+          >
+            All Categories
+          </Badge>
           {[...new Set(categories)].map((cat) => (
             <Badge
-            key={cat}
-            variant={category === cat ? 'default' : 'outline'}
-            className="cursor-pointer whitespace-nowrap"
-            onClick={() => handleCategoryChange(cat === 'All' ? null : cat)}
-          >
-            {cat}
-          </Badge>
-          
+              key={cat}
+              variant={category === cat ? 'default' : 'outline'}
+              className="cursor-pointer whitespace-nowrap hover:bg-primary/90 transition-colors"
+              onClick={() => handleCategoryChange(cat === 'All' ? null : cat)}
+            >
+              {cat}
+            </Badge>
           ))}
-
         </div>
 
         {/* Results Count */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 border-b border-border/30 pb-2">
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-medium text-foreground">{loading ? '...' : businesses.length}</span> businesses
           </p>
@@ -162,7 +179,7 @@ export default function BusinessesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index} className="overflow-hidden">
+              <Card key={index} className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow">
                 <Skeleton className="h-48 w-full" />
                 <CardContent className="p-4">
                   <Skeleton className="h-6 w-3/4 mb-2" />
@@ -173,22 +190,25 @@ export default function BusinessesPage() {
               </Card>
             ))
           ) : businesses.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">No businesses found</p>
+            <div className="col-span-full text-center py-12 bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No businesses found</p>
+              <Button onClick={refetch} className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
+                Reset Filters
+              </Button>
             </div>
           ) : (
             businesses.map((business) => (
-              <div key={business.id} onClick={() => handleBusinessClick(business.id)}>
+              <div key={business.id} onClick={() => handleBusinessClick(business.id)} className="cursor-pointer transition-transform hover:scale-[1.01]">
                 <BusinessCard
                   business={{
                     id: parseInt(business.id.toString()),
                     name: business.name,
                     category: business.category,
-                    rating: businessReviews.length > 0 ? businessReviews.reduce((sum, review) => sum + review.rating, 0) / businessReviews.length : 0, // Using placeholder rating until real data is available
-                    reviewCount: businessReviews.length, // Using placeholder count until real data is available
+                    rating: businessReviews.length > 0 ? businessReviews.reduce((sum, review) => sum + review.rating, 0) / businessReviews.length : 0, 
+                    reviewCount: businessReviews.length,
                     description: business.description,
                     address: business.address,
-                    phoneNumber: business.phoneNumber || "(555) 123-4567", // Using placeholder if no phone
+                    phoneNumber: business.phoneNumber || "(555) 123-4567",
                     imageUrl: business.imageUrl,
                     isVerified: business.isVerified,
                     city: business.city,
@@ -211,11 +231,11 @@ export default function BusinessesPage() {
         {!loading && businesses.length > 0 && (
           <div className="flex justify-center mt-12">
             <Pagination>
-              <PaginationContent>
+              <PaginationContent className="shadow-sm rounded-lg p-1">
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    className={`${currentPage === 1 ? "pointer-events-none opacity-50" : ""} hover:bg-accent hover:text-accent-foreground transition-colors`}
                   />
                 </PaginationItem>
                 {Array.from({ length: Math.ceil(businesses.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
@@ -223,6 +243,7 @@ export default function BusinessesPage() {
                     <PaginationLink
                       isActive={currentPage === page}
                       onClick={() => setCurrentPage(page)}
+                      className={`hover:bg-accent hover:text-accent-foreground transition-colors ${currentPage === page ? "bg-primary text-primary-foreground" : ""}`}
                     >
                       {page}
                     </PaginationLink>
@@ -231,7 +252,7 @@ export default function BusinessesPage() {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => setCurrentPage(prev => Math.min(Math.ceil(businesses.length / itemsPerPage), prev + 1))}
-                    className={currentPage === Math.ceil(businesses.length / itemsPerPage) ? "pointer-events-none opacity-50" : ""}
+                    className={`${currentPage === Math.ceil(businesses.length / itemsPerPage) ? "pointer-events-none opacity-50" : ""} hover:bg-accent hover:text-accent-foreground transition-colors`}
                   />
                 </PaginationItem>
               </PaginationContent>

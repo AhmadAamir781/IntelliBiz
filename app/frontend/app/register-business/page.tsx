@@ -34,6 +34,9 @@ const businessCategories = [
   "Other",
 ]
 
+// Replace with a theme-based accent class
+const themeAccentClass = "focus:border-primary/30 focus:ring-primary/20";
+
 export default function RegisterBusinessPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
@@ -228,34 +231,50 @@ export default function RegisterBusinessPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30 px-4 py-12">
-      <div className="container">
-        <Link href="/" className="text-orange-500 hover:text-orange-600 flex items-center gap-1 mb-6">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-accent to-background px-4 py-12">
+      <div className="container max-w-6xl mx-auto">
+        <Link href="/" className="text-primary hover:text-primary/80 flex items-center gap-1 mb-6">
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
       </div>
 
-      <div className="flex items-center justify-center flex-1">
-        <Card className="w-full max-w-3xl border-orange-200">
-          <CardHeader className="space-y-1 border-b border-orange-100 bg-gradient-to-r from-white to-orange-50">
-            <CardTitle className="text-2xl font-bold text-orange-800">Register Your Business</CardTitle>
+      <div className="flex items-center justify-center flex-1 mx-auto w-full max-w-6xl">
+        <Card className="w-full max-w-3xl border-primary/20 shadow-md">
+          <CardHeader className="space-y-1 border-b border-primary/10 bg-gradient-to-r from-background to-accent/50">
+            <CardTitle className="text-2xl font-bold text-primary">Register Your Business</CardTitle>
             <CardDescription>Complete the form below to list your business on IntelliBiz</CardDescription>
 
             <div className="mt-4">
               <div className="mt-4 overflow-x-auto pb-2">
                 <Tabs value={`step-${currentStep}`} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 min-w-[500px] bg-orange-100/50">
-                    <TabsTrigger value="step-1" disabled className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <TabsList className="grid w-full grid-cols-4 min-w-[500px] bg-muted">
+                    <TabsTrigger 
+                      value="step-1" 
+                      disabled={Number(currentStep) !== 1} 
+                      className={`text-xs sm:text-sm whitespace-nowrap ${Number(currentStep) === 1 ? "bg-primary text-primary-foreground" : ""}`}
+                    >
                       Basic Info
                     </TabsTrigger>
-                    <TabsTrigger value="step-2" disabled className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                    <TabsTrigger 
+                      value="step-2" 
+                      disabled={Number(currentStep) !== 2} 
+                      className={`text-xs sm:text-sm whitespace-nowrap ${Number(currentStep) === 2 ? "bg-primary text-primary-foreground" : ""}`}
+                    >
                       Contact & Location
                     </TabsTrigger>
-                    <TabsTrigger value="step-3" disabled className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                    <TabsTrigger 
+                      value="step-3" 
+                      disabled={Number(currentStep) !== 3} 
+                      className={`text-xs sm:text-sm whitespace-nowrap ${Number(currentStep) === 3 ? "bg-primary text-primary-foreground" : ""}`}
+                    >
                       Hours & Services
                     </TabsTrigger>
-                    <TabsTrigger value="step-4" disabled className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                    <TabsTrigger 
+                      value="step-4" 
+                      disabled={Number(currentStep) !== 4} 
+                      className={`text-xs sm:text-sm whitespace-nowrap ${Number(currentStep) === 4 ? "bg-primary text-primary-foreground" : ""}`}
+                    >
                       Review & Submit
                     </TabsTrigger>
                   </TabsList>
@@ -270,7 +289,7 @@ export default function RegisterBusinessPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="businessName" className="flex items-center">
-                      <Building className="mr-2 h-4 w-4" />
+                      <Building className="mr-2 h-4 w-4 text-primary" />
                       Business Name
                     </Label>
                     <Input
@@ -280,7 +299,7 @@ export default function RegisterBusinessPage() {
                       required
                       value={formData.businessName}
                       onChange={handleChange}
-                      className={errors.businessName ? "border-destructive" : ""}
+                      className={`${errors.businessName ? "border-destructive" : "border-input"} ${themeAccentClass}`}
                     />
                     {errors.businessName && <p className="text-xs text-destructive">{errors.businessName}</p>}
                   </div>
@@ -288,10 +307,10 @@ export default function RegisterBusinessPage() {
                   <div className="space-y-2">
                     <Label htmlFor="category">Business Category</Label>
                     <Select value={formData.category} onValueChange={(value) => handleSelectChange("category", value)}>
-                      <SelectTrigger className={errors.category ? "border-destructive" : ""}>
+                      <SelectTrigger className={`${errors.category ? "border-destructive" : ""} ${themeAccentClass}`}>
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="border-primary/20">
                         {businessCategories.map((category) => (
                           <SelectItem key={category} value={category}>
                             {category}
@@ -304,7 +323,7 @@ export default function RegisterBusinessPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="description" className="flex items-center">
-                      <Info className="mr-2 h-4 w-4" />
+                      <Info className="mr-2 h-4 w-4 text-primary" />
                       Business Description
                     </Label>
                     <Textarea
@@ -315,7 +334,7 @@ export default function RegisterBusinessPage() {
                       required
                       value={formData.description}
                       onChange={handleChange}
-                      className={errors.description ? "border-destructive" : ""}
+                      className={`${errors.description ? "border-destructive" : ""} ${themeAccentClass}`}
                     />
                     {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
                     <p className="text-xs text-muted-foreground">
@@ -325,7 +344,7 @@ export default function RegisterBusinessPage() {
 
                   <div className="space-y-2">
                     <Label className="flex items-center">
-                      <Upload className="mr-2 h-4 w-4" />
+                      <Upload className="mr-2 h-4 w-4 text-primary" />
                       Business Logo (Optional)
                     </Label>
                     <div className="flex items-center justify-center w-full">
@@ -350,11 +369,11 @@ export default function RegisterBusinessPage() {
               {Number(currentStep) === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Contact Information</h3>
+                    <h3 className="text-lg font-medium text-primary">Contact Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="flex items-center">
-                          <Phone className="mr-2 h-4 w-4" />
+                          <Phone className="mr-2 h-4 w-4 text-primary" />
                           Phone Number
                         </Label>
                         <Input
@@ -364,14 +383,14 @@ export default function RegisterBusinessPage() {
                           required
                           value={formData.phone}
                           onChange={handleChange}
-                          className={errors.phone ? "border-destructive" : ""}
+                          className={`${errors.phone ? "border-destructive" : ""} ${themeAccentClass}`}
                         />
                         {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="email" className="flex items-center">
-                          <Mail className="mr-2 h-4 w-4" />
+                          <Mail className="mr-2 h-4 w-4 text-primary" />
                           Email Address
                         </Label>
                         <Input
@@ -382,29 +401,30 @@ export default function RegisterBusinessPage() {
                           required
                           value={formData.email}
                           onChange={handleChange}
-                          className={errors.email ? "border-destructive" : ""}
+                          className={`${errors.email ? "border-destructive" : ""} ${themeAccentClass}`}
                         />
                         {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="website">Website (Optional)</Label>
+                      <Label htmlFor="website" className={`${themeAccentClass}`}>Website (Optional)</Label>
                       <Input
                         id="website"
                         name="website"
                         placeholder="e.g., https://yourbusiness.com"
                         value={formData.website}
                         onChange={handleChange}
+                        className={themeAccentClass}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Business Location</h3>
+                    <h3 className="text-lg font-medium text-primary">Business Location</h3>
                     <div className="space-y-2">
                       <Label htmlFor="address" className="flex items-center">
-                        <MapPin className="mr-2 h-4 w-4" />
+                        <MapPin className="mr-2 h-4 w-4 text-primary" />
                         Street Address
                       </Label>
                       <Input
@@ -414,7 +434,7 @@ export default function RegisterBusinessPage() {
                         required
                         value={formData.address}
                         onChange={handleChange}
-                        className={errors.address ? "border-destructive" : ""}
+                        className={`${errors.address ? "border-destructive" : ""} ${themeAccentClass}`}
                       />
                       {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
                     </div>
@@ -429,7 +449,7 @@ export default function RegisterBusinessPage() {
                           required
                           value={formData.city}
                           onChange={handleChange}
-                          className={errors.city ? "border-destructive" : ""}
+                          className={`${errors.city ? "border-destructive" : ""} ${themeAccentClass}`}
                         />
                         {errors.city && <p className="text-xs text-destructive">{errors.city}</p>}
                       </div>
@@ -443,7 +463,7 @@ export default function RegisterBusinessPage() {
                           required
                           value={formData.state}
                           onChange={handleChange}
-                          className={errors.state ? "border-destructive" : ""}
+                          className={`${errors.state ? "border-destructive" : ""} ${themeAccentClass}`}
                         />
                         {errors.state && <p className="text-xs text-destructive">{errors.state}</p>}
                       </div>
@@ -457,7 +477,7 @@ export default function RegisterBusinessPage() {
                           required
                           value={formData.zipCode}
                           onChange={handleChange}
-                          className={errors.zipCode ? "border-destructive" : ""}
+                          className={`${errors.zipCode ? "border-destructive" : ""} ${themeAccentClass}`}
                         />
                         {errors.zipCode && <p className="text-xs text-destructive">{errors.zipCode}</p>}
                       </div>
@@ -469,8 +489,8 @@ export default function RegisterBusinessPage() {
               {Number(currentStep) === 3 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-medium flex items-center">
-                      <Clock className="mr-2 h-5 w-5" />
+                    <h3 className="text-lg font-medium flex items-center text-primary">
+                      <Clock className="mr-2 h-5 w-5 text-primary" />
                       Business Hours
                     </h3>
                     <p className="text-sm text-muted-foreground">
@@ -495,6 +515,7 @@ export default function RegisterBusinessPage() {
                               name={item.open}
                               value={formData[item.open as keyof typeof formData] as string}
                               onChange={handleChange}
+                              className={themeAccentClass}
                             />
                           </div>
                           <div>
@@ -503,6 +524,7 @@ export default function RegisterBusinessPage() {
                               name={item.close}
                               value={formData[item.close as keyof typeof formData] as string}
                               onChange={handleChange}
+                              className={themeAccentClass}
                             />
                           </div>
                         </div>
@@ -511,7 +533,7 @@ export default function RegisterBusinessPage() {
                   </div>
 
                   <div className="space-y-2 pt-4">
-                    <h3 className="text-lg font-medium">Services & Additional Information</h3>
+                    <h3 className="text-lg font-medium text-primary">Services & Additional Information</h3>
 
                     <div className="space-y-2">
                       <Label htmlFor="services">Services Offered</Label>
@@ -522,6 +544,7 @@ export default function RegisterBusinessPage() {
                         rows={3}
                         value={formData.services}
                         onChange={handleChange}
+                        className={themeAccentClass}
                       />
                       <p className="text-xs text-muted-foreground">
                         E.g., Plumbing repairs, Pipe installation, Drain cleaning
@@ -537,6 +560,7 @@ export default function RegisterBusinessPage() {
                           placeholder="e.g., 5"
                           value={formData.yearsInBusiness}
                           onChange={handleChange}
+                          className={themeAccentClass}
                         />
                       </div>
 
@@ -548,14 +572,15 @@ export default function RegisterBusinessPage() {
                           placeholder="e.g., Licensed Master Plumber #12345"
                           value={formData.licenses}
                           onChange={handleChange}
+                          className={themeAccentClass}
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2 pt-4">
-                    <h3 className="text-lg font-medium flex items-center">
-                      <User className="mr-2 h-5 w-5" />
+                    <h3 className="text-lg font-medium flex items-center text-primary">
+                      <User className="mr-2 h-5 w-5 text-primary" />
                       Business Owner Information
                     </h3>
 
@@ -568,6 +593,7 @@ export default function RegisterBusinessPage() {
                           placeholder="e.g., John Smith"
                           value={formData.ownerName}
                           onChange={handleChange}
+                          className={themeAccentClass}
                         />
                       </div>
 
@@ -579,6 +605,7 @@ export default function RegisterBusinessPage() {
                           placeholder="e.g., (555) 123-4567"
                           value={formData.ownerPhone}
                           onChange={handleChange}
+                          className={themeAccentClass}
                         />
                       </div>
                     </div>
@@ -592,6 +619,7 @@ export default function RegisterBusinessPage() {
                         placeholder="e.g., owner@yourbusiness.com"
                         value={formData.ownerEmail}
                         onChange={handleChange}
+                        className={themeAccentClass}
                       />
                       <p className="text-xs text-muted-foreground">
                         This email will not be displayed publicly. It will only be used for account management.
@@ -604,43 +632,43 @@ export default function RegisterBusinessPage() {
               {Number(currentStep) === 4 && (
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Review Your Information</h3>
+                    <h3 className="text-lg font-medium text-primary">Review Your Information</h3>
                     <p className="text-sm text-muted-foreground">
                       Please review your business information before submitting.
                     </p>
                   </div>
 
                   <div className="space-y-4">
-                    <Card>
+                    <Card className="border-primary/20 shadow-sm">
                       <CardContent className="pt-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <h4 className="font-medium">Business Information</h4>
+                            <h4 className="font-medium text-primary">Business Information</h4>
                             <ul className="mt-2 space-y-1">
                               <li>
-                                <span className="text-muted-foreground">Name:</span> {formData.businessName}
+                                <span className="text-primary/80">Name:</span> {formData.businessName}
                               </li>
                               <li>
-                                <span className="text-muted-foreground">Category:</span> {formData.category}
+                                <span className="text-primary/80">Category:</span> {formData.category}
                               </li>
                               <li>
-                                <span className="text-muted-foreground">Years in Business:</span>{" "}
+                                <span className="text-primary/80">Years in Business:</span>{" "}
                                 {formData.yearsInBusiness || "Not specified"}
                               </li>
                             </ul>
                           </div>
 
                           <div>
-                            <h4 className="font-medium">Contact Information</h4>
+                            <h4 className="font-medium text-primary">Contact Information</h4>
                             <ul className="mt-2 space-y-1">
                               <li>
-                                <span className="text-muted-foreground">Phone:</span> {formData.phone}
+                                <span className="text-primary/80">Phone:</span> {formData.phone}
                               </li>
                               <li>
-                                <span className="text-muted-foreground">Email:</span> {formData.email}
+                                <span className="text-primary/80">Email:</span> {formData.email}
                               </li>
                               <li>
-                                <span className="text-muted-foreground">Website:</span>{" "}
+                                <span className="text-primary/80">Website:</span>{" "}
                                 {formData.website || "Not specified"}
                               </li>
                             </ul>
@@ -648,19 +676,19 @@ export default function RegisterBusinessPage() {
                         </div>
 
                         <div className="mt-4">
-                          <h4 className="font-medium">Location</h4>
+                          <h4 className="font-medium text-primary">Location</h4>
                           <p className="mt-1">
                             {formData.address}, {formData.city}, {formData.state} {formData.zipCode}
                           </p>
                         </div>
 
                         <div className="mt-4">
-                          <h4 className="font-medium">Description</h4>
+                          <h4 className="font-medium text-primary">Description</h4>
                           <p className="mt-1 text-sm">{formData.description}</p>
                         </div>
 
                         <div className="mt-4">
-                          <h4 className="font-medium">Services</h4>
+                          <h4 className="font-medium text-primary">Services</h4>
                           <p className="mt-1">{formData.services || "Not specified"}</p>
                         </div>
                       </CardContent>
@@ -672,14 +700,14 @@ export default function RegisterBusinessPage() {
                       id="terms"
                       checked={formData.agreeTerms}
                       onCheckedChange={handleCheckboxChange}
-                      className={errors.agreeTerms ? "border-destructive" : ""}
+                      className={`${errors.agreeTerms ? "border-destructive" : "border-primary/30"} data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground`}
                     />
                     <label
                       htmlFor="terms"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       I confirm that all information provided is accurate and I agree to the{" "}
-                      <a href="/terms" className="text-primary underline-offset-4 hover:underline">
+                      <a href="/terms" className="text-orange-500 underline-offset-4 hover:underline">
                         terms of service
                       </a>
                     </label>
@@ -688,20 +716,20 @@ export default function RegisterBusinessPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-4 border-t border-orange-100">
+            <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-4 border-t border-primary/10">
               {Number(currentStep) > 1 && (
-                <Button type="button" variant="outline" onClick={handlePrevious} className="w-full sm:w-auto border-orange-300 hover:bg-orange-50 hover:text-orange-600">
+                <Button type="button" variant="outline" onClick={handlePrevious} className="w-full sm:w-auto hover:bg-accent hover:text-accent-foreground">
                   Previous
                 </Button>
               )}
 
               <div className="flex w-full sm:w-auto">
                 {Number(currentStep) < 4 ? (
-                  <Button type="button" onClick={handleNext} className="w-full bg-orange-500 hover:bg-orange-600">
+                  <Button type="button" onClick={handleNext} className="w-full">
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Submitting..." : "Register Business"}
                   </Button>
                 )}
