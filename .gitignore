@@ -69,3 +69,4 @@ yarn.lock
 !/important-config/
 /app/frontend/.next
 /app/frontend/.next
+/app/frontend/.next
