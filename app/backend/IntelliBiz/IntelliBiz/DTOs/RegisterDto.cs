@@ -27,6 +27,6 @@ namespace IntelliBiz.API.DTOs
         public string ConfirmPassword { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Role is required")]
-        public string Role { get; set; } = "User";
+        public string Role { get; set; }
     }
 }

@@ -16,7 +16,7 @@ export function Logo({ className, size = "md" }: LogoProps) {
     <Link href="/" className={`flex items-center gap-2 ${className}`}>
       <div className="relative">
         <img
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-N3ZBxndDJeRib3ukF13AFDQGBh94nA.png"
+          src="/intellibiz-logo.png"
           alt="IntelliBiz Logo"
           className={`${sizes[size]}`}
         />

@@ -42,7 +42,7 @@ namespace IntelliBiz.API.Services
             };
 
             var users = await _userRepository.GetAllAsync();
-            if(users == null)
+            if(users.Count() == 0)
             {
                 user.Role = "Admin";
             }
