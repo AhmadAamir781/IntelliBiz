@@ -54,7 +54,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
     business.imageUrl || categoryImages[business.category as keyof typeof categoryImages] || categoryImages.default
 
   // Use either provided reviewCount or calculate from fetched reviews
-  const reviewCount = business.reviewCount !== undefined ? business.reviewCount : reviews.length;
+  const reviewCount = reviews.length;
   
   // Calculate average rating from reviews
   const averageRating = reviews.length > 0 
