@@ -41,6 +41,12 @@ namespace IntelliBiz.API.Services
                 CreatedAt = DateTime.UtcNow
             };
 
+            var users = await _userRepository.GetAllAsync();
+            if(users == null)
+            {
+                user.Role = "Admin";
+            }
+
             int userId = await _userRepository.CreateAsync(user);
             user.Id = userId;
 
