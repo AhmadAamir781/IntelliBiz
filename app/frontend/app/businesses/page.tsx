@@ -18,24 +18,24 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Review } from '@/lib/types';
 
 export default function BusinessesPage() {
-  
- 
-    const [categories, setCategories] = useState<string[]>([]);
-   const [businessReviews, setBusinessReviews] = useState<Review[]>([]);
-    useEffect(() => {
-      const fetchCategories = async () => {
-        try {
-          const response = await businessApi.getAllCategories();
-          if (response.data) {
-            setCategories(response.data); // or response?.data depending on your API response shape
-          }
-        } catch (error) {
-          console.error("Error fetching categories:", error);
+
+
+  const [categories, setCategories] = useState<string[]>([]);
+  const [businessReviews, setBusinessReviews] = useState<Review[]>([]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await businessApi.getAllCategories();
+        if (response.data) {
+          setCategories(response.data); // or response?.data depending on your API response shape
         }
-      };
-  
-      fetchCategories();
-    }, []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   const router = useRouter();
   const {
     businesses,
@@ -90,18 +90,18 @@ export default function BusinessesPage() {
           <div className="flex-1 flex gap-2">
             <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="Search businesses, services..." 
-                className="pl-9" 
+              <Input
+                placeholder="Search businesses, services..."
+                className="pl-9"
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
             <div className="relative w-full md:max-w-[200px]">
               <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="Location" 
-                className="pl-9" 
+              <Input
+                placeholder="Location"
+                className="pl-9"
                 value={location}
                 onChange={(e) => handleLocationChange(e.target.value)}
               />
@@ -130,17 +130,19 @@ export default function BusinessesPage() {
 
 
         <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
-      {categories.map((cat) => (
-        <Badge
-          key={cat}
-          variant={category === cat ? 'default' : 'outline'}
-          className="cursor-pointer"
-          onClick={() => handleCategoryChange(cat === 'All' ? null : cat)}
-        >
-          {cat}
-        </Badge>
-      ))}
-    </div>
+          {[...new Set(categories)].map((cat) => (
+            <Badge
+            key={cat}
+            variant={category === cat ? 'default' : 'outline'}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => handleCategoryChange(cat === 'All' ? null : cat)}
+          >
+            {cat}
+          </Badge>
+          
+          ))}
+
+        </div>
 
         {/* Results Count */}
         <div className="flex justify-between items-center mb-6">
@@ -170,7 +172,7 @@ export default function BusinessesPage() {
           ) : (
             businesses.map((business) => (
               <div key={business.id} onClick={() => handleBusinessClick(business.id)}>
-                <BusinessCard 
+                <BusinessCard
                   business={{
                     id: parseInt(business.id.toString()),
                     name: business.name,
@@ -191,7 +193,7 @@ export default function BusinessesPage() {
                     createdAt: business.createdAt,
                     updatedAt: business.updatedAt,
                     status: business.status
-                  }} 
+                  }}
                 />
               </div>
             ))
