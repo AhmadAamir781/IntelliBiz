@@ -14,8 +14,8 @@ import { MessageDialog } from "@/components/message-dialog"
 import { MapPin, Phone, Mail, Globe, Calendar, MessageSquare, Star, Clock, CheckCircle2, Share2 } from "lucide-react"
 import { useParams } from "next/navigation"
 import { Loader2 } from "lucide-react"
-import { businessApi } from "@/lib/api"
-import { BusinessDetailDto } from "@/lib/types"
+import { businessApi, reviewApi } from "@/lib/api"
+import { BusinessDetailDto, Review } from "@/lib/types"
 import { toast } from "sonner"
 
 // Mapping for category images
@@ -34,6 +34,7 @@ const categoryImages = {
 export default function BusinessDetailPage() {
   const { id } = useParams()
   const [business, setBusiness] = useState<BusinessDetailDto | null>(null)
+  const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -58,6 +59,32 @@ export default function BusinessDetailPage() {
       fetchBusinessDetail()
     }
   }, [id])
+
+  // Fetch reviews for the business
+  useEffect(() => {
+    async function fetchBusinessReviews() {
+      try {
+        const response = await reviewApi.getReviewsByBusiness(Number(id))
+        if (response.data) {
+          setReviews(response.data)
+        }
+      } catch (err) {
+        console.error('Error fetching business reviews:', err)
+      }
+    }
+
+    if (id) {
+      fetchBusinessReviews()
+    }
+  }, [id])
+
+  // Calculate average rating from reviews
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    : business?.rating || 0
+
+  // Use actual review count
+  const reviewCount = reviews.length
 
   if (loading) {
     return (
@@ -144,17 +171,17 @@ export default function BusinessDetailPage() {
                       <Star
                         key={i}
                         className={`h-4 w-4 ${
-                          i < Math.floor(business.rating)
+                          i < Math.floor(averageRating)
                             ? "text-yellow-400 fill-yellow-400"
-                            : i < business.rating
+                            : i < averageRating
                               ? "text-yellow-400 fill-yellow-400 opacity-50"
                               : "text-muted-foreground"
                         }`}
                       />
                     ))}
                   </div>
-                  <span className="font-medium">{business.rating}</span>
-                  <span className="text-muted-foreground">({business.reviewCount} reviews)</span>
+                  <span className="font-medium">{averageRating.toFixed(1)}</span>
+                  <span className="text-muted-foreground">({reviewCount} reviews)</span>
                 </div>
                 <p className="text-muted-foreground mb-4">
                   {business.description ? (
