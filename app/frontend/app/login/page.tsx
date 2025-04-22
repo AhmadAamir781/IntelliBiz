@@ -48,10 +48,10 @@ export default function LoginPage() {
             // Redirect based on user role
             if (role === "Admin") {
               router.push("/admin")
-            } else if (role === "Shopkeeper") {
+            } else if (role === "BusinessOwner") {
               router.push("/business")
             } else {
-              router.push("/dashboard")
+              router.push("/businesses")
             }
           } catch (apiError) {
             // If API fails, still use stored user data
@@ -59,11 +59,11 @@ export default function LoginPage() {
             
             // Redirect based on stored user role
             if (user.role === "Admin") {
-              router.push("/admin")
-            } else if (user.role === "Shopkeeper") {
-              router.push("/business") 
+              router.push("/login")
+            } else if (user.role === "BusinessOwner") {
+              router.push("/login") 
             } else {
-              router.push("/dashboard")
+              router.push("/login")
             }
           }
         }
