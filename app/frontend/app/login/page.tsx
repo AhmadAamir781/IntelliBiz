@@ -13,6 +13,7 @@ import { Eye, EyeOff } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { authApi, userApi } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import { FixedToast } from "@/components/fixed-toast"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function LoginPage() {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem("token")
       if (!token) return
-      
+      debugger
       try {
         // Get user from localStorage for initial data
         const userStr = localStorage.getItem("user")
@@ -44,7 +45,7 @@ export default function LoginPage() {
             
             // Use the verified role if it exists, otherwise fallback to stored role
             const role = verifiedUser?.role || user.role
-            
+            debugger
             // Redirect based on user role
             if (role === "Admin") {
               router.push("/admin")
@@ -110,9 +111,10 @@ export default function LoginPage() {
           // Get complete user profile from API to ensure we have the latest role
           const userResponse = await userApi.getUsersByEmail(formData.email)
           const userData = userResponse.data
-          
-          // Show success toast
-          showSuccessToast("Login successful", `Welcome back, ${userData.firstName || authResponse.data.user.firstName}!`)
+          if(userData){
+            // Show success toast
+            showSuccessToast("Login successful", `Welcome back, ${userData.firstName || authResponse.data.user.firstName}!`)
+          }
 
           // Use the verified role from API for redirection
           const userRole = userData.role
@@ -143,11 +145,33 @@ export default function LoginPage() {
           }
         }
       } else {
-        showErrorToast("Login failed", authResponse.data.message || "Invalid credentials")
+        // Handle unsuccessful login with specific error message
+        const errorMessage = authResponse.data.message || "Invalid email or password"
+        showErrorToast("Login failed", errorMessage)
       }
     } catch (error: any) {
       console.error("Login failed:", error)
-      showErrorToast("Login failed", error.response?.data?.message || "An error occurred")
+      
+      // Provide more specific error messages based on the error type
+      if (error.response) {
+        debugger
+        // Server responded with an error status
+        if (error.response.status === 401) {
+          showErrorToast("Invalid credentials", "The email or password you entered is incorrect")
+        } else if (error.response.status === 404) {
+          showErrorToast("Account not found", "No account exists with this email address")
+        } else if (error.response.status === 403) {
+          showErrorToast("Account locked", "Your account has been temporarily locked due to multiple failed login attempts")
+        } else {
+          showErrorToast("Login failed", error.response.data?.message || "An error occurred while signing in")
+        }
+      } else if (error.request) {
+        // Request was made but no response received (network error)
+        showErrorToast("Connection error", "Unable to connect to the server. Please check your internet connection and try again")
+      } else {
+        // Something else happened while setting up the request
+        showErrorToast("Login error", "An unexpected error occurred. Please try again later")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -155,6 +179,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
+      
       {/* Left side - Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12">
         <div className="w-full max-w-md space-y-8">
@@ -166,7 +191,27 @@ export default function LoginPage() {
             <p className="mt-2 text-sm text-gray-600">Sign in to your account to continue</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form 
+            onSubmit={handleSubmit} 
+            className="space-y-6"
+            onLoad={() => {
+              console.log("Form loaded");
+              // Try using both custom toast hook and direct toast
+              showErrorToast("Form Loaded", "Direct test from form onLoad");
+              
+              // Also attempt to call the imported toast function directly
+              try {
+                const { toast } = require("@/components/ui/use-toast");
+                toast({
+                  title: "Direct Toast Test",
+                  description: "Using direct toast import",
+                  variant: "destructive",
+                });
+              } catch (err) {
+                console.error("Error calling direct toast:", err);
+              }
+            }}
+          >
             <div className="space-y-4">
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -233,6 +278,7 @@ export default function LoginPage() {
                     Remember me
                   </label>
                 </div>
+                
               </div>
             </div>
 

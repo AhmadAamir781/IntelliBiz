@@ -3,25 +3,42 @@
 import { useToast as useShadcnToast } from "@/components/ui/use-toast"
 
 export function useToast() {
-  const { toast } = useShadcnToast()
+  const { toast, toasts } = useShadcnToast()
 
-  const showToast = (title: string, description?: string, variant?: "default" | "destructive") => {
+  // For debugging
+  if (typeof window !== 'undefined') {
+    console.log('Current toasts:', toasts)
+  }
+
+  const showToast = (
+    title: string, 
+    description?: string, 
+    variant: "default" | "destructive" = "default",
+    duration: number = 5000
+  ) => {
+    console.log(`Showing toast: ${title}, ${description}`)
+    
     toast({
       title,
       description,
       variant,
+      duration,
     })
   }
 
   const showSuccessToast = (title: string, description?: string) => {
-    showToast(title, description, "default")
+    showToast(title, description, "default", 5000)
   }
 
   const showErrorToast = (title: string, description?: string) => {
-    showToast(title, description, "destructive")
+    // For debugging
+    console.log(`Showing error toast: ${title}, ${description}`)
+    
+    showToast(title, description, "destructive", 7000)
   }
 
   return {
+    toasts,
     showToast,
     showSuccessToast,
     showErrorToast,
