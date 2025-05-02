@@ -13,7 +13,6 @@ import { Eye, EyeOff } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { authApi, userApi } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
-import { FixedToast } from "@/components/fixed-toast"
 
 export default function LoginPage() {
   const router = useRouter()

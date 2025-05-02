@@ -154,7 +154,7 @@ export default function RegisterBusinessPage() {
 
       if (!formData.description.trim()) {
         newErrors.description = "Description is required"
-      } else if (formData.description.length < 50) {
+      } else if (formData.description.length < 10) {
         newErrors.description = "Description should be at least 50 characters"
       }
     } else if (step === 2) {
@@ -216,7 +216,8 @@ export default function RegisterBusinessPage() {
 
     try {
       const response = await businessApi.createBusiness(formData)
-      if (response.data.success) {
+
+      if (response.data) {
         showSuccessToast("Business registered successfully!")
         router.push("/businesses")
       } else {
@@ -338,7 +339,7 @@ export default function RegisterBusinessPage() {
                     />
                     {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
                     <p className="text-xs text-muted-foreground">
-                      Min. 50 characters. Include your specialties, experience, and what sets you apart.
+                      Min. 10 characters. Include your specialties, experience, and what sets you apart.
                     </p>
                   </div>
 
