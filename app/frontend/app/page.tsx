@@ -1,14 +1,77 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
+import { Search, LogOut, User } from "lucide-react"
 import { SearchBar } from "@/components/search-bar"
 import { FeaturedBusinesses } from "@/components/featured-businesses"
 import { CategorySection } from "@/components/category-section"
 import { Logo } from "@/components/logo"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Home() {
+  const { isAuthenticated, logout, user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check if user is authenticated after auth state is loaded
+    if (!loading && !isAuthenticated) {
+      // Store current location for redirect after login
+      localStorage.setItem('redirectAfterLogin', '/')
+      // Redirect to login page
+      router.push('/login')
+    }
+  }, [isAuthenticated, loading, router])
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
+
+  // While checking auth status, show a loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // If not authenticated, don't render the content (will redirect)
+  if (!isAuthenticated) {
+    return null
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Header with auth controls */}
+      <header className="w-full py-4 px-4 md:px-6 border-b bg-background">
+        <div className="container mx-auto flex justify-between items-center">
+          <Logo />
+          <div className="flex items-center gap-4">
+            {isAuthenticated && (
+              <>
+                <div className="hidden md:block text-sm">
+                  <span className="text-muted-foreground mr-2">Welcome,</span>
+                  <span className="font-medium">{user?.firstName || user?.email}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center gap-1"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  <span>Logout</span>
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary/90 to-primary py-16 md:py-24">
         <div className="container px-4 md:px-6">

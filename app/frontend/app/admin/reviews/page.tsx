@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,13 +34,17 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { Search, MoreHorizontal, Eye, Flag, CheckCircle, AlertTriangle, Star, Trash2, XCircle } from "lucide-react"
+import { Search, MoreHorizontal, Eye, Flag, CheckCircle, AlertTriangle, Star, Trash2, XCircle, LogOut } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAdminReviews } from "@/hooks/useAdminReviews"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Review } from "@/lib/types"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from 'sonner'
 
 export default function ReviewManagement() {
+  const router = useRouter()
+  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [reviewStatus, setReviewStatus] = useState<"all" | "published" | "pending" | "flagged">("all")
@@ -47,6 +52,28 @@ export default function ReviewManagement() {
   const [reviewToDelete, setReviewToDelete] = useState<number | null>(null)
   const [reviewDetailsOpen, setReviewDetailsOpen] = useState(false)
   const [selectedReview, setSelectedReview] = useState<Review | null>(null)
+
+  // Check authentication and admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        localStorage.setItem('redirectAfterLogin', '/admin/reviews')
+        router.push('/login')
+        return
+      }
+      
+      // Check if user has admin role
+      if (isAuthenticated && !hasRole('admin')) {
+        toast.error('Access denied. Admin privileges required.')
+        router.push('/')
+      }
+    }
+  }, [isAuthenticated, authLoading, router, hasRole])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   const { reviews, stats, loading, error, totalPages, approveReview, rejectReview, deleteReview, unflagReview } = useAdminReviews({
     status: reviewStatus,
@@ -127,6 +154,20 @@ export default function ReviewManagement() {
     }
   }
 
+  // Show loading state while checking authentication
+  if (authLoading || (loading && !error)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated or not an admin
+  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+    return null
+  }
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -138,9 +179,20 @@ export default function ReviewManagement() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Review Management</h1>
-          <p className="text-muted-foreground">Monitor and moderate customer reviews.</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Review Management</h1>
+            <p className="text-muted-foreground">Monitor and moderate customer reviews.</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            className="flex items-center gap-1"
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
         </div>
       </div>
 

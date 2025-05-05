@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import { Logo } from "@/components/logo"
-import { authApi, userApi } from "@/lib/api"
+import { authApi, userApi, getUserRole } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
@@ -24,6 +24,7 @@ export default function LoginPage() {
     rememberMe: false,
   })
   const { showSuccessToast, showErrorToast } = useToast()
+  const [error, setError] = useState("")
 
   // Check if user is already logged in and redirect based on role
   useEffect(() => {
@@ -96,81 +97,45 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
 
     try {
-      // First attempt login
-      const authResponse = await authApi.login(formData)
-
-      if (authResponse.data.success) {
-        // Store token and basic user data
-        localStorage.setItem("token", authResponse.data.token)
-        localStorage.setItem("user", JSON.stringify(authResponse.data.user))
-
-        try {
-          // Get complete user profile from API to ensure we have the latest role
-          const userResponse = await userApi.getUsersByEmail(formData.email)
-          const userData = userResponse.data
-          if(userData){
-            // Show success toast
-            showSuccessToast("Login successful", `Welcome back, ${userData.firstName || authResponse.data.user.firstName}!`)
-          }
-
-          // Use the verified role from API for redirection
-          const userRole = userData.role
-
+      const response = await authApi.login({ email: formData.email, password: formData.password })
+      
+      if (response.data?.token) {
+        showSuccessToast("Login successful", "Welcome back!")
+        
+        // Get the redirect path or determine based on role
+        const redirectPath = localStorage.getItem("redirectAfterLogin")
+        
+        if (redirectPath) {
+          // Use saved redirect path if available
+          localStorage.removeItem("redirectAfterLogin")
+          router.push(redirectPath)
+        } else {
           // Redirect based on user role
-          if (userRole === "Admin") {
-            router.push("/admin")
-          } else if (userRole === "Shopkeeper") {
-            router.push("/business")
-          } else {
-            router.push("/dashboard")
-          }
-        } catch (profileError) {
-          console.error("Error fetching user profile:", profileError)
+          const userRole = getUserRole()
           
-          // Fallback to using the role from the auth response
-          const fallbackRole = authResponse.data.user.role
-          
-          showSuccessToast("Login successful", `Welcome back, ${authResponse.data.user.firstName}!`)
-          
-          // Redirect based on role from auth response
-          if (fallbackRole === "Admin") {
-            router.push("/admin")
-          } else if (fallbackRole === "Shopkeeper") {
-            router.push("/business")
-          } else {
-            router.push("/dashboard")
+          switch(userRole) {
+            case 'admin':
+              router.push('/admin/dashboard')
+              break
+            case 'business_owner':
+              router.push('/business/dashboard')
+              break
+            default:
+              router.push('/dashboard') // Regular user
           }
         }
       } else {
-        // Handle unsuccessful login with specific error message
-        const errorMessage = authResponse.data.message || "Invalid email or password"
-        showErrorToast("Login failed", errorMessage)
+        setError("Invalid login credentials")
+        showErrorToast("Login failed", "Invalid login credentials")
       }
     } catch (error: any) {
-      console.error("Login failed:", error)
-      
-      // Provide more specific error messages based on the error type
-      if (error.response) {
-        debugger
-        // Server responded with an error status
-        if (error.response.status === 401) {
-          showErrorToast("Invalid credentials", "The email or password you entered is incorrect")
-        } else if (error.response.status === 404) {
-          showErrorToast("Account not found", "No account exists with this email address")
-        } else if (error.response.status === 403) {
-          showErrorToast("Account locked", "Your account has been temporarily locked due to multiple failed login attempts")
-        } else {
-          showErrorToast("Login failed", error.response.data?.message || "An error occurred while signing in")
-        }
-      } else if (error.request) {
-        // Request was made but no response received (network error)
-        showErrorToast("Connection error", "Unable to connect to the server. Please check your internet connection and try again")
-      } else {
-        // Something else happened while setting up the request
-        showErrorToast("Login error", "An unexpected error occurred. Please try again later")
-      }
+      console.error("Login error:", error)
+      const errorMessage = error.response?.data?.message || "An error occurred during login"
+      setError(errorMessage)
+      showErrorToast("Login failed", errorMessage)
     } finally {
       setIsLoading(false)
     }

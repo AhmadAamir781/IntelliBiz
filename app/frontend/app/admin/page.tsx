@@ -1,5 +1,7 @@
 "use client"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,15 +16,56 @@ import {
   ArrowRight,
   ArrowUpRight,
   ArrowDownRight,
+  LogOut,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAdminDashboard } from "@/hooks/useAdminDashboard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "sonner"
 
 export default function AdminDashboard() {
+  const router = useRouter()
+  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
   const { stats, pendingBusinesses, recentActivity, loading, error } = useAdminDashboard()
+
+  // Check authentication and admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        localStorage.setItem('redirectAfterLogin', '/admin')
+        router.push('/login')
+        return
+      }
+      
+      // Check if user has admin role
+      if (isAuthenticated && !hasRole('admin')) {
+        toast.error('Access denied. Admin privileges required.')
+        router.push('/')
+      }
+    }
+  }, [isAuthenticated, authLoading, router, hasRole])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading || (loading && !error)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated or not an admin
+  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+    return null
+  }
 
   if (error) {
     return (
@@ -44,6 +87,15 @@ export default function AdminDashboard() {
             Download Report
           </Button>
           <Button className="w-full sm:w-auto">View Analytics</Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            className="flex items-center gap-1"
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
         </div>
       </div>
 

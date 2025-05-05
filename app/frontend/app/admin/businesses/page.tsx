@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,14 +47,18 @@ import {
   Edit,
   Trash2,
   Plus,
+  LogOut,
 } from "lucide-react"
 import { useAdminBusinesses } from "@/hooks/useAdminBusinesses"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useBusinesses } from '@/hooks/useBusinesses'
+import { useAuth } from "@/hooks/use-auth"
 import { toast } from 'sonner'
 import { businessApi } from '@/lib/api'
 
 export default function BusinessManagement() {
+  const router = useRouter()
+  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
   const searchParams = useSearchParams()
   const filterParam = searchParams.get("filter") || "all"
 
@@ -63,6 +68,28 @@ export default function BusinessManagement() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [businessToDelete, setBusinessToDelete] = useState<number | null>(null)
+
+  // Check authentication and admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        localStorage.setItem('redirectAfterLogin', '/admin/businesses')
+        router.push('/login')
+        return
+      }
+      
+      // Check if user has admin role
+      if (isAuthenticated && !hasRole('admin')) {
+        toast.error('Access denied. Admin privileges required.')
+        router.push('/')
+      }
+    }
+  }, [isAuthenticated, authLoading, router, hasRole])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   const { businesses, stats, loading, error, totalPages, updateBusinessStatus, deleteBusiness } = useAdminBusinesses({
     status: filter as 'all' | 'approved' | 'pending' | 'rejected',
@@ -127,6 +154,20 @@ export default function BusinessManagement() {
     }
   }
 
+  // Show loading state while checking authentication
+  if (authLoading || (loading && !error)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated or not an admin
+  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+    return null
+  }
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -138,9 +179,20 @@ export default function BusinessManagement() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Business Management</h1>
-          <p className="text-muted-foreground">Manage all registered businesses on the platform.</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Business Management</h1>
+            <p className="text-muted-foreground">Manage all registered businesses on the platform.</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            className="flex items-center gap-1"
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
         </div>
         <div className="flex justify-between items-center">
           <Button asChild>

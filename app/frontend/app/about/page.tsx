@@ -1,17 +1,60 @@
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
-import { CheckCircle, Users, Award, Target, ArrowLeft } from "lucide-react"
+import { CheckCircle, Users, Award, Target, ArrowLeft, LogOut } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function AboutPage() {
+  const { isAuthenticated, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+
+  // Check authentication and redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      localStorage.setItem('redirectAfterLogin', '/about');
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container px-4 py-8 md:px-6 md:py-12">
-        <div className="mb-6">
+        <div className="flex justify-between items-center mb-6">
           <Link href="/" className="text-primary hover:underline flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
             Back to home
           </Link>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-1"
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
         </div>
 
         <div className="flex flex-col items-center mb-12">

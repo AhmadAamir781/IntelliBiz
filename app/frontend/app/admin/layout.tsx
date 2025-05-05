@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
@@ -39,15 +39,41 @@ import {
   SidebarMenuButton,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "sonner"
 
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const router = useRouter()
   const pathname = usePathname()
+  const { isAuthenticated, loading: authLoading, logout, hasRole, user } = useAuth()
   const [isMounted, setIsMounted] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  // Check authentication and admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        localStorage.setItem('redirectAfterLogin', pathname || '/admin')
+        router.push('/login')
+        return
+      }
+      
+      // Check if user has admin role
+      if (isAuthenticated && !hasRole('admin')) {
+        toast.error('Access denied. Admin privileges required.')
+        router.push('/')
+      }
+    }
+  }, [isAuthenticated, authLoading, router, hasRole, pathname])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   // Prevent hydration errors
   useEffect(() => {
@@ -117,8 +143,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return pathname?.startsWith(href) && href !== "/admin"
   }
 
-  if (!isMounted) {
+  // Show loading state while checking authentication
+  if (authLoading || !isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated or not an admin
+  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
     return null
+  }
+
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    if (!user) return 'AD'
+    return `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() || 'AD'
   }
 
   return (
@@ -159,19 +201,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <div className="border-t p-4">
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar>
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarImage src={user?.profilePicture || "/placeholder.svg?height=32&width=32"} alt={user?.firstName || "Admin"} />
+                    <AvatarFallback>{getInitials()}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">Admin User</p>
-                    <p className="text-xs text-muted-foreground">admin@intellibiz.com</p>
+                    <p className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : 'Admin User'}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email || 'admin@intellibiz.com'}</p>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full justify-start gap-2" asChild>
-                  <Link href="/login">
-                    <LogOut className="h-4 w-4" />
-                    Sign out
-                  </Link>
+                <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  Sign out
                 </Button>
               </div>
             </div>
@@ -229,16 +269,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <SidebarFooter className="p-4">
               <div className="flex items-center gap-2 mb-6">
                 <Avatar>
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarImage src={user?.profilePicture || "/placeholder.svg?height=32&width=32"} alt={user?.firstName || "Admin"} />
+                  <AvatarFallback>{getInitials()}</AvatarFallback>
                 </Avatar>
                 <div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 flex items-center gap-1 px-2">
                         <div className="flex flex-col items-start">
-                          <span className="text-sm font-medium">Admin User</span>
-                          <span className="text-xs text-muted-foreground">admin@intellibiz.com</span>
+                          <span className="text-sm font-medium">{user ? `${user.firstName} ${user.lastName}` : 'Admin User'}</span>
+                          <span className="text-xs text-muted-foreground">{user?.email || 'admin@intellibiz.com'}</span>
                         </div>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </Button>
@@ -247,18 +287,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       <DropdownMenuItem>Profile</DropdownMenuItem>
                       <DropdownMenuItem>Settings</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/login">Sign out</Link>
+                      <DropdownMenuItem onClick={handleLogout}>
+                        Sign out
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="w-full justify-start gap-2" asChild>
-                <Link href="/login">
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </Link>
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                Sign out
               </Button>
             </SidebarFooter>
           </Sidebar>

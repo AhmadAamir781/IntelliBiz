@@ -1,18 +1,65 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Star, MessageSquare, Calendar, TrendingUp, Eye, ArrowRight, ArrowUpRight, CheckCircle, Clock, ArrowLeft } from "lucide-react"
+import { Star, MessageSquare, Calendar, TrendingUp, Eye, ArrowRight, ArrowUpRight, CheckCircle, Clock, ArrowLeft, LogOut } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useBusinessDashboard } from "@/hooks/useBusinessDashboard"
+import { useAuth } from "@/hooks/use-auth"
 import { formatDistanceToNow } from "date-fns"
 
 export default function BusinessDashboard() {
-  const { stats, business, upcomingAppointments, recentMessages, recentReviews, loading, error } = useBusinessDashboard()
+  const { 
+    stats, 
+    business, 
+    upcomingAppointments, 
+    recentMessages, 
+    recentReviews, 
+    loading: dashboardLoading, 
+    error 
+  } = useBusinessDashboard()
+  
+  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
+  const router = useRouter()
+
+  // Check authentication and role
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      localStorage.setItem('redirectAfterLogin', '/business')
+      router.push('/login')
+      return
+    }
+
+    // Optional: Check if user has correct role for business dashboard
+    if (!authLoading && isAuthenticated && !hasRole('business_owner') && !hasRole('admin')) {
+      router.back() // Go back if wrong role
+    }
+  }, [isAuthenticated, authLoading, router, hasRole])
+
+  const handleLogout = () => {
+    logout()
+    router.push("/login")
+  }
+
+  // Show loading state while checking authentication or loading dashboard data
+  if (authLoading || (dashboardLoading && !error)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return null
+  }
 
   if (error) {
     return (
@@ -25,7 +72,7 @@ export default function BusinessDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div className="mb-6">
+        <div className="mb-6">
           <Link href="/" className="text-primary hover:underline flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
             Back to home
@@ -38,6 +85,14 @@ export default function BusinessDashboard() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+          <Button 
+            variant="outline" 
+            className="w-full sm:w-auto"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
           <Button variant="outline" className="w-full sm:w-auto" asChild>
             <Link href="/business/profile">Edit Profile</Link>
           </Button>
@@ -54,7 +109,7 @@ export default function BusinessDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Profile Views</p>
-                {loading ? (
+                {dashboardLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
                   <p className="text-2xl font-bold">{stats?.profileViews || 0}</p>
@@ -64,7 +119,7 @@ export default function BusinessDashboard() {
                 <Eye className="h-5 w-5 text-primary" />
               </div>
             </div>
-            {loading ? (
+            {dashboardLoading ? (
               <Skeleton className="h-4 w-24 mt-4" />
             ) : (
               <div className="mt-4 flex items-center text-xs text-muted-foreground">
@@ -81,7 +136,7 @@ export default function BusinessDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Appointments</p>
-                {loading ? (
+                {dashboardLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
                   <p className="text-2xl font-bold">{stats?.appointments || 0}</p>
@@ -91,7 +146,7 @@ export default function BusinessDashboard() {
                 <Calendar className="h-5 w-5 text-primary" />
               </div>
             </div>
-            {loading ? (
+            {dashboardLoading ? (
               <Skeleton className="h-4 w-24 mt-4" />
             ) : (
               <div className="mt-4 flex items-center text-xs text-muted-foreground">
@@ -108,7 +163,7 @@ export default function BusinessDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Reviews</p>
-                {loading ? (
+                {dashboardLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
                   <p className="text-2xl font-bold">{stats?.reviews || 0}</p>
@@ -118,7 +173,7 @@ export default function BusinessDashboard() {
                 <Star className="h-5 w-5 text-primary" />
               </div>
             </div>
-            {loading ? (
+            {dashboardLoading ? (
               <Skeleton className="h-4 w-24 mt-2" />
             ) : (
               <div className="flex items-center gap-1 mt-2">
@@ -145,7 +200,7 @@ export default function BusinessDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Messages</p>
-                {loading ? (
+                {dashboardLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
                   <p className="text-2xl font-bold">{stats?.messages || 0}</p>
@@ -155,7 +210,7 @@ export default function BusinessDashboard() {
                 <MessageSquare className="h-5 w-5 text-primary" />
               </div>
             </div>
-            {loading ? (
+            {dashboardLoading ? (
               <Skeleton className="h-4 w-24 mt-4" />
             ) : (
               <div className="mt-4 flex items-center text-xs text-muted-foreground">
@@ -199,7 +254,7 @@ export default function BusinessDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {dashboardLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                       <TableRow key={i}>
                         <TableCell colSpan={5}>
@@ -268,7 +323,7 @@ export default function BusinessDashboard() {
             <CardDescription>Latest messages from your customers</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {dashboardLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
@@ -343,7 +398,7 @@ export default function BusinessDashboard() {
             <CardDescription>Latest customer reviews</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {dashboardLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="border-b pb-4 last:border-0 last:pb-0">

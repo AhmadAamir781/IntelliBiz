@@ -2,8 +2,9 @@
 
 import type React from "react"
 import Link from 'next/link';
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, MapPin, Phone, Mail, Clock, Link as LucideLink, Info, Building, User, ArrowLeft } from "lucide-react"
+import { Upload, MapPin, Phone, Mail, Clock, Link as LucideLink, Info, Building, User, ArrowLeft, LogOut } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { businessApi } from "@/lib/api"
 
@@ -39,8 +40,12 @@ const themeAccentClass = "focus:border-primary/30 focus:ring-primary/20";
 
 export default function RegisterBusinessPage() {
   const router = useRouter()
+  const { isAuthenticated, loading: authLoading, logout } = useAuth();
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const { showSuccessToast, showErrorToast } = useToast()
+  
   const [formData, setFormData] = useState({
     // Basic Info
     businessName: "",
@@ -88,8 +93,18 @@ export default function RegisterBusinessPage() {
     agreeTerms: false,
   })
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const { showSuccessToast, showErrorToast } = useToast()
+  // Check authentication and redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      localStorage.setItem('redirectAfterLogin', '/register-business');
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -231,13 +246,37 @@ export default function RegisterBusinessPage() {
     }
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-accent to-background px-4 py-12">
       <div className="container max-w-6xl mx-auto">
-        <Link href="/" className="text-primary hover:text-primary/80 flex items-center gap-1 mb-6">
-          <ArrowLeft className="h-4 w-4" />
-          Back to home
-        </Link>
+        <div className="flex justify-between items-center mb-6">
+          <Link href="/" className="text-primary hover:text-primary/80 flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
+          </Link>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-1"
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center justify-center flex-1 mx-auto w-full max-w-6xl">

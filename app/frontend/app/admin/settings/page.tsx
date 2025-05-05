@@ -3,16 +3,21 @@
 import { CardFooter } from "@/components/ui/card"
 import type React from "react"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle, Save } from "lucide-react"
+import { CheckCircle, LogOut, Save } from "lucide-react"
 import { useSettings } from "@/hooks/useSettings"
 import { Settings } from "@/lib/types"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from 'sonner'
 
 export default function AdminSettingsPage() {
+  const router = useRouter()
+  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
   const { settings, loading, error, updateSettings } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -24,6 +29,28 @@ export default function AdminSettingsPage() {
     termsOfService: "",
     privacyPolicy: "",
   });
+
+  // Check authentication and admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        localStorage.setItem('redirectAfterLogin', '/admin/settings')
+        router.push('/login')
+        return
+      }
+      
+      // Check if user has admin role
+      if (isAuthenticated && !hasRole('admin')) {
+        toast.error('Access denied. Admin privileges required.')
+        router.push('/')
+      }
+    }
+  }, [isAuthenticated, authLoading, router, hasRole])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   useEffect(() => {
     if (settings) {
@@ -60,15 +87,18 @@ export default function AdminSettingsPage() {
     }
   };
 
-  if (loading) {
+  // Show loading state while checking authentication
+  if (authLoading || (loading && !error)) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Admin Settings</h1>
-          <p className="text-muted-foreground">Loading settings...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Don't render content if not authenticated or not an admin
+  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+    return null;
   }
 
   if (error) {
@@ -84,9 +114,20 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Admin Settings</h1>
-        <p className="text-muted-foreground">Manage platform settings and configurations.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Admin Settings</h1>
+          <p className="text-muted-foreground">Manage platform settings and configurations.</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleLogout}
+          className="flex items-center gap-1"
+        >
+          <LogOut className="h-4 w-4 mr-1" />
+          Logout
+        </Button>
       </div>
 
       <Card>

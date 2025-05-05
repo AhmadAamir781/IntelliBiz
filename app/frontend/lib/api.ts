@@ -11,7 +11,6 @@ import {
   ApiResponse,
   Settings
 } from "./types"
-import { any } from "zod"
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
@@ -20,6 +19,59 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 })
+
+// Function to check if token exists and is valid
+export const isAuthenticated = (): boolean => {
+  const token = localStorage.getItem("token")
+  return !!token // Returns true if token exists
+}
+
+// Function to get current user data from localStorage
+export const getCurrentUser = (): User | null => {
+  const userString = localStorage.getItem("user")
+  if (!userString) return null
+  try {
+    return JSON.parse(userString)
+  } catch (error) {
+    console.error("Error parsing user data:", error)
+    return null
+  }
+}
+
+// Function to get user role
+export const getUserRole = (): string | null => {
+  const user = getCurrentUser()
+  return user?.role || null
+}
+
+// Role-based route protection
+export const hasAccess = (allowedRoles: string[]): boolean => {
+  const userRole = getUserRole()
+  return userRole ? allowedRoles.includes(userRole) : false
+}
+
+// Function to handle unauthorized access (redirect to previous page)
+export const handleUnauthorizedAccess = (): void => {
+  if (typeof window !== 'undefined') {
+    if (window.history.length > 1) {
+      window.history.back() // Go back to previous page if available
+    } else {
+      window.location.href = "/" // Otherwise go to home
+    }
+  }
+}
+
+// Function to redirect to login page
+export const redirectToLogin = (): void => {
+  if (typeof window !== 'undefined') {
+    // Store the current path so we can redirect back after login
+    const currentPath = window.location.pathname
+    if (currentPath !== '/login') {
+      localStorage.setItem("redirectAfterLogin", currentPath)
+      window.location.href = "/login"
+    }
+  }
+}
 
 // Add request interceptor for authentication
 api.interceptors.request.use(
@@ -40,9 +92,14 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
+      // Unauthorized - clear auth data and redirect to login
       localStorage.removeItem("token")
       localStorage.removeItem("user")
-      window.location.href = "/login"
+      redirectToLogin()
+    } else if (error.response?.status === 403) {
+      // Forbidden - user doesn't have the right permissions
+      console.error("Access forbidden:", error.response?.data)
+      handleUnauthorizedAccess() // Redirect to previous page
     }
     return Promise.reject(error)
   }
@@ -50,11 +107,51 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  login: (data: any): Promise<ApiResponse<any>> =>
-    api.post("/auth/login", data),
+  login: async (data: any): Promise<ApiResponse<any>> => {
+    const response = await api.post("/auth/login", data)
+    debugger
+    if (response.data?.token) {
+      localStorage.setItem("token", response.data.token)
+      localStorage.setItem("user", JSON.stringify(response.data.user))
+      
+      // If user is admin, always redirect to admin dashboard
+      if (response.data.user?.role === 'admin') {
+        window.location.href = "/admin"
+        return response as unknown as ApiResponse<any>
+      }
+      
+      // For non-admin users, handle redirect after login if there's a saved path
+      const redirectPath = localStorage.getItem("redirectAfterLogin")
+      if (redirectPath) {
+        localStorage.removeItem("redirectAfterLogin")
+        window.location.href = redirectPath
+      }
+    }
+    return response as unknown as ApiResponse<any>
+  },
 
   register: (data: RegisterRequest): Promise<ApiResponse<any>> =>
     api.post("/auth/register", data),
+    
+  logout: (): void => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    window.location.href = "/login"
+  },
+  
+  refreshUserData: async (): Promise<void> => {
+    try {
+      const user = getCurrentUser()
+      if (user && user.id) {
+        const response = await userApi.getProfile(user.id)
+        if (response.data) {
+          localStorage.setItem("user", JSON.stringify(response.data))
+        }
+      }
+    } catch (error) {
+      console.error("Failed to refresh user data:", error)
+    }
+  },
 }
 
 // User API

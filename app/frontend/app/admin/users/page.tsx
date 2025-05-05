@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,15 +33,40 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { Search, MoreHorizontal, Edit, Trash2, Eye, UserPlus } from "lucide-react"
+import { Search, MoreHorizontal, Edit, Trash2, Eye, UserPlus, LogOut } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUsers } from "@/hooks/useUsers"
 import { toast } from "sonner"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function UserManagement() {
+  const router = useRouter()
+  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
   const { users, loading, error, deleteUser, updateUserRole } = useUsers()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
+
+  // Check authentication and admin role
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        localStorage.setItem('redirectAfterLogin', '/admin/users')
+        router.push('/login')
+        return
+      }
+      
+      // Check if user has admin role
+      if (isAuthenticated && !hasRole('admin')) {
+        toast.error('Access denied. Admin privileges required.')
+        router.push('/')
+      }
+    }
+  }, [isAuthenticated, authLoading, router, hasRole])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   const filteredUsers = users.filter(user =>
     `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,20 +109,41 @@ export default function UserManagement() {
     }
   }
 
-  if (loading) {
-    return <div>Loading...</div>
+  // Show loading state while checking authentication
+  if (authLoading || (loading && !error)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated or not an admin
+  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+    return null
   }
 
   if (error) {
-    return <div>Error: {error}</div>
+    return <div className="text-red-500">Error: {error}</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">Manage all users on the platform.</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">User Management</h1>
+            <p className="text-muted-foreground">Manage all users on the platform.</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            className="flex items-center gap-1"
+          >
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
         </div>
         <div className="flex justify-between items-center">
           <Button asChild>

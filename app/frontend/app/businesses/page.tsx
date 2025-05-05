@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { useBusinesses } from '@/hooks/useBusinesses';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BusinessCard } from "@/components/business-card";
 import { BusinessFilters } from "@/components/business-filters";
-import { Search, MapPin, SlidersHorizontal, Star, ChevronRight, Link as LucideLink, ArrowLeft } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, Star, ChevronRight, Link as LucideLink, ArrowLeft, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,22 @@ import { Review } from '@/lib/types';
 export default function BusinessesPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [businessReviews, setBusinessReviews] = useState<Review[]>([]);
+  const { isAuthenticated, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
   
+  // Check authentication
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      localStorage.setItem('redirectAfterLogin', '/businesses');
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+  
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -37,10 +53,9 @@ export default function BusinessesPage() {
     fetchCategories();
   }, []);
   
-  const router = useRouter();
   const {
     businesses,
-    loading,
+    loading: businessesLoading,
     error,
     searchTerm,
     category,
@@ -66,6 +81,20 @@ export default function BusinessesPage() {
     });
   };
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -84,11 +113,19 @@ export default function BusinessesPage() {
       {/* Gradient Header Section */}
       <section className="bg-gradient-to-r from-primary/90 to-primary py-12 md:py-16 text-primary-foreground">
         <div className="container px-4 md:px-6">
-          <div className="mb-6">
+          <div className="flex justify-between items-center mb-6">
             <Link href="/" className="text-primary-foreground hover:text-primary-foreground/90 flex items-center gap-1 transition-colors">
               <ArrowLeft className="h-4 w-4" />
               Back to home
             </Link>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
           
           <div className="mb-8">
@@ -171,13 +208,13 @@ export default function BusinessesPage() {
         {/* Results Count */}
         <div className="flex justify-between items-center mb-6 border-b border-border/30 pb-2">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{loading ? '...' : businesses.length}</span> businesses
+            Showing <span className="font-medium text-foreground">{businessesLoading ? '...' : businesses.length}</span> businesses
           </p>
         </div>
 
         {/* Business Listings */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
+          {businessesLoading ? (
             Array.from({ length: 6 }).map((_, index) => (
               <Card key={index} className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow">
                 <Skeleton className="h-48 w-full" />
@@ -228,7 +265,7 @@ export default function BusinessesPage() {
         </div>
 
         {/* Pagination */}
-        {!loading && businesses.length > 0 && (
+        {!businessesLoading && businesses.length > 0 && (
           <div className="flex justify-center mt-12">
             <Pagination>
               <PaginationContent className="shadow-sm rounded-lg p-1">
