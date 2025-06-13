@@ -19,7 +19,7 @@ namespace IntelliBiz.API.DTOs
         public string Category { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Description is required")]
-        [MinLength(50, ErrorMessage = "Description should be at least 50 characters")]
+        [MinLength(10, ErrorMessage = "Description should be at least 50 characters")]
         public string Description { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Address is required")]

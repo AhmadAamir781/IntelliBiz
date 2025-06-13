@@ -110,7 +110,7 @@ namespace IntelliBiz.API.Repositories
                 SELECT CAST(SCOPE_IDENTITY() as int)";
             
             appointment.CreatedAt = DateTime.UtcNow;
-            appointment.ServiceId = 1;
+            appointment.ServiceId = 2;
             return await connection.QuerySingleAsync<int>(sql, appointment);
         }
 
