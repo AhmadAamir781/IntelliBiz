@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }) {
   // Dashboard is only accessible to authenticated users with specific roles
   return (
-    <RouteGuard allowedRoles={['admin', 'business_owner', 'user']}>
+    <RouteGuard allowedRoles={['Admin', 'BusinessOwner', 'user']}>
       {children}
     </RouteGuard>
   )

@@ -115,7 +115,7 @@ export const authApi = {
       localStorage.setItem("user", JSON.stringify(response.data.user))
       
       // If user is admin, always redirect to admin dashboard
-      if (response.data.user?.role === 'admin') {
+      if (response.data.user?.role === 'Admin') {
         window.location.href = "/admin"
         return response as unknown as ApiResponse<any>
       }

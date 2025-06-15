@@ -132,7 +132,7 @@ export default function BusinessLayout({ children }: BusinessLayoutProps) {
   }
 
   return (
-    <RouteGuard allowedRoles={['business_owner', 'admin']}>
+    <RouteGuard allowedRoles={['BusinessOwner', 'Admin']}>
       <div className="min-h-screen bg-muted/30">
         {/* Mobile Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:hidden">

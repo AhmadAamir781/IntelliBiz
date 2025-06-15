@@ -37,7 +37,7 @@ export default function BusinessDashboard() {
     }
 
     // Optional: Check if user has correct role for business dashboard
-    if (!authLoading && isAuthenticated && !hasRole('business_owner') && !hasRole('admin')) {
+    if (!authLoading && isAuthenticated && !hasRole('BusinessOwner') && !hasRole('Admin')) {
       router.back() // Go back if wrong role
     }
   }, [isAuthenticated, authLoading, router, hasRole])

@@ -117,10 +117,10 @@ export default function LoginPage() {
           const userRole = getUserRole()
           
           switch(userRole) {
-            case 'admin':
+            case 'Admin':
               router.push('/admin/dashboard')
               break
-            case 'business_owner':
+            case 'BusinessOwner':
               router.push('/business/dashboard')
               break
             default:

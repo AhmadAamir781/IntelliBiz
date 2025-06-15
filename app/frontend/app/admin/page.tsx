@@ -41,7 +41,7 @@ export default function AdminDashboard() {
       }
       
       // Check if user has admin role
-      if (isAuthenticated && !hasRole('admin')) {
+      if (isAuthenticated && !hasRole('Admin')) {
         toast.error('Access denied. Admin privileges required.')
         router.push('/')
       }
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   }
 
   // Don't render content if not authenticated or not an admin
-  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+  if (!isAuthenticated || (isAuthenticated && !hasRole('Admin'))) {
     return null
   }
 

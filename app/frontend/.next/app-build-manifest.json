@@ -16,6 +16,31 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
+    ],
+    "/admin/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/layout.js"
+    ],
+    "/admin/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/page.js"
+    ],
+    "/dashboard/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/layout.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/page.js"
+    ],
     "/businesses/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -26,40 +51,55 @@
       "static/chunks/main-app.js",
       "static/chunks/app/businesses/page.js"
     ],
-    "/register-business/page": [
+    "/business/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/register-business/page.js"
+      "static/chunks/app/business/layout.js"
     ],
-    "/signup/page": [
+    "/business/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/signup/page.js"
+      "static/chunks/app/business/page.js"
     ],
-    "/login-portal/loading": [
+    "/businesses/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/login-portal/loading.js"
+      "static/chunks/app/businesses/[id]/page.js"
     ],
-    "/login-portal/page": [
+    "/admin/businesses/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/login-portal/page.js"
+      "static/chunks/app/admin/businesses/loading.js"
     ],
-    "/login/page": [
+    "/admin/businesses/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/login/page.js"
+      "static/chunks/app/admin/businesses/page.js"
     ],
-    "/dashboard/page": [
+    "/admin/users/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/page.js"
+      "static/chunks/app/admin/users/loading.js"
     ],
-    "/_not-found/page": [
+    "/admin/users/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/admin/users/page.js"
+    ],
+    "/admin/reviews/loading": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/reviews/loading.js"
+    ],
+    "/admin/reviews/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/reviews/page.js"
+    ],
+    "/admin/settings/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/settings/page.js"
     ]
   }
 }

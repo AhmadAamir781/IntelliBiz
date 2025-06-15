@@ -56,7 +56,7 @@ export default function UserManagement() {
       }
       
       // Check if user has admin role
-      if (isAuthenticated && !hasRole('admin')) {
+      if (isAuthenticated && !hasRole('Admin')) {
         toast.error('Access denied. Admin privileges required.')
         router.push('/')
       }
@@ -119,7 +119,7 @@ export default function UserManagement() {
   }
 
   // Don't render content if not authenticated or not an admin
-  if (!isAuthenticated || (isAuthenticated && !hasRole('admin'))) {
+  if (!isAuthenticated || (isAuthenticated && !hasRole('Admin'))) {
     return null
   }
 
@@ -213,7 +213,7 @@ export default function UserManagement() {
                       <TableCell className="font-medium">{`${user.firstName} ${user.lastName}`}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                        <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
                           {user.role}
                         </Badge>
                       </TableCell>
@@ -226,8 +226,8 @@ export default function UserManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleUpdateRole(user.id, user.role === 'admin' ? 'user' : 'admin')}>
-                              {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                            <DropdownMenuItem onClick={() => handleUpdateRole(user.id, user.role === 'Admin' ? 'user' : 'Admin')}>
+                              {user.role === 'Admin' ? 'Remove Admin' : 'Make Admin'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDeleteUser(user.id)}>
                               Delete User
