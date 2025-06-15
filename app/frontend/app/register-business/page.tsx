@@ -230,6 +230,7 @@ export default function RegisterBusinessPage() {
     setIsLoading(true)
 
     try {
+         
       const response = await businessApi.createBusiness(formData)
 
       if (response.data) {

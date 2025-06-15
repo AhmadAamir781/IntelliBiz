@@ -37,6 +37,7 @@ export const useAdminReviews = (filters: ReviewFilters = {}) => {
         } else if (filters.status === 'flagged') {
           response = await reviewApi.getFlaggedReviews();
         } else {
+             
           response = await reviewApi.getAllReviews();
         }
 

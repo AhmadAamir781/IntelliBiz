@@ -22,7 +22,7 @@ export function useBusinessMessages(businessId: number) {
     try {
       setLoading(true);
       setError(null);
-debugger
+ 
       const response = await messageApi.getBusinessMessages(businessId); //TODO
       if (response.data) {
         setMessages(response.data);

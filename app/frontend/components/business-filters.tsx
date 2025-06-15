@@ -79,7 +79,7 @@ export function BusinessFilters({ onFiltersApplied, onClose }: BusinessFiltersPr
       } else {
         // Get businesses for each selected category and combine results
         let allBusinesses: Business[] = []
-        debugger
+         
         for (const category of selectedCategories) {
           const response = await businessApi.getBusinessesByCategory(category)
           if (response.data) {

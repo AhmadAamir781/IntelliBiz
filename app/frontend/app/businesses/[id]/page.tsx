@@ -43,6 +43,7 @@ export default function BusinessDetailPage() {
       try {
         setLoading(true)
         setError(null)
+         
         const response = await businessApi.getBusinessDetail(Number(id))
       
         setBusiness(response.data)

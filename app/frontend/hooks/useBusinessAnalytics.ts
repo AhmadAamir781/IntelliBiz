@@ -66,7 +66,7 @@ export function useBusinessAnalytics(businessId: number, timeRange: string) {
     try {
       setLoading(true);
       setError(null);
-debugger
+ 
       // Fetch overview data
       const overviewResponse = await businessApi.getBusinessAnalytics(1, timeRange);
       if (overviewResponse.data) {

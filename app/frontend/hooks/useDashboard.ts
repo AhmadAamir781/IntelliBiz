@@ -44,7 +44,7 @@ export const useDashboard = (): {
       try {
         setLoading(true);
         setError(null);
-debugger
+ 
         // Fetch all data in parallel
         const [appointmentsResponse, messagesResponse, reviewsResponse] = await Promise.all([
           appointmentApi.getAllAppointments(),

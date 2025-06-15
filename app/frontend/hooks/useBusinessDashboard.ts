@@ -27,7 +27,7 @@ export const useBusinessDashboard = () => {
       try {
         setLoading(true);
         setError(null);
-debugger
+ 
         // Get the current user from localStorage
         const userStr = localStorage.getItem('user');
         if (!userStr) {
@@ -39,12 +39,12 @@ debugger
         // Fetch business associated with the user
         const businessResponse = await businessApi.getBusinessesByOwner(user.id);
         const business = businessResponse.data?.[0] || null;
-        debugger
+         
         if (!business) {
           throw new Error('No business found for this user');
         }
         
-        debugger
+         
         setBusiness(business);
         // Fetch all necessary data in parallel
         const [appointmentsResponse, reviewsResponse, messagesResponse] = await Promise.all([

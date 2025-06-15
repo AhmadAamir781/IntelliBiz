@@ -31,7 +31,7 @@ export default function LoginPage() {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem("token")
       if (!token) return
-      debugger
+       
       try {
         // Get user from localStorage for initial data
         const userStr = localStorage.getItem("user")
@@ -45,7 +45,7 @@ export default function LoginPage() {
             
             // Use the verified role if it exists, otherwise fallback to stored role
             const role = verifiedUser?.role || user.role
-            debugger
+             
             // Redirect based on user role
             if (role === "Admin") {
               router.push("/admin")

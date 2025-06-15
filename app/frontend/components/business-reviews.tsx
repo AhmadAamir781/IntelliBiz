@@ -88,7 +88,7 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
       console.log("Submitting review:", reviewData);
       
       const response = await reviewApi.createReview(reviewData);
-      debugger
+       
       console.log("Review submission response:", response);
       
       // Consider the review submission successful even if response.data is false
