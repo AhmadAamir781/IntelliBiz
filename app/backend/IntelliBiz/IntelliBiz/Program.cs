@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using IntelliBiz.API.Data;
 using IntelliBiz.API.Repositories;
 using IntelliBiz.API.Services;
@@ -85,6 +86,25 @@ builder.Services.AddSingleton<IDatabaseConnectionFactory>(provider =>
 
     return new SqlServerConnectionFactory(configuration.GetConnectionString("SqlServerConnection"));
 });
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5, // allow 5 requests
+                Window = TimeSpan.FromSeconds(10), // per 10 seconds
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            });
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 
 // Register Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
