@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { businessApi } from '../lib/api';
 import { Business, ApiResponse } from '../lib/types';
 
@@ -18,7 +18,6 @@ interface BusinessStats {
   categories: { name: string; count: number }[];
 }
 
-// Define structure for the paginated business response
 interface PaginatedBusinessResponse {
   businesses: Business[];
   totalPages: number;
@@ -27,9 +26,12 @@ interface PaginatedBusinessResponse {
 export const useAdminBusinesses = (filters: BusinessFilters = {}) => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [stats, setStats] = useState<BusinessStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  // 🧠 Use stable filters dependency to avoid infinite loop
+  const stableFilters = useMemo(() => JSON.stringify(filters), [filters]);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -37,20 +39,19 @@ export const useAdminBusinesses = (filters: BusinessFilters = {}) => {
         setLoading(true);
         setError(null);
 
-        // Fetch businesses
         const response = await businessApi.getAllBusinesses();
-        
-        // For now, use the direct response since API doesn't support filters yet
-        if (response.data) {
+
+        if (response?.data) {
           setBusinesses(response.data);
-          setTotalPages(1); // Default to 1 page until pagination is implemented
+          setTotalPages(1); // Can be dynamic if API supports pagination later
         }
 
-        // Skip stats for now as it's not implemented in the API
-        // When implemented, uncomment the following:
+        // Uncomment when API supports stats
         // const statsResponse = await businessApi.getBusinessStats();
-        // setStats(statsResponse.data);
-        
+        // if (statsResponse?.data) {
+        //   setStats(statsResponse.data);
+        // }
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch businesses');
       } finally {
@@ -59,15 +60,13 @@ export const useAdminBusinesses = (filters: BusinessFilters = {}) => {
     };
 
     fetchBusinesses();
-  }, [filters]);
+  }, [stableFilters]);
 
   const updateBusinessStatus = async (id: number, status: 'approved' | 'rejected') => {
     try {
-      // Since updateBusinessStatus doesn't exist, use updateBusiness
       await businessApi.updateBusiness(id, { status });
-      // Refresh the businesses list
       const response = await businessApi.getAllBusinesses();
-      if (response.data) {
+      if (response?.data) {
         setBusinesses(response.data);
       }
     } catch (err) {
@@ -78,9 +77,8 @@ export const useAdminBusinesses = (filters: BusinessFilters = {}) => {
   const deleteBusiness = async (id: number) => {
     try {
       await businessApi.deleteBusiness(id);
-      // Refresh the businesses list
       const response = await businessApi.getAllBusinesses();
-      if (response.data) {
+      if (response?.data) {
         setBusinesses(response.data);
       }
     } catch (err) {
@@ -97,4 +95,4 @@ export const useAdminBusinesses = (filters: BusinessFilters = {}) => {
     updateBusinessStatus,
     deleteBusiness,
   };
-}; 
+};
