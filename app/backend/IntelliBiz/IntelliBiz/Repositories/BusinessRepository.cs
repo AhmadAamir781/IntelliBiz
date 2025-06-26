@@ -136,7 +136,7 @@ namespace IntelliBiz.API.Repositories
         public async Task<bool> DeleteAsync(int id)
         {
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "DELETE FROM Businesses WHERE Id = @Id";
+            const string sql = "DELETE FROM Services where BusinessId = @id; DELETE FROM Businesses WHERE Id = @Id;";
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
         }
