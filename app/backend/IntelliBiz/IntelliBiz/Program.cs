@@ -95,10 +95,10 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 5, // allow 5 requests
-                Window = TimeSpan.FromSeconds(10), // per 10 seconds
+                PermitLimit = 100, // allow 5 requests
+                Window = TimeSpan.FromSeconds(70), // per 10 seconds
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 2
+                QueueLimit = 5
             });
     });
 
@@ -136,6 +136,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

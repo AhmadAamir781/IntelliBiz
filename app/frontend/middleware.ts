@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
 
     // If you want to keep some checks, like for the token, you can use this:
     // if (!token) {
-    //   const url = new URL(`/login-portal`, request.url)
+    //   const url = new URL(`/login`, request.url)
     //   url.searchParams.set("callbackUrl", pathname)
     //   return NextResponse.redirect(url)
     // }
@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
     //   }
     //   return NextResponse.next()
     // } catch (error) {
-    //   const url = new URL(`/login-portal`, request.url)
+    //   const url = new URL(`/login`, request.url)
     //   url.searchParams.set("callbackUrl", pathname)
     //   return NextResponse.redirect(url)
     // }

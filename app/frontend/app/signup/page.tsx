@@ -502,7 +502,7 @@ export default function SignupPage() {
           <div className="text-center mt-6">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login-portal" className="font-medium text-primary hover:text-primary/80 transition-colors">
+              <Link href="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
                 Sign in
               </Link>
             </p>
