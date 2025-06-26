@@ -3,7 +3,7 @@ import { businessApi } from '../lib/api';
 import { Business, ApiResponse } from '../lib/types';
 
 interface BusinessFilters {
-  status?: 'all' | 'approved' | 'pending' | 'rejected';
+  status?: 'all' | 'verified' | 'pending';
   category?: string;
   searchQuery?: string;
   page?: number;
@@ -42,7 +42,22 @@ export const useAdminBusinesses = (filters: BusinessFilters = {}) => {
         const response = await businessApi.getAllBusinesses();
 
         if (response?.data) {
-          setBusinesses(response.data);
+          let filteredBusinesses = response.data;
+          if (filters.status === 'verified') {
+            filteredBusinesses = filteredBusinesses.filter(b => b.isVerified === true);
+          } else if (filters.status === 'pending') {
+            filteredBusinesses = filteredBusinesses.filter(b => !b.isVerified);
+          }
+          if (filters.searchQuery && filters.searchQuery.trim() !== '') {
+            const q = filters.searchQuery.trim().toLowerCase();
+            filteredBusinesses = filteredBusinesses.filter(b =>
+              (b.name && b.name.toLowerCase().includes(q)) ||
+              (b.category && b.category.toLowerCase().includes(q)) ||
+              (b.address && b.address.toLowerCase().includes(q)) ||
+              (b.email && b.email.toLowerCase().includes(q))
+            );
+          }
+          setBusinesses(filteredBusinesses);
           setTotalPages(1); // Can be dynamic if API supports pagination later
         }
 

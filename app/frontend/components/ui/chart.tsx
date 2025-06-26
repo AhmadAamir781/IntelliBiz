@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
+import { BarChart as ReBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
 import { cn } from "@/lib/utils"
 
@@ -353,6 +354,28 @@ function getPayloadConfigFromPayload(
   return configLabelKey in config
     ? config[configLabelKey]
     : config[key as keyof typeof config]
+}
+
+// Reusable BarChartComponent
+export function BarChartComponent({ data, xKey, yKey, color = "#6366f1", height = 250 }: {
+  data: any[];
+  xKey: string;
+  yKey: string;
+  color?: string;
+  height?: number;
+}) {
+  return (
+    <div style={{ width: "100%", height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ReBarChart data={data}>
+          <XAxis dataKey={xKey} stroke="#888" fontSize={12} />
+          <YAxis allowDecimals={false} stroke="#888" fontSize={12} />
+          <Tooltip />
+          <Bar dataKey={yKey} fill={color} radius={[4, 4, 0, 0]} />
+        </ReBarChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 export {

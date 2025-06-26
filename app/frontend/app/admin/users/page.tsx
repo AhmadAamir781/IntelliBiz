@@ -83,13 +83,39 @@ export default function UserManagement() {
   }
 
   const handleUpdateRole = async (id: number, role: string) => {
-    const result = await updateUserRole(id, role)
+    // Toggle between 'Admin' and 'User' (capitalized)
+
+    debugger
+    const newRole = role === 'Admin' ? 'User' : 'Admin';
+    const result = await updateUserRole(id, newRole);
     if (result.success) {
-      toast.success("User role updated successfully")
+      toast.success('User role updated successfully');
     } else {
-      toast.error(result.error || "Failed to update user role")
+      toast.error(result.error || 'Failed to update user role');
     }
-  }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) return;
+    let allSuccess = true;
+    for (const idStr of selectedUsers) {
+      const id = parseInt(idStr, 10);
+      const result = await deleteUser(id);
+      if (!result.success) {
+        allSuccess = false;
+        toast.error(result.error || `Failed to delete user with ID ${id}`);
+      }
+    }
+    if (allSuccess) {
+      toast.success('Selected users deleted successfully');
+    }
+    setSelectedUsers([]);
+  };
+
+  const handleExportSelected = () => {
+    // Placeholder: implement export logic (e.g., CSV) as needed
+    toast.info('Export functionality is not implemented yet.');
+  };
 
   const toggleUserSelection = (id: string) => {
     setSelectedUsers((prev) => {
@@ -226,7 +252,7 @@ export default function UserManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleUpdateRole(user.id, user.role === 'Admin' ? 'user' : 'Admin')}>
+                            <DropdownMenuItem onClick={() => handleUpdateRole(user.id, user.role)}>
                               {user.role === 'Admin' ? 'Remove Admin' : 'Make Admin'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDeleteUser(user.id)}>
@@ -245,12 +271,12 @@ export default function UserManagement() {
           {selectedUsers.length > 0 && (
             <div className="flex items-center gap-2 mt-4">
               <span className="text-sm text-muted-foreground">
-                {selectedUsers.length} user{selectedUsers.length > 1 ? "s" : ""} selected
+                {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
               </span>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExportSelected}>
                 Export Selected
               </Button>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
                 Delete Selected
               </Button>
             </div>

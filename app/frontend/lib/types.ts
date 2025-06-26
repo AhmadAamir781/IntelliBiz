@@ -10,6 +10,7 @@ export interface User {
 
 export interface Business {
   id: number;
+  businessName: string;
   name: string;
   description: string;
   category: string;

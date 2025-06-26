@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSearchParams } from "next/navigation"
@@ -68,6 +68,7 @@ export default function BusinessManagement() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [businessToDelete, setBusinessToDelete] = useState<number | null>(null)
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
 
   // Check authentication and admin role
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function BusinessManagement() {
   }
 
   const { businesses, stats, loading, error, totalPages, updateBusinessStatus, deleteBusiness } = useAdminBusinesses({
-    status: filter as 'all' | 'approved' | 'pending' | 'rejected',
+    status: filter as 'all' | 'verified' | 'pending',
     category: selectedCategory,
     searchQuery,
     page: currentPage,
@@ -122,8 +123,12 @@ export default function BusinessManagement() {
     return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
   }
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => {
+      setSearchQuery(value)
+    }, 300)
   }
 
   const handleApprove = async (id: number) => {
@@ -215,9 +220,8 @@ export default function BusinessManagement() {
               <div className="overflow-x-auto">
                 <TabsList className="w-full sm:w-auto">
                   <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="approved">Approved</TabsTrigger>
+                  <TabsTrigger value="verified">Verified</TabsTrigger>
                   <TabsTrigger value="pending">Pending</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
                 </TabsList>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 w-full">
@@ -227,8 +231,8 @@ export default function BusinessManagement() {
                     type="search"
                     placeholder="Search businesses..."
                     className="pl-8"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    defaultValue={searchQuery}
+                    onChange={handleSearchChange}
                   />
                 </div>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -271,7 +275,7 @@ export default function BusinessManagement() {
                   ) : businesses.length > 0 ? (
                     businesses.map((business) => (
                       <TableRow key={business.id}>
-                        <TableCell className="font-medium">{business.name}</TableCell>
+                        <TableCell className="font-medium">{business.businessName}</TableCell>
                         <TableCell className="hidden md:table-cell">{business.category}</TableCell>
                         <TableCell className="hidden md:table-cell">{business.ownerId}</TableCell>
                         <TableCell className="hidden md:table-cell">{business.address}</TableCell>
