@@ -69,7 +69,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
       <div className="relative aspect-video overflow-hidden">
         <img 
           src={imageUrl || "/placeholder.svg"} 
-          alt={business.name} 
+          alt={business.businessName} 
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
         />
         {business.isVerified && (
@@ -94,7 +94,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
             </Badge>
           )}
         </div>
-        <h3 className="font-semibold text-lg mb-1 text-foreground">{business.name}</h3>
+        <h3 className="font-semibold text-lg mb-1 text-foreground">{business.businessName}</h3>
         <div className="flex items-center gap-1 mb-3">
           <div className="flex">
             {[...Array(5)].map((_, i) => (

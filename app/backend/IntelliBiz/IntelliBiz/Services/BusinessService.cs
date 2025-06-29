@@ -62,7 +62,7 @@ namespace IntelliBiz.API.Services
                 City = businessDto.City,
                 State = businessDto.State,
                 ZipCode = businessDto.ZipCode,
-                Phone = businessDto.Phone,
+                Phone = businessDto.PhoneNumber,
                 Email = businessDto.Email,
                 Website = businessDto.Website,
                 IsVerified = false,
@@ -92,7 +92,7 @@ namespace IntelliBiz.API.Services
             existingBusiness.City = businessDto.City;
             existingBusiness.State = businessDto.State;
             existingBusiness.ZipCode = businessDto.ZipCode;
-            existingBusiness.Phone = businessDto.Phone;
+            existingBusiness.Phone = businessDto.PhoneNumber;
             existingBusiness.Email = businessDto.Email;
             existingBusiness.Website = businessDto.Website;
             existingBusiness.UpdatedAt = DateTime.UtcNow;
@@ -154,13 +154,15 @@ namespace IntelliBiz.API.Services
                 City = business.City,
                 State = business.State,
                 ZipCode = business.ZipCode,
-                Phone = business.Phone,
+                PhoneNumber = business.Phone,
                 Email = business.Email,
                 Website = business.Website,
                 IsVerified = business.IsVerified,
                 Hours = business.Hour,
                 OwnerName = business.OwnerName,
                 ServiceArea = business.ServiceArea,
+                CreatedAt = business.CreatedAt,
+                UpdatedAt = business.UpdatedAt
             };
         }
     }

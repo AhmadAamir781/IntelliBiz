@@ -1,262 +1,642 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle, LogOut, Save } from "lucide-react"
-import { useSettings } from "@/hooks/useSettings"
-import { Settings } from "@/lib/types"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { 
+  ArrowLeft, 
+  Settings as SettingsIcon,
+  Bell,
+  Shield,
+  Globe,
+  Database,
+  Mail,
+  Save,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  Clock
+} from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { toast } from 'sonner'
+import { settingsApi } from "@/lib/api"
+import { Settings } from "@/lib/types"
+import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
+
+interface ExtendedSettings extends Settings {
+  // Additional settings not in the base Settings type
+  siteDescription?: string
+  supportPhone?: string
+  autoApproveBusinesses?: boolean
+  requireBusinessVerification?: boolean
+  maxBusinessesPerUser?: number
+  autoApproveReviews?: boolean
+  requireReviewModeration?: boolean
+  maxReviewsPerUser?: number
+  emailNotifications?: boolean
+  smsNotifications?: boolean
+  adminNotifications?: boolean
+  sessionTimeout?: number
+  maxLoginAttempts?: number
+  requireTwoFactor?: boolean
+  maintenanceMode?: boolean
+  maintenanceMessage?: string
+}
 
 export default function AdminSettingsPage() {
   const router = useRouter()
-  const { isAuthenticated, loading: authLoading, logout, hasRole } = useAuth()
-  const { settings, loading, error, updateSettings } = useSettings();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [formData, setFormData] = useState<Settings>({
-    siteName: "",
-    adminEmail: "",
-    supportEmail: "",
-    defaultCurrency: "",
+  const { isAuthenticated, loading: authLoading, hasRole } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [settings, setSettings] = useState<ExtendedSettings>({
+    siteName: "IntelliBiz",
+    adminEmail: "admin@intellibiz.com",
+    supportEmail: "support@intellibiz.com",
+    defaultCurrency: "USD",
     termsOfService: "",
     privacyPolicy: "",
-  });
+    siteDescription: "Your trusted business directory",
+    supportPhone: "+1 (555) 123-4567",
+    autoApproveBusinesses: false,
+    requireBusinessVerification: true,
+    maxBusinessesPerUser: 5,
+    autoApproveReviews: false,
+    requireReviewModeration: true,
+    maxReviewsPerUser: 10,
+    emailNotifications: true,
+    smsNotifications: false,
+    adminNotifications: true,
+    sessionTimeout: 30,
+    maxLoginAttempts: 5,
+    requireTwoFactor: false,
+    maintenanceMode: false,
+    maintenanceMessage: "We're currently performing maintenance. Please check back soon."
+  })
+
+  // Memoize authentication check to prevent unnecessary re-renders
+  const authCheck = useMemo(() => ({
+    isAuthenticated,
+    hasRole: hasRole('Admin'),
+    shouldRedirect: !authLoading && !isAuthenticated,
+    shouldDenyAccess: !authLoading && isAuthenticated && !hasRole('Admin')
+  }), [isAuthenticated, authLoading, hasRole])
 
   // Check authentication and admin role
   useEffect(() => {
-    if (!authLoading) {
-      if (!isAuthenticated) {
-        localStorage.setItem('redirectAfterLogin', '/admin/settings')
-        router.push('/login')
-        return
-      }
-      
-      // Check if user has admin role
-      if (isAuthenticated && !hasRole('Admin')) {
-        toast.error('Access denied. Admin privileges required.')
-        router.push('/')
+    if (authCheck.shouldRedirect) {
+      localStorage.setItem('redirectAfterLogin', '/admin/settings')
+      router.push('/login')
+      return
+    }
+    
+    if (authCheck.shouldDenyAccess) {
+      toast.error('Access denied. Admin privileges required.')
+      router.push('/')
+    }
+  }, [authCheck, router])
+
+  // Load settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        setLoading(true)
+        const response = await settingsApi.getSettings()
+        
+        if (response.data) {
+          setSettings(prev => ({
+            ...prev,
+            ...response.data
+          }))
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error)
+        toast.error('Failed to load settings')
+      } finally {
+        setLoading(false)
       }
     }
-  }, [isAuthenticated, authLoading, router, hasRole])
 
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
+    if (authCheck.isAuthenticated && authCheck.hasRole) {
+      loadSettings()
+    }
+  }, [authCheck.isAuthenticated, authCheck.hasRole])
+
+  const handleSettingChange = (key: keyof ExtendedSettings, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }))
   }
 
-  useEffect(() => {
-    if (settings) {
-      setFormData(settings);
-    }
-  }, [settings]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  const handleSaveSettings = async () => {
     try {
-      const result = await updateSettings(formData);
-      if (result.success) {
-        setIsSuccess(true);
-        setTimeout(() => {
-          setIsSuccess(false);
-          setIsSubmitting(false);
-        }, 3000);
-      } else {
-        throw new Error(result.error);
+      setSaving(true)
+      
+      // Extract only the base Settings properties for the API call
+      const baseSettings: Settings = {
+        siteName: settings.siteName,
+        adminEmail: settings.adminEmail,
+        supportEmail: settings.supportEmail,
+        defaultCurrency: settings.defaultCurrency,
+        termsOfService: settings.termsOfService,
+        privacyPolicy: settings.privacyPolicy
       }
+      
+      await settingsApi.updateSettings(baseSettings)
+      
+      toast.success('Settings saved successfully!')
     } catch (error) {
-      console.error("Admin settings update failed:", error);
-      setIsSubmitting(false);
+      console.error('Error saving settings:', error)
+      toast.error('Failed to save settings')
+    } finally {
+      setSaving(false)
     }
-  };
+  }
+
+  const handleResetSettings = async () => {
+    if (confirm('Are you sure you want to reset all settings to default? This action cannot be undone.')) {
+      try {
+        setSaving(true)
+        
+        const defaultSettings: ExtendedSettings = {
+          siteName: "IntelliBiz",
+          adminEmail: "admin@intellibiz.com",
+          supportEmail: "support@intellibiz.com",
+          defaultCurrency: "USD",
+          termsOfService: "",
+          privacyPolicy: "",
+          siteDescription: "Your trusted business directory",
+          supportPhone: "+1 (555) 123-4567",
+          autoApproveBusinesses: false,
+          requireBusinessVerification: true,
+          maxBusinessesPerUser: 5,
+          autoApproveReviews: false,
+          requireReviewModeration: true,
+          maxReviewsPerUser: 10,
+          emailNotifications: true,
+          smsNotifications: false,
+          adminNotifications: true,
+          sessionTimeout: 30,
+          maxLoginAttempts: 5,
+          requireTwoFactor: false,
+          maintenanceMode: false,
+          maintenanceMessage: "We're currently performing maintenance. Please check back soon."
+        }
+        
+        // Save base settings to API
+        const baseSettings: Settings = {
+          siteName: defaultSettings.siteName,
+          adminEmail: defaultSettings.adminEmail,
+          supportEmail: defaultSettings.supportEmail,
+          defaultCurrency: defaultSettings.defaultCurrency,
+          termsOfService: defaultSettings.termsOfService,
+          privacyPolicy: defaultSettings.privacyPolicy
+        }
+        
+        await settingsApi.updateSettings(baseSettings)
+        setSettings(defaultSettings)
+        
+        toast.success('Settings reset to default!')
+      } catch (error) {
+        console.error('Error resetting settings:', error)
+        toast.error('Failed to reset settings')
+      } finally {
+        setSaving(false)
+      }
+    }
+  }
 
   // Show loading state while checking authentication
-  if (authLoading || (loading && !error)) {
+  if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-8 w-8" />
+          <Skeleton className="h-8 w-48" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
       </div>
-    );
+    )
   }
 
   // Don't render content if not authenticated or not an admin
-  if (!isAuthenticated || (isAuthenticated && !hasRole('Admin'))) {
-    return null;
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Admin Settings</h1>
-          <p className="text-red-500">Error: {error}</p>
-        </div>
-      </div>
-    );
+  if (!authCheck.isAuthenticated || !authCheck.hasRole) {
+    return null
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Admin Settings</h1>
-          <p className="text-muted-foreground">Manage platform settings and configurations.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">System Settings</h1>
+          <p className="text-muted-foreground">Configure platform settings and preferences.</p>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center justify-end gap-2">
         <Button 
           variant="outline" 
-          size="sm" 
-          onClick={handleLogout}
-          className="flex items-center gap-1"
+          onClick={handleResetSettings}
+          disabled={saving}
         >
-          <LogOut className="h-4 w-4 mr-1" />
-          Logout
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Reset to Default
+        </Button>
+        <Button 
+          onClick={handleSaveSettings}
+          disabled={saving}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {saving ? "Saving..." : "Save Settings"}
         </Button>
       </div>
 
-      <Card>
-        <form onSubmit={handleSubmit}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* General Settings */}
+        <Card>
           <CardHeader>
-            <CardTitle>Platform Settings</CardTitle>
-            <CardDescription>Configure general settings for the IntelliBiz platform.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              General Settings
+            </CardTitle>
+            <CardDescription>Basic platform configuration</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {isSuccess ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-                <h3 className="text-xl font-medium mb-2">Settings Updated!</h3>
-                <p className="text-center text-muted-foreground">Admin settings have been successfully updated.</p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="siteName">Site Name</Label>
-                  <Input
-                    id="siteName"
-                    name="siteName"
-                    placeholder="e.g., IntelliBiz"
-                    value={formData.siteName}
-                    onChange={handleChange}
-                  />
-                </div>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="siteName">Site Name</Label>
+              <Input
+                id="siteName"
+                value={settings.siteName}
+                onChange={(e) => handleSettingChange('siteName', e.target.value)}
+                disabled={saving}
+              />
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="adminEmail">Admin Email</Label>
-                    <Input
-                      id="adminEmail"
-                      name="adminEmail"
-                      type="email"
-                      placeholder="e.g., admin@intellibiz.com"
-                      value={formData.adminEmail}
-                      onChange={handleChange}
-                    />
-                  </div>
+            <div className="space-y-2">
+              <Label htmlFor="siteDescription">Site Description</Label>
+              <Textarea
+                id="siteDescription"
+                value={settings.siteDescription || ""}
+                onChange={(e) => handleSettingChange('siteDescription', e.target.value)}
+                disabled={saving}
+                rows={3}
+              />
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="supportEmail">Support Email</Label>
-                    <Input
-                      id="supportEmail"
-                      name="supportEmail"
-                      type="email"
-                      placeholder="e.g., support@intellibiz.com"
-                      value={formData.supportEmail}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="adminEmail">Admin Email</Label>
+              <Input
+                id="adminEmail"
+                type="email"
+                value={settings.adminEmail}
+                onChange={(e) => handleSettingChange('adminEmail', e.target.value)}
+                disabled={saving}
+              />
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="defaultCurrency">Default Currency</Label>
-                  <Input
-                    id="defaultCurrency"
-                    name="defaultCurrency"
-                    placeholder="e.g., USD"
-                    value={formData.defaultCurrency}
-                    onChange={handleChange}
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="supportEmail">Support Email</Label>
+              <Input
+                id="supportEmail"
+                type="email"
+                value={settings.supportEmail}
+                onChange={(e) => handleSettingChange('supportEmail', e.target.value)}
+                disabled={saving}
+              />
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="termsOfService">Terms of Service</Label>
-                  <Textarea
-                    id="termsOfService"
-                    name="termsOfService"
-                    placeholder="Enter the terms of service..."
-                    rows={4}
-                    value={formData.termsOfService}
-                    onChange={handleChange}
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="supportPhone">Support Phone</Label>
+              <Input
+                id="supportPhone"
+                value={settings.supportPhone || ""}
+                onChange={(e) => handleSettingChange('supportPhone', e.target.value)}
+                disabled={saving}
+              />
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="privacyPolicy">Privacy Policy</Label>
-                  <Textarea
-                    id="privacyPolicy"
-                    name="privacyPolicy"
-                    placeholder="Enter the privacy policy..."
-                    rows={4}
-                    value={formData.privacyPolicy}
-                    onChange={handleChange}
-                  />
-                </div>
-              </>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="defaultCurrency">Default Currency</Label>
+              <Input
+                id="defaultCurrency"
+                value={settings.defaultCurrency}
+                onChange={(e) => handleSettingChange('defaultCurrency', e.target.value)}
+                disabled={saving}
+              />
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Saving...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </div>
-              )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+        </Card>
+
+        {/* Business Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Business Settings
+            </CardTitle>
+            <CardDescription>Business registration and verification rules</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Auto-approve Businesses</Label>
+                <p className="text-sm text-muted-foreground">
+                  Automatically approve new business registrations
+                </p>
+              </div>
+              <Switch
+                checked={settings.autoApproveBusinesses || false}
+                onCheckedChange={(checked) => handleSettingChange('autoApproveBusinesses', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Require Business Verification</Label>
+                <p className="text-sm text-muted-foreground">
+                  Require manual verification for new businesses
+                </p>
+              </div>
+              <Switch
+                checked={settings.requireBusinessVerification || false}
+                onCheckedChange={(checked) => handleSettingChange('requireBusinessVerification', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maxBusinesses">Max Businesses per User</Label>
+              <Select
+                value={(settings.maxBusinessesPerUser || 5).toString()}
+                onValueChange={(value) => handleSettingChange('maxBusinessesPerUser', parseInt(value))}
+                disabled={saving}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="unlimited">Unlimited</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Review Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              Review Settings
+            </CardTitle>
+            <CardDescription>Review moderation and approval rules</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Auto-approve Reviews</Label>
+                <p className="text-sm text-muted-foreground">
+                  Automatically approve new reviews
+                </p>
+              </div>
+              <Switch
+                checked={settings.autoApproveReviews || false}
+                onCheckedChange={(checked) => handleSettingChange('autoApproveReviews', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Require Review Moderation</Label>
+                <p className="text-sm text-muted-foreground">
+                  Require manual moderation for reviews
+                </p>
+              </div>
+              <Switch
+                checked={settings.requireReviewModeration || false}
+                onCheckedChange={(checked) => handleSettingChange('requireReviewModeration', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maxReviews">Max Reviews per User</Label>
+              <Select
+                value={(settings.maxReviewsPerUser || 10).toString()}
+                onValueChange={(value) => handleSettingChange('maxReviewsPerUser', parseInt(value))}
+                disabled={saving}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="unlimited">Unlimited</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notification Settings
+            </CardTitle>
+            <CardDescription>Configure notification preferences</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Send notifications via email
+                </p>
+              </div>
+              <Switch
+                checked={settings.emailNotifications || false}
+                onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>SMS Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Send notifications via SMS
+                </p>
+              </div>
+              <Switch
+                checked={settings.smsNotifications || false}
+                onCheckedChange={(checked) => handleSettingChange('smsNotifications', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Admin Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Send notifications to admin users
+                </p>
+              </div>
+              <Switch
+                checked={settings.adminNotifications || false}
+                onCheckedChange={(checked) => handleSettingChange('adminNotifications', checked)}
+                disabled={saving}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security Settings
+            </CardTitle>
+            <CardDescription>Security and authentication configuration</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+              <Select
+                value={(settings.sessionTimeout || 30).toString()}
+                onValueChange={(value) => handleSettingChange('sessionTimeout', parseInt(value))}
+                disabled={saving}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="60">1 hour</SelectItem>
+                  <SelectItem value="120">2 hours</SelectItem>
+                  <SelectItem value="480">8 hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
+              <Select
+                value={(settings.maxLoginAttempts || 5).toString()}
+                onValueChange={(value) => handleSettingChange('maxLoginAttempts', parseInt(value))}
+                disabled={saving}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">3 attempts</SelectItem>
+                  <SelectItem value="5">5 attempts</SelectItem>
+                  <SelectItem value="10">10 attempts</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Require Two-Factor Authentication</Label>
+                <p className="text-sm text-muted-foreground">
+                  Require 2FA for admin accounts
+                </p>
+              </div>
+              <Switch
+                checked={settings.requireTwoFactor || false}
+                onCheckedChange={(checked) => handleSettingChange('requireTwoFactor', checked)}
+                disabled={saving}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Maintenance Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Maintenance Settings
+            </CardTitle>
+            <CardDescription>System maintenance and downtime configuration</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Maintenance Mode</Label>
+                <p className="text-sm text-muted-foreground">
+                  Enable maintenance mode for the platform
+                </p>
+              </div>
+              <Switch
+                checked={settings.maintenanceMode || false}
+                onCheckedChange={(checked) => handleSettingChange('maintenanceMode', checked)}
+                disabled={saving}
+              />
+            </div>
+
+            {(settings.maintenanceMode || false) && (
+              <div className="space-y-2">
+                <Label htmlFor="maintenanceMessage">Maintenance Message</Label>
+                <Textarea
+                  id="maintenanceMessage"
+                  value={settings.maintenanceMessage || ""}
+                  onChange={(e) => handleSettingChange('maintenanceMessage', e.target.value)}
+                  disabled={saving}
+                  rows={3}
+                  placeholder="Message to display during maintenance..."
+                />
+              </div>
+            )}
+
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center gap-2 text-yellow-800">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-sm font-medium">Warning</span>
+              </div>
+              <p className="text-sm text-yellow-700 mt-1">
+                Changes to these settings will affect all users. Please review carefully before saving.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  );
+  )
 }

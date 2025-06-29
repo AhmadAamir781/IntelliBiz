@@ -53,6 +53,52 @@ export default function AdminDashboard() {
     router.push('/login')
   }
 
+  const handleDownloadReport = async () => {
+    try {
+      // Show loading state
+      toast.loading('Generating report...')
+      
+      // Simulate report generation (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Create a simple CSV report with current stats
+      const reportData = [
+        ['Metric', 'Value', 'Date'],
+        ['Total Businesses', stats?.totalBusinesses || 0, new Date().toLocaleDateString()],
+        ['Total Users', stats?.totalUsers || 0, new Date().toLocaleDateString()],
+        ['Total Reviews', stats?.totalReviews || 0, new Date().toLocaleDateString()],
+        ['Total Messages', stats?.totalMessages || 0, new Date().toLocaleDateString()],
+        ['Business Growth', `${stats?.businessGrowth || 0}%`, new Date().toLocaleDateString()],
+        ['User Growth', `${stats?.userGrowth || 0}%`, new Date().toLocaleDateString()],
+        ['Review Growth', `${stats?.reviewGrowth || 0}%`, new Date().toLocaleDateString()],
+        ['Message Growth', `${stats?.messageGrowth || 0}%`, new Date().toLocaleDateString()]
+      ]
+      
+      // Convert to CSV
+      const csvContent = reportData.map(row => row.join(',')).join('\n')
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `intellibiz-admin-report-${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      
+      toast.success('Report downloaded successfully!')
+    } catch (error) {
+      console.error('Error generating report:', error)
+      toast.error('Failed to generate report')
+    }
+  }
+
+  const handleViewAnalytics = () => {
+    router.push('/admin/analytics')
+  }
+
   // Show loading state while checking authentication
   if (authLoading || (loading && !error)) {
     return (
@@ -83,10 +129,10 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Welcome to the IntelliBiz admin dashboard.</p>
         </div>
         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
-          <Button variant="outline" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={handleDownloadReport}>
             Download Report
           </Button>
-          <Button className="w-full sm:w-auto">View Analytics</Button>
+          <Button className="w-full sm:w-auto" onClick={handleViewAnalytics}>View Analytics</Button>
           <Button 
             variant="outline" 
             size="sm" 
@@ -241,14 +287,14 @@ export default function AdminDashboard() {
                     Array.from({ length: 4 }).map((_, i) => (
                       <TableRow key={i}>
                         <TableCell colSpan={5}>
-                          <Skeleton className="h-12 w-full" />
+                          <Skeleton className="h-12 w-full" />  
                         </TableCell>
                       </TableRow>
                     ))
                   ) : pendingBusinesses.length > 0 ? (
                     pendingBusinesses.map((business) => (
                       <TableRow key={business.id}>
-                        <TableCell className="font-medium">{business.name}</TableCell>
+                        <TableCell className="font-medium">{business.businessName}</TableCell>
                         <TableCell className="hidden md:table-cell">{business.category}</TableCell>
                         <TableCell className="hidden md:table-cell">
                           {new Date(business.createdAt).toLocaleDateString()}

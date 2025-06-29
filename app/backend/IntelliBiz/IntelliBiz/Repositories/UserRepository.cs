@@ -73,7 +73,7 @@ namespace IntelliBiz.API.Repositories
         public async Task<bool> DeleteAsync(int id)
         {
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "DELETE FROM Reviews WHERE UserId = @Id; DELETE FROM Businesses WHERE OwnerId = @Id; DELETE FROM Users WHERE Id = @Id;";
+            const string sql = "DELETE FROM Appointments\nWHERE BusinessId IN (\n    SELECT Id FROM Businesses WHERE OwnerId = @Id\n);\n\nDELETE FROM Services\nWHERE BusinessId IN (\n    SELECT Id FROM Businesses WHERE OwnerId = @Id\n);\n\nDELETE FROM Reviews\nWHERE UserId = @Id;\n\nDELETE FROM Businesses\nWHERE OwnerId = @Id;\n\nDELETE FROM Users\nWHERE Id = @Id;\n";   
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
         }

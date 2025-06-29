@@ -194,6 +194,79 @@ export default function ReviewManagement() {
             Logout
           </Button>
         </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Reviews</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Star className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Published</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.published}</p>
+                </div>
+                <div className="p-2 bg-green-100 rounded-full">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                </div>
+                <div className="p-2 bg-yellow-100 rounded-full">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Flagged</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.flagged}</p>
+                </div>
+                <div className="p-2 bg-red-100 rounded-full">
+                  <Flag className="h-5 w-5 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Rejected</p>
+                  <p className="text-2xl font-bold text-gray-600">{stats.rejected}</p>
+                </div>
+                <div className="p-2 bg-gray-100 rounded-full">
+                  <XCircle className="h-5 w-5 text-gray-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card>

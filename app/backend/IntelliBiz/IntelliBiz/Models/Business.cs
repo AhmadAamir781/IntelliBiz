@@ -86,7 +86,7 @@ namespace IntelliBiz.API.Models
         public int ViewCount { get; set; }
         public int Rating { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
     }

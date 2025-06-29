@@ -1,30 +1,59 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-
-import type React from "react"
-
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CheckCircle, Save } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { CheckCircle, Save, User, Mail, Phone, MapPin } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
+import { userApi } from "@/lib/api"
+import { User as UserType } from "@/lib/types"
+import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardSettingsPage() {
-  const [isSubmitting, setIsLoading] = useState(false)
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<UserType | null>(null)
   const [formData, setFormData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "(555) 123-4567",
-    address: "123 Main St",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
   })
-  const { showSuccessToast, showErrorToast } = useToast()
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
+        if (currentUser.id) {
+          const response = await userApi.getProfile(currentUser.id)
+          if (response.data) {
+            setUser(response.data)
+            setFormData({
+              firstName: response.data.firstName || "",
+              lastName: response.data.lastName || "",
+              email: response.data.email || "",
+              phoneNumber: response.data.phoneNumber || "",
+            })
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+        toast.error("Failed to load user data")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (isAuthenticated && !authLoading) {
+      fetchUserData()
+    }
+  }, [isAuthenticated, authLoading])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -39,21 +68,61 @@ export default function DashboardSettingsPage() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      if (!user?.id) {
+        throw new Error("User not found")
+      }
 
-      setIsSuccess(true)
-      console.log("Dashboard settings updated:", formData)
-
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setIsSuccess(false)
-        setIsSubmitting(false)
-      }, 3000)
+      const response = await userApi.updateProfile(user.id, formData)
+      
+      if (response.data) {
+        // Update localStorage with new user data
+        localStorage.setItem("user", JSON.stringify(response.data))
+        setUser(response.data)
+        setIsSuccess(true)
+        toast.success("Settings updated successfully")
+        
+        // Reset success state after 3 seconds
+        setTimeout(() => {
+          setIsSuccess(false)
+        }, 3000)
+      }
     } catch (error) {
-      console.error("Dashboard settings update failed:", error)
+      console.error("Settings update failed:", error)
+      toast.error("Failed to update settings")
+    } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading || loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32 mb-2" />
+            <Skeleton className="h-4 w-80" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -82,19 +151,43 @@ export default function DashboardSettingsPage() {
               </div>
             ) : (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="e.g., John Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      First Name
+                    </Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      placeholder="e.g., John"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Last Name
+                    </Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      placeholder="e.g., Doe"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email Address
+                  </Label>
                   <Input
                     id="email"
                     name="email"
@@ -102,92 +195,43 @@ export default function DashboardSettingsPage() {
                     placeholder="e.g., john@example.com"
                     value={formData.email}
                     onChange={handleChange}
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phoneNumber" className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Phone Number
+                  </Label>
                   <Input
-                    id="phone"
-                    name="phone"
+                    id="phoneNumber"
+                    name="phoneNumber"
                     placeholder="e.g., (555) 123-4567"
-                    value={formData.phone}
+                    value={formData.phoneNumber}
                     onChange={handleChange}
                   />
                 </div>
 
+                {/* Display user role */}
                 <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    placeholder="e.g., 123 Main St"
-                    value={formData.address}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      placeholder="e.g., New York"
-                      value={formData.city}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      name="state"
-                      placeholder="e.g., NY"
-                      value={formData.state}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP Code</Label>
-                    <Input
-                      id="zipCode"
-                      name="zipCode"
-                      placeholder="e.g., 10001"
-                      value={formData.zipCode}
-                      onChange={handleChange}
-                    />
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Role
+                  </Label>
+                  <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                    <span className="text-sm font-medium capitalize">{user?.role || "User"}</span>
+                    <span className="text-xs text-muted-foreground">(Role cannot be changed)</span>
                   </div>
                 </div>
               </>
             )}
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || isSuccess}>
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   Saving...
                 </div>
               ) : (

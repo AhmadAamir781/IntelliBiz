@@ -9,7 +9,7 @@
         public int ReviewCount { get; set; }
         public string Description { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Website { get; set; } = string.Empty;
         public string Founded { get; set; } = string.Empty;
@@ -20,6 +20,8 @@
         public List<string> Images { get; set; } = new();
         public bool Verified { get; set; }
         public string Licenses { get; set; } = string.Empty;
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public List<string> PaymentMethods { get; set; } = new();
         public List<string> ServiceAreas { get; set; } = new();
     }

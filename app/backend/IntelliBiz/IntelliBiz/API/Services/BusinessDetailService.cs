@@ -42,12 +42,14 @@ namespace IntelliBiz.API.Services
                 ReviewCount = reviews.Count(),
                 Description = business.Description,
                 Address = business.Address,
-                Phone = business.PhoneNumber,
+                PhoneNumber = business.PhoneNumber,
                 Email = business.Email,
                 Website = business.Website,
                 Founded = business.Founded,
                 Owner = business.Owner,
                 Employees = business.Employees,
+                CreatedAt = business.CreatedAt,
+                UpdatedAt = business.UpdatedAt,
                 Services = services.Select(s => s.Name).ToList(),
                 Hours = new BusinessHoursDto
                 {

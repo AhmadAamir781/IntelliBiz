@@ -1,7 +1,8 @@
 {
-  "/admin/analytics/page": "app/admin/analytics/page.js",
   "/admin/businesses/page": "app/admin/businesses/page.js",
+  "/admin/reviews/page": "app/admin/reviews/page.js",
+  "/admin/activity/page": "app/admin/activity/page.js",
+  "/admin/page": "app/admin/page.js",
   "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/businesses/edit/[id]/page": "app/admin/businesses/edit/[id]/page.js",
-  "/admin/reviews/page": "app/admin/reviews/page.js"
+  "/admin/analytics/page": "app/admin/analytics/page.js"
 }

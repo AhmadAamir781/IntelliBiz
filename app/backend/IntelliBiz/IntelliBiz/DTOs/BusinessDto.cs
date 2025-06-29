@@ -41,7 +41,7 @@ namespace IntelliBiz.API.DTOs
         [Required(ErrorMessage = "Phone number is required")]
         [Phone(ErrorMessage = "Invalid phone number")]
         [StringLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]
-        public string Phone { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email address")]
@@ -57,5 +57,7 @@ namespace IntelliBiz.API.DTOs
         public BusinessHoursDto? Hours {get; set;}
         public List<string>? ServiceArea {get;set;}
         public string? OwnerName { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

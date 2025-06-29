@@ -98,7 +98,7 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 100, // allow 5 requests
                 Window = TimeSpan.FromSeconds(70), // per 10 seconds
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 5
+                QueueLimit = 21
             });
     });
 

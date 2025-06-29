@@ -179,7 +179,7 @@ export default function DashboardPage() {
                               <p className="text-sm text-muted-foreground">{appointment.serviceId}</p>
                               <div className="flex items-center gap-2 mt-2">
                                 <p className="text-sm">
-                                  {new Date(appointment.date).toLocaleDateString("en-US", {
+                                  {new Date(appointment.appointmentDate).toLocaleDateString("en-US", {
                                     month: "short",
                                     day: "numeric",
                                     year: "numeric",
