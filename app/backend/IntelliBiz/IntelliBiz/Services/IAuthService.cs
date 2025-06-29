@@ -7,5 +7,7 @@ namespace IntelliBiz.API.Services
         Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto);
         Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
         string GenerateJwtToken(UserDto user);
+        Task<AuthResponseDto> LoginWithGoogleAsync(string email);
+        Task<AuthResponseDto> RegisterWithGoogleAsync(string firstName, string lastName, string email, string role = "Customer");
     }
 }

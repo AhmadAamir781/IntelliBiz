@@ -178,5 +178,89 @@ namespace IntelliBiz.API.Services
 
             return result == 0;
         }
+
+        public async Task<AuthResponseDto> LoginWithGoogleAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "User not found"
+                };
+            }
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Role = user.Role,
+                CreatedAt = user.CreatedAt
+            };
+
+            string token = GenerateJwtToken(userDto);
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Login successful",
+                Token = token,
+                User = userDto
+            };
+        }
+
+        public async Task<AuthResponseDto> RegisterWithGoogleAsync(string firstName, string lastName, string email, string role = "Customer")
+        {
+            if (await _userRepository.EmailExistsAsync(email))
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "Email already exists"
+                };
+            }
+
+            var user = new User
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                PasswordHash = string.Empty, // No password for Google accounts
+                Role = role,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var users = await _userRepository.GetAllAsync();
+            if(users.Count() == 0)
+            {
+                user.Role = "Admin";
+            }
+
+            int userId = await _userRepository.CreateAsync(user);
+            user.Id = userId;
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Role = user.Role,
+                CreatedAt = user.CreatedAt
+            };
+
+            string token = GenerateJwtToken(userDto);
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Registration successful",
+                Token = token,
+                User = userDto
+            };
+        }
     }
 }

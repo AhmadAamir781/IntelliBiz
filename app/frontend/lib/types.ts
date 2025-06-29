@@ -95,6 +95,12 @@ export interface Message {
   updatedAt: string;
 }
 
+export interface GoogleLoginRequest {
+  email: string;
+  name: string;
+  picture: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;

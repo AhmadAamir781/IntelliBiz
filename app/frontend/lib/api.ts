@@ -9,8 +9,10 @@ import {
   LoginRequest,
   RegisterRequest,
   ApiResponse,
-  Settings
+  Settings,
+  GoogleLoginRequest
 } from "./types"
+import { googleOAuth } from "./oauth"
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
@@ -151,6 +153,66 @@ export const authApi = {
     } catch (error) {
       console.error("Failed to refresh user data:", error)
     }
+  },
+
+  // OAuth methods
+  googleLogin: async (idToken: string): Promise<ApiResponse<any>> => {
+    const userInfo = await googleOAuth.getUserInfo(idToken)
+    const googleLoginRequest: GoogleLoginRequest = {
+      email: userInfo.email,
+      name: userInfo.name,
+      picture: userInfo.picture,
+    };
+    
+    const response = await api.post("/auth/google",  googleLoginRequest )
+    
+    if (response.data?.token) {
+      localStorage.setItem("token", response.data.token)
+      localStorage.setItem("user", JSON.stringify(response.data.user))
+      
+      // Handle redirect based on user role
+      const redirectPath = localStorage.getItem("redirectAfterLogin")
+      if (redirectPath) {
+        localStorage.removeItem("redirectAfterLogin")
+        window.location.href = redirectPath
+      } else {
+        const userRole = response.data.user?.role
+        if (userRole === 'Admin') {
+          window.location.href = "/admin"
+        } else if (userRole === 'BusinessOwner') {
+          window.location.href = "/business"
+        } else {
+          window.location.href = "/dashboard"
+        }
+      }
+    }
+    return response as unknown as ApiResponse<any>
+  },
+
+  facebookLogin: async (token: string): Promise<ApiResponse<any>> => {
+    const response = await api.post("/auth/facebook", { token })
+    
+    if (response.data?.token) {
+      localStorage.setItem("token", response.data.token)
+      localStorage.setItem("user", JSON.stringify(response.data.user))
+      
+      // Handle redirect based on user role
+      const redirectPath = localStorage.getItem("redirectAfterLogin")
+      if (redirectPath) {
+        localStorage.removeItem("redirectAfterLogin")
+        window.location.href = redirectPath
+      } else {
+        const userRole = response.data.user?.role
+        if (userRole === 'Admin') {
+          window.location.href = "/admin"
+        } else if (userRole === 'BusinessOwner') {
+          window.location.href = "/business"
+        } else {
+          window.location.href = "/dashboard"
+        }
+      }
+    }
+    return response as unknown as ApiResponse<any>
   },
 }
 

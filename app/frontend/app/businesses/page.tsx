@@ -240,6 +240,7 @@ export default function BusinessesPage() {
                   business={{
                     id: parseInt(business.id.toString()),
                     name: business.name,
+                    businessName: business.businessName,
                     category: business.category,
                     rating: businessReviews.length > 0 ? businessReviews.reduce((sum, review) => sum + review.rating, 0) / businessReviews.length : 0, 
                     reviewCount: businessReviews.length,
