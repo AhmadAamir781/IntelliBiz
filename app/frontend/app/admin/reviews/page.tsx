@@ -75,7 +75,7 @@ export default function ReviewManagement() {
     router.push('/login')
   }
 
-  const { reviews, stats, loading, error, totalPages, approveReview, rejectReview, deleteReview, unflagReview } = useAdminReviews({
+  const { reviews, stats, loading, error, totalPages, approveReview, rejectReview, deleteReview, unflagReview, flagReview } = useAdminReviews({
     status: reviewStatus,
     page: currentPage,
     pageSize: 10,
@@ -113,6 +113,7 @@ export default function ReviewManagement() {
   }
 
   const getStatusBadge = (status: string, isFlagged: boolean) => {
+    debugger
     if (isFlagged) {
       return (
         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
@@ -123,7 +124,7 @@ export default function ReviewManagement() {
     }
 
     switch (status) {
-      case "approved":
+      case "published":
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             <CheckCircle className="mr-1 h-3 w-3" />
@@ -215,7 +216,7 @@ export default function ReviewManagement() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Published</p>
+                  <p className="text-sm font-medium text-muted-foreground">published</p>
                   <p className="text-2xl font-bold text-green-600">{stats.published}</p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-full">
@@ -364,7 +365,7 @@ export default function ReviewManagement() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              {review.status === "pending" && (
+                              {review.status === "published" && (
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => approveReview(review.id)}>
@@ -383,6 +384,15 @@ export default function ReviewManagement() {
                                   <DropdownMenuItem onClick={() => unflagReview(review.id)}>
                                     <Flag className="mr-2 h-4 w-4" />
                                     Unflag
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {!review.isFlagged && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => flagReview(review.id)}>
+                                    <Flag className="mr-2 h-4 w-4" />
+                                    Flag the review
                                   </DropdownMenuItem>
                                 </>
                               )}

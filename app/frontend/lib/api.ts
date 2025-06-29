@@ -338,6 +338,9 @@ export const reviewApi = {
   getPendingReviews: (): Promise<ApiResponse<Review[]>> =>
     api.get("/reviews/pending"),
 
+  getPublishedReviews: (): Promise<ApiResponse<Review[]>> =>
+    api.get("/reviews/published"),
+
   getFlaggedReviews: (): Promise<ApiResponse<Review[]>> =>
     api.get("/reviews/flagged"),
 

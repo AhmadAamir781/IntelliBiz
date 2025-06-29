@@ -86,6 +86,25 @@ export const useAdminNotifications = () => {
         console.error('Error fetching pending review notifications:', error)
       }
 
+      try {
+        const pendingReviewsResponse = await reviewApi.getPublishedReviews()
+        if (pendingReviewsResponse.data) {
+          pendingReviewsResponse.data.forEach((review) => {
+            allNotifications.push({
+              id: `review-pending-${review.id}`,
+              type: 'review',
+              title: 'Review published',
+              message: `Review #${review.id} is published`,
+              time: new Date(review.createdAt).toLocaleDateString(),
+              isRead: false,
+              priority: 'medium',
+              actionUrl: `/admin/reviews/${review.id}`
+            })
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching published review notifications:', error)
+      }
       // Sort notifications by priority and time (newest first)
       allNotifications.sort((a, b) => {
         const priorityOrder = { high: 3, medium: 2, low: 1 }

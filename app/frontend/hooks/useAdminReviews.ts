@@ -4,7 +4,7 @@ import { Review } from '../lib/types';
 import { toast } from 'sonner';
 
 interface AdminReviewsFilters {
-  status: 'all' | 'published' | 'pending' | 'flagged';
+  status: 'all' | 'published' | 'pending' | 'flagged' | 'rejected';
   page: number;
   pageSize: number;
 }
@@ -48,10 +48,10 @@ export const useAdminReviews = (filters: AdminReviewsFilters) => {
       if (filters.status !== 'all') {
         switch (filters.status) {
           case 'published':
-            filteredReviews = reviewsData.filter(review => review.status === 'approved');
+            filteredReviews = reviewsData.filter(review => review.status === 'published');
             break;
-          case 'pending':
-            filteredReviews = reviewsData.filter(review => review.status === 'pending');
+          case 'rejected':
+            filteredReviews = reviewsData.filter(review => review.status === 'rejected');
             break;
           case 'flagged':
             filteredReviews = reviewsData.filter(review => review.isFlagged);
@@ -62,7 +62,7 @@ export const useAdminReviews = (filters: AdminReviewsFilters) => {
       // Calculate stats
       const statsData: ReviewStats = {
         total: reviewsData.length,
-        published: reviewsData.filter(r => r.status === 'approved').length,
+        published: reviewsData.filter(r => r.status === 'published').length,
         pending: reviewsData.filter(r => r.status === 'pending').length,
         flagged: reviewsData.filter(r => r.isFlagged).length,
         rejected: reviewsData.filter(r => r.status === 'rejected').length

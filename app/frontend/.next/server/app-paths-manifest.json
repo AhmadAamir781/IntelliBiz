@@ -1,8 +1,7 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
-  "/terms/page": "app/terms/page.js",
   "/login/page": "app/login/page.js",
-  "/privacy/page": "app/privacy/page.js",
-  "/register-business/page": "app/register-business/page.js"
+  "/register-business/page": "app/register-business/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/reviews/page": "app/admin/reviews/page.js",
+  "/admin/analytics/page": "app/admin/analytics/page.js"
 }

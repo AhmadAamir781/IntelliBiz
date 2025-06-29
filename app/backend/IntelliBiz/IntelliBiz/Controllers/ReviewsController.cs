@@ -77,6 +77,14 @@ namespace IntelliBiz.API.Controllers
             return Ok(reviews);
         }
 
+        [HttpGet("published")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<ReviewDto>>> GetPublishedReviews()
+        {
+            var reviews = await _reviewService.GetByStatusAsync("published");
+            return Ok(reviews);
+        }
+
         [HttpPost]
         public async Task<ActionResult<ApiResponseDto<ReviewDto>>> Create([FromBody] ReviewDto reviewDto)
         {

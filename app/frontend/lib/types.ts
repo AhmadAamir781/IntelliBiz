@@ -51,7 +51,7 @@ export interface Review {
   comment: string;
   isFlagged: boolean;
   flagReason?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'published' | 'pending' | 'rejected' | 'flagged';
   createdAt: string;
   userName?: string;
   userAvatar?: string;

@@ -84,8 +84,6 @@ export default function UserManagement() {
 
   const handleUpdateRole = async (id: number, role: string) => {
     // Toggle between 'Admin' and 'User' (capitalized)
-
-    debugger
     const newRole = role === 'Admin' ? 'User' : 'Admin';
     const result = await updateUserRole(id, newRole);
     if (result.success) {
