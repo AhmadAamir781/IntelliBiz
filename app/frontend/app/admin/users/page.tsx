@@ -159,15 +159,6 @@ export default function UserManagement() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">User Management</h1>
             <p className="text-muted-foreground">Manage all users on the platform.</p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleLogout}
-            className="flex items-center gap-1"
-          >
-            <LogOut className="h-4 w-4 mr-1" />
-            Logout
-          </Button>
         </div>
         <div className="flex justify-between items-center">
           <Button asChild>

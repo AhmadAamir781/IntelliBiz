@@ -10,6 +10,7 @@ import { Logo } from "@/components/logo"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import { getUserRole } from '../lib/api';
 
 export default function Home() {
   const { isAuthenticated, logout, user, loading } = useAuth()
@@ -50,6 +51,16 @@ export default function Home() {
       <header className="w-full py-4 px-4 md:px-6 border-b bg-background">
         <div className="container mx-auto flex justify-between items-center">
           <Logo />
+
+          {getUserRole() === "Admin" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/admin")}
+              >
+                Admin Panel
+              </Button>
+            )}
           <div className="flex items-center gap-4">
             {isAuthenticated && (
               <>

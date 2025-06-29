@@ -189,15 +189,6 @@ export default function BusinessManagement() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Business Management</h1>
             <p className="text-muted-foreground">Manage all registered businesses on the platform.</p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleLogout}
-            className="flex items-center gap-1"
-          >
-            <LogOut className="h-4 w-4 mr-1" />
-            Logout
-          </Button>
         </div>
         <div className="flex justify-between items-center">
           <Button asChild>

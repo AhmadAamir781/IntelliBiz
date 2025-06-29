@@ -157,15 +157,6 @@ export default function AdminAnalyticsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground">Comprehensive insights into your platform performance.</p>

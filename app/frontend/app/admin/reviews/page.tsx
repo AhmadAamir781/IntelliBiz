@@ -185,15 +185,6 @@ export default function ReviewManagement() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Review Management</h1>
             <p className="text-muted-foreground">Monitor and moderate customer reviews.</p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleLogout}
-            className="flex items-center gap-1"
-          >
-            <LogOut className="h-4 w-4 mr-1" />
-            Logout
-          </Button>
         </div>
 
         {/* Stats Cards */}
