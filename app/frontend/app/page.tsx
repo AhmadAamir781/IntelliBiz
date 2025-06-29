@@ -83,9 +83,6 @@ export default function Home() {
               Connect with trusted local businesses for all your service needs. From plumbers to barbers, find the right
               professional near you.
             </p>
-            <div className="w-full max-w-md mt-4">
-              <SearchBar />
-            </div>
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <Button asChild size="lg" variant="secondary">
                 <Link href="/businesses">Browse All Services</Link>
@@ -195,7 +192,7 @@ export default function Home() {
             <div>
               <Logo />
               <p className="mt-4 text-sm text-muted-foreground">
-                Connecting local businesses with customers in their community since 2023.
+                Connecting local businesses with customers in their community since 2025.
               </p>
             </div>
             <div>

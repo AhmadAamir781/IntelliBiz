@@ -31,7 +31,7 @@ interface ProfileFormData {
   firstName: string
   lastName: string
   email: string
-  phone: string
+  phoneNumber: string
   address: string
   bio: string
   currentPassword: string
@@ -50,7 +50,7 @@ export default function AdminProfilePage() {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     address: "",
     bio: "",
     currentPassword: "",
@@ -95,7 +95,7 @@ export default function AdminProfilePage() {
             firstName: userData.firstName || "",
             lastName: userData.lastName || "",
             email: userData.email || "",
-            phone: (userData as any).phone || "",
+            phoneNumber: (userData as any).phone || "",
             address: (userData as any).address || "",
             bio: (userData as any).bio || "",
             currentPassword: "",
@@ -133,7 +133,7 @@ export default function AdminProfilePage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        phone: formData.phone,
+        phoneNumber: formData.phoneNumber,
         address: formData.address,
         bio: formData.bio
       }
@@ -287,12 +287,12 @@ export default function AdminProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phoneNumber">Phone</Label>
               <Input
-                id="phone"
+                id="phoneNumber"
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                value={formData.phoneNumber}
+                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                 disabled={!isEditing || saving}
               />
             </div>

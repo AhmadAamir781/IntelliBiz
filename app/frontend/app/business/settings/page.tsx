@@ -88,9 +88,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phoneNumber">Phone Number</Label>
                 <Input
-                  id="phone"
+                  id="phoneNumber"
                   name="phone"
                   type="tel"
                   placeholder="e.g., (555) 123-4567"

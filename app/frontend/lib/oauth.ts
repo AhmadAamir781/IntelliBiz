@@ -104,21 +104,26 @@ export const googleOAuth = {
 // Facebook OAuth Functions
 export const facebookOAuth = {
   // Initialize Facebook OAuth
-  init: () => {
-    if (typeof window === 'undefined') return
-
-    // Load Facebook SDK if not already loaded
-    if (!window.FB) {
-      const script = document.createElement('script')
-      script.src = 'https://connect.facebook.net/en_US/sdk.js'
-      script.async = true
-      script.defer = true
-      script.crossOrigin = 'anonymous'
-      script.onerror = () => {
-        console.error('Failed to load Facebook SDK')
+  init: (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined') {
+        resolve();
+        return;
       }
-      document.head.appendChild(script)
 
+      // If FB is already loaded and initialized, resolve immediately
+      if (window.FB) {
+        resolve();
+        return;
+      }
+
+      // Load Facebook SDK if not already loaded
+      const script = document.createElement('script');
+      script.src = 'https://connect.facebook.net/en_US/sdk.js';
+      script.async = true;
+      script.defer = true;
+      script.crossOrigin = 'anonymous';
+      
       script.onload = () => {
         if (window.FB) {
           window.FB.init({
@@ -126,70 +131,98 @@ export const facebookOAuth = {
             cookie: true,
             xfbml: true,
             version: 'v18.0'
-          })
+          });
+          resolve();
+        } else {
+          reject(new Error('Facebook SDK failed to load'));
         }
-      }
-    }
+      };
+      
+      script.onerror = () => {
+        reject(new Error('Failed to load Facebook SDK'));
+      };
+      
+      document.head.appendChild(script);
+    });
   },
 
   // Sign in with Facebook
-  signIn: (): Promise<string> => {
+  signIn: async (): Promise<string> => {
+    if (typeof window === 'undefined') {
+      throw new Error('Facebook OAuth is not available on server side');
+    }
+
+    // Check if we're in development mode (HTTP)
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+      throw new Error('Facebook OAuth requires HTTPS. Please use HTTPS in production or localhost in development.');
+    }
+
+    // Ensure Facebook SDK is initialized
+    await facebookOAuth.init();
+
+    // Check if Facebook SDK is loaded
+    if (!window.FB) {
+      throw new Error('Facebook SDK not loaded');
+    }
+
     return new Promise((resolve, reject) => {
-      if (typeof window === 'undefined') {
-        reject(new Error('Facebook OAuth is not available on server side'))
-        return
-      }
-
-      // Check if Facebook SDK is loaded
-      if (!window.FB) {
-        reject(new Error('Facebook SDK not loaded. Please call facebookOAuth.init() first'))
-        return
-      }
-
       try {
-        window.FB.login((response: any) => {
+        const fb = window.FB;
+        if (!fb) {
+          reject(new Error('Facebook SDK not available'));
+          return;
+        }
+        
+        fb.login((response: any) => {
           if (response.authResponse) {
-            resolve(response.authResponse.accessToken)
+            resolve(response.authResponse.accessToken);
           } else {
-            reject(new Error('Facebook login failed'))
+            reject(new Error('Facebook login failed'));
           }
         }, {
           scope: 'email,public_profile'
-        })
+        });
       } catch (error) {
-        reject(new Error('Failed to initialize Facebook login'))
+        reject(new Error('Failed to initialize Facebook login'));
       }
-    })
+    });
   },
 
   // Get user info from Facebook
   getUserInfo: async (accessToken: string) => {
+    if (typeof window === 'undefined') {
+      throw new Error('Facebook OAuth is not available on server side');
+    }
+
+    // Ensure Facebook SDK is initialized
+    await facebookOAuth.init();
+
+    if (!window.FB) {
+      throw new Error('Facebook SDK not loaded');
+    }
+
     return new Promise((resolve, reject) => {
-      if (typeof window === 'undefined') {
-        reject(new Error('Facebook OAuth is not available on server side'))
-        return
-      }
-
-      if (!window.FB) {
-        reject(new Error('Facebook SDK not loaded'))
-        return
-      }
-
       try {
-        window.FB.api('/me', {
+        const fb = window.FB;
+        if (!fb) {
+          reject(new Error('Facebook SDK not available'));
+          return;
+        }
+        
+        fb.api('/me', {
           fields: 'id,name,email,picture',
           access_token: accessToken
         }, (response: any) => {
           if (response.error) {
-            reject(new Error(response.error.message))
+            reject(new Error(response.error.message));
           } else {
-            resolve(response)
+            resolve(response);
           }
-        })
+        });
       } catch (error) {
-        reject(new Error('Failed to fetch user information from Facebook'))
+        reject(new Error('Failed to fetch user information from Facebook'));
       }
-    })
+    });
   }
 }
 

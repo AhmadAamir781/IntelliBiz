@@ -164,10 +164,10 @@ export default function BusinessesPage() {
           </div>
 
           {/* Search and Filter Section */}
-          <Card className="border-none bg-gradient-to-r from-primary/90 to-primary">
+          <Card className="border-0 shadow-none bg-gradient-to-r">
             <CardContent className="p-0">
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="border-none flex-1 flex gap-2">
+                <div className="flex-1 flex gap-2">
                   <div className="relative w-full md:max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input

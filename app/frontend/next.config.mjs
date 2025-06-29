@@ -26,7 +26,17 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    https: true,
+    appDir: true,
   },
+  devIndicators: {
+    buildActivity: false,
+  },
+  ...(process.env.NODE_ENV === 'development' && {
+    server: {
+      https: true,
+    },
+  }),
 }
 
 if (userConfig) {

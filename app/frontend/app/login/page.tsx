@@ -131,20 +131,71 @@ export default function LoginPage() {
       setIsLoading(true)
       setError("")
       
+      console.log("Starting Facebook login...")
+
+      console.log("Getting Facebook access token...")
       const accessToken = await facebookOAuth.signIn()
-      const response = await authApi.facebookLogin(accessToken)
+
+      debugger
+      console.log("Facebook access token received:", accessToken ? "Success" : "Failed")
       
-      if (response.data?.token) {
+      console.log("Getting Facebook user info...")
+      const facebookResponse = await authApi.facebookLogin(accessToken)
+      console.log("Facebook API response:", facebookResponse)
+      
+      if (facebookResponse.data?.token) {
         showSuccessToast("Login successful", "Welcome back!")
       } else {
         setError("Facebook login failed")
-        showErrorToast("Login failed", "Facebook login failed")
+        showErrorToast("Login failed", "Facebook login failed. Please try again.")
       }
     } catch (error: any) {
-      console.error("Facebook login error:", error)
+      console.error('Facebook login error:', error)
       const errorMessage = error.message || "An error occurred during Facebook login"
       setError(errorMessage)
       showErrorToast("Facebook login failed", errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Development helper for testing Facebook login
+  const handleFacebookLoginDev = async () => {
+    try {
+      setIsLoading(true)
+      setError("")
+      
+      console.log("Starting Facebook login (Development Mode)...")
+      
+      // Mock Facebook login for development
+      const mockUserInfo = {
+        id: "dev_facebook_user_123",
+        name: "Development User",
+        email: "dev@example.com",
+        picture: "https://via.placeholder.com/150"
+      }
+      
+      const mockRequest = {
+        email: mockUserInfo.email,
+        name: mockUserInfo.name,
+        picture: mockUserInfo.picture,
+      }
+      
+      console.log("Sending mock Facebook login request...")
+      const response = await authApi.facebookLogin("mock_token")
+      console.log("Mock Facebook API response:", response)
+      
+      if (response.data?.token) {
+        showSuccessToast("Development Login successful", "Welcome back!")
+      } else {
+        setError("Development Facebook login failed")
+        showErrorToast("Login failed", "Development Facebook login failed. Please try again.")
+      }
+    } catch (error: any) {
+      console.error('Development Facebook login error:', error)
+      const errorMessage = error.message || "An error occurred during development Facebook login"
+      setError(errorMessage)
+      showErrorToast("Development Facebook login failed", errorMessage)
     } finally {
       setIsLoading(false)
     }

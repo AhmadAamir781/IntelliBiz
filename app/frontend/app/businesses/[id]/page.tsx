@@ -207,9 +207,9 @@ debugger
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 mb-5" style={{marginBottom: "50px"}}>
-                {business.phoneNumber ? (
+                {business.phone ? (
                   <Button asChild className="gap-2">
-                    <a href={`tel:${business.phoneNumber}`}>
+                    <a href={`tel:${business.phone}`}>
                       <Phone className="h-4 w-4" />
                       Call Now
                     </a>

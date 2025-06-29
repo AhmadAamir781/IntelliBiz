@@ -13,6 +13,7 @@ import {
   GoogleLoginRequest
 } from "./types"
 import { googleOAuth } from "./oauth"
+import { facebookOAuth } from "./oauth"
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
@@ -190,7 +191,8 @@ export const authApi = {
   },
 
   facebookLogin: async (token: string): Promise<ApiResponse<any>> => {
-    const response = await api.post("/auth/facebook", { token })
+
+    const response = await api.post("/auth/facebook", {AccessToken: token})
     
     if (response.data?.token) {
       localStorage.setItem("token", response.data.token)

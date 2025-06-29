@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Google.Apis.Auth;
 using IntelliBiz.API.DTOs;
 using IntelliBiz.API.Services;
@@ -19,6 +20,51 @@ namespace IntelliBiz.API.Controllers
             _authService = authService;
             _userService = userService;
         }
+
+        [HttpPost("facebook")]
+        public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest dto)
+        {
+            try
+            {
+                // Step 1: Validate the Facebook token and get user info
+                using var httpClient = new HttpClient();
+                var url = $"https://graph.facebook.com/me?fields=id,name,email,picture&access_token={dto.AccessToken}";
+
+                var response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return BadRequest(new { Message = "Invalid Facebook token" });
+
+                var content = await response.Content.ReadAsStringAsync();
+                var fbUser = JsonSerializer.Deserialize<FacebookUserInfo>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                // Step 2: Check if user exists
+                var user = await _userService.GetByEmailAsync(fbUser.Email);
+
+                if (user != null)
+                {
+                    // User exists, log them in
+                    var loginResponse = await _authService.LoginWithGoogleAsync(fbUser.Email);
+                    return Ok(loginResponse);
+                }
+                else
+                {
+                    // Register new user
+                    var firstName = fbUser.Name?.Split(' ').FirstOrDefault() ?? "";
+                    var lastName = fbUser.Name?.Split(' ').Skip(1).FirstOrDefault() ?? "";
+
+                    var registerResponse = await _authService.RegisterWithGoogleAsync(firstName, lastName, fbUser.Email, "Customer");
+                    return Ok(registerResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = "Facebook login failed", Details = ex.Message });
+            }
+        }
+
 
         [HttpPost("google")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleUserInfo dto)
