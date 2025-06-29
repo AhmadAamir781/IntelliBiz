@@ -68,7 +68,7 @@ export default function AppointmentsPage() {
     }
 
     if (selectedDate) {
-      const appointmentDate = format(new Date(appointment.date), "yyyy-MM-dd")
+      const appointmentDate = format(new Date(appointment.appointmentDate), "yyyy-MM-dd")
       if (appointmentDate !== selectedDate) {
         return false
       }
@@ -259,7 +259,7 @@ export default function AppointmentsPage() {
                   <TableCell>{appointment.service.name}</TableCell>
                   <TableCell>
                     <div>
-                      <p>{format(new Date(appointment.date), "MMM dd, yyyy")}</p>
+                      <p>{format(new Date(appointment.appointmentDate), "MMM dd, yyyy")}</p>
                       <p className="text-sm text-muted-foreground">
                         {format(new Date(appointment.time), "hh:mm a")}
                       </p>
@@ -374,7 +374,7 @@ export default function AppointmentsPage() {
                   </p>
                   <p>
                     <span className="text-muted-foreground">Date:</span>{" "}
-                    {format(new Date(selectedAppointment.date), "MMM dd, yyyy")}
+                    {format(new Date(selectedAppointment.appointmentDate), "MMM dd, yyyy")}
                   </p>
                   <p>
                     <span className="text-muted-foreground">Time:</span>{" "}

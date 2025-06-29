@@ -231,6 +231,7 @@ export default function RegisterBusinessPage() {
 
     try {
          
+         console.log(formData);
       const response = await businessApi.createBusiness(formData)
 
       if (response.data) {
@@ -269,14 +270,6 @@ export default function RegisterBusinessPage() {
             <ArrowLeft className="h-4 w-4" />
             Back to home
           </Link>
-          <Button 
-            variant="outline" 
-            onClick={handleLogout}
-            className="flex items-center gap-1"
-          >
-            <LogOut className="h-4 w-4 mr-1" />
-            Logout
-          </Button>
         </div>
       </div>
 

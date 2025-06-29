@@ -108,8 +108,6 @@ export default function LoginPage() {
       setError("")
       
       const accessToken = await googleOAuth.signIn()
-      debugger
-      
       const response = await authApi.googleLogin(accessToken)
       
       if (response.data?.token) {

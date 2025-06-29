@@ -3,7 +3,6 @@
 // Google OAuth Configuration
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'your-google-client-id'
 
-debugger
 const GOOGLE_REDIRECT_URI = typeof window !== 'undefined' 
   ? `${window.location.origin}/auth/google/callback`
   : 'http://localhost:3000/auth/google/callback'
@@ -68,7 +67,6 @@ export const googleOAuth = {
           scope: 'email profile',
           callback: (response: any) => {
             console.log("Google callback response", response);
-            debugger; // <-- This will only hit after user completes Google sign-in
             if (response.error) {
               reject(new Error(response.error));
             } else {

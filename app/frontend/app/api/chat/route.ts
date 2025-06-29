@@ -160,7 +160,7 @@ Always provide helpful, accurate information and guide users to the appropriate 
 `
 
     const result = streamText({
-      model: openai("gpt-4"),
+      model: openai("gpt-3.5-turbo"),
       messages: [{ role: "system", content: systemPrompt }, ...messages],
       temperature: 0.7,
       maxTokens: 500,

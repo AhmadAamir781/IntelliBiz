@@ -3,9 +3,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Star, MapPin, Phone, CheckCircle2 } from "lucide-react"
+import { Star, MapPin, Phone, CheckCircle2, Building } from "lucide-react"
 import { Business as ApiBusinessType, Review } from "@/lib/types"
 import { reviewApi } from "@/lib/api"
+import { useAuth } from "@/hooks/use-auth"
 
 // Extended business type that includes reviewCount
 interface BusinessWithReviewCount extends ApiBusinessType {
@@ -14,16 +15,17 @@ interface BusinessWithReviewCount extends ApiBusinessType {
 
 // Business category images mapping
 const categoryImages = {
-  Plumbing: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?q=80&w=600&auto=format&fit=crop",
   Electrical: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=600&auto=format&fit=crop",
-  Carpentry: "https://images.unsplash.com/photo-1601564921647-b446839a013f?q=80&w=600&auto=format&fit=crop",
-  Cleaning: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=600&auto=format&fit=crop",
-  Landscaping: "https://images.unsplash.com/photo-1600240644455-3edc55c375fe?q=80&w=600&auto=format&fit=crop",
-  Automotive: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600&auto=format&fit=crop",
-  "Beauty & Wellness": "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?q=80&w=600&auto=format&fit=crop",
-  "Food & Catering": "https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=600&auto=format&fit=crop",
+  Carpentry: "https://servicemarketwp.imgix.net/wp-content/uploads/2018/10/types-carpentry-services-dubai-450x250.jpg?q=80&w=600&auto=format&fit=crop",
+  "Home Services": "https://img.freepik.com/premium-photo/close-up-repairman-uniform-standing-home-kitchen-holding-his-tool-bag_673498-2375.jpg?semt=ais_hybrid&w=740",
+  Gardening: "https://www.nationaldaycalendar.com/.image/ar_16:9%2Cc_fill%2Ccs_srgb%2Cg_faces:center%2Cq_auto:eco%2Cw_768/MjA1MTEyMTE4OTk4MDE3NjY4/website-feature---national-gardening-day--april-14.png?q=80&w=600&auto=format&fit=crop",
+  "IT Services": "https://img.freepik.com/free-photo/people-working-while-respecting-social-distancing-restriction_23-2148961749.jpg?semt=ais_hybrid&w=740",
+  "Automobile Services": "https://t4.ftcdn.net/jpg/05/21/93/17/360_F_521931702_TXOHZBa3tLVISome894Zc061ceab4Txm.jpg?q=80&w=600&auto=format&fit=crop",
+  Education: "https://images.unsplash.com/photo-1588072432836-e10032774350?q=80&w=600&auto=format&fit=crop",
+  "Interior Design": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop",
+  "IT & Technology": "https://burst.shopifycdn.com/photos/tech-meeting-flatlay.jpg?width=1000&format=pjpg&exif=0&iptc=0",
   default: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop",
-}
+};
 
 // Type for the business card that can accept both our mock data and API business data
 interface BusinessCardProps {
@@ -32,6 +34,10 @@ interface BusinessCardProps {
 
 export function BusinessCard({ business }: BusinessCardProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const { user } = useAuth();
+  
+  // Check if the current user owns this business
+  const isOwnedByUser = user && business.ownerId === user.id;
   
   // Fetch reviews on component mount
   useEffect(() => {
@@ -65,13 +71,26 @@ export function BusinessCard({ business }: BusinessCardProps) {
   const formattedAddress = `${business.address}, ${business.city}, ${business.state} ${business.zipCode}`;
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col shadow-md hover:shadow-lg transition-all border border-border group rounded-lg">
+    <Card className={`overflow-hidden h-full flex flex-col shadow-md hover:shadow-lg transition-all border rounded-lg ${
+      isOwnedByUser 
+        ? 'border-primary/30 bg-primary/5 shadow-primary/10' 
+        : 'border-border'
+    }`}>
       <div className="relative aspect-video overflow-hidden">
         <img 
           src={imageUrl || "/placeholder.svg"} 
           alt={business.businessName} 
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
         />
+        {isOwnedByUser && (
+          <Badge
+            variant="outline"
+            className="absolute top-2 left-2 bg-primary text-primary-foreground border-primary flex items-center gap-1 shadow-sm backdrop-blur-sm z-10"
+          >
+            <Building className="h-3 w-3" />
+            Your Business
+          </Badge>
+        )}
         {business.isVerified && (
           <Badge
             variant="outline"
@@ -128,8 +147,10 @@ export function BusinessCard({ business }: BusinessCardProps) {
           <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
             <Link href={`/businesses/${business.id}`}>View Details</Link>
           </Button>
-          <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
-            Contact
+          <Button asChild variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
+            <Link href={`/businesses/${business.id}/contact`}>
+              Contact
+            </Link>
           </Button>
         </div>
       </CardContent>

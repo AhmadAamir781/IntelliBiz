@@ -10,7 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { MessageSquare, Send, X, Loader2, Bot, MapPin, Star, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { useChat } from "ai/react"
+import { useChat, Message } from "ai/react"
 
 // Sample quick prompts for users to click on
 const quickPrompts = [
@@ -143,36 +143,74 @@ export function AIChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set())
+  const [businessRotationIndex, setBusinessRotationIndex] = useState(0)
+  const [messages, setMessages] = useState<Array<{
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    businesses?: any[];
+  }>>([
+    {
+      id: "welcome",
+      role: "assistant",
+      content: "👋 Hi there! I'm IntelliBiz AI assistant. How can I help you find local businesses or answer questions about our platform today?",
+    }
+  ])
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Use the AI SDK's useChat hook for real-time AI responses
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, error } = useChat({
-    api: "/api/chat",
-    initialMessages: [
-      {
-        id: "welcome",
-        role: "assistant",
-        content:
-          "👋 Hi there! I'm IntelliBiz AI assistant. How can I help you find local businesses or answer questions about our platform today?",
-      },
-    ],
-    onResponse: (response) => {
-      // This runs when we get a response from the API
-      if (response.status === 200) {
-        // Process the query to see if we need to add business recommendations
-        // Use the messages from the closure, not from the state
-        const lastUserMessage = messages.filter((m) => m.role === "user").pop()
+  // Mock AI response function
+  const generateMockResponse = (userMessage: string) => {
+    const query = userMessage.toLowerCase()
+    
+    if (query.includes("plumber") || query.includes("plumbing")) {
+      return "Here are some great plumbing services that might help with your request:"
+    } else if (query.includes("electrician") || query.includes("electrical")) {
+      return "I found some excellent electrical services for you:"
+    } else if (query.includes("find") || query.includes("show")) {
+      return "Here are some businesses that match your search:"
+    } else if (query.includes("help") || query.includes("what")) {
+      return "I can help you find local businesses, answer questions about IntelliBiz, or assist with business registration. What would you like to know?"
+    } else {
+      return "I understand you're looking for local services. Let me help you find the right businesses for your needs:"
+    }
+  }
 
-        if (lastUserMessage) {
-          const userQuery = lastUserMessage.content.toLowerCase()
-          // Use setTimeout to avoid state updates during render
-          setTimeout(() => {
-            processBusinessQuery(userQuery)
-          }, 100)
-        }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || isLoading) return
+
+    const userMessage = input.trim()
+    setInput("")
+    setIsLoading(true)
+
+    // Add user message
+    const newUserMessage = {
+      id: Date.now().toString(),
+      role: "user" as const,
+      content: userMessage
+    }
+    setMessages(prev => [...prev, newUserMessage])
+
+    // Simulate AI processing delay
+    setTimeout(() => {
+      const aiResponse = generateMockResponse(userMessage)
+      const newAiMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant" as const,
+        content: aiResponse
       }
-    },
-    experimental_throttle: 50, // Add throttling to prevent excessive re-renders
-  })
+      setMessages(prev => [...prev, newAiMessage])
+      setIsLoading(false)
+      
+      // Process business query after response
+      processBusinessQuery(userMessage)
+    }, 1000)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value)
+  }
 
   // Process business queries to find relevant businesses
   const processBusinessQuery = (query: string) => {
@@ -262,11 +300,30 @@ export function AIChatbot() {
       })
     }
 
-    // Limit to top 3 results
-    filteredBusinesses = filteredBusinesses.slice(0, 3)
+    // Rotate through different businesses to provide variety
+    const rotationSize = 3 // Show 3 businesses at a time
+    const startIndex = (businessRotationIndex * rotationSize) % Math.max(filteredBusinesses.length, 1)
+    const endIndex = startIndex + rotationSize
+    
+    // Get rotated subset of businesses
+    let rotatedBusinesses = filteredBusinesses.slice(startIndex, endIndex)
+    
+    // If we don't have enough businesses after rotation, wrap around
+    if (rotatedBusinesses.length < rotationSize && filteredBusinesses.length > rotationSize) {
+      const remaining = rotationSize - rotatedBusinesses.length
+      rotatedBusinesses = [...rotatedBusinesses, ...filteredBusinesses.slice(0, remaining)]
+    }
+    
+    // If still no businesses, use the original filtered list
+    if (rotatedBusinesses.length === 0) {
+      rotatedBusinesses = filteredBusinesses.slice(0, 3)
+    }
+
+    // Update rotation index for next time
+    setBusinessRotationIndex(prev => prev + 1)
 
     // Add business recommendations to the last assistant message
-    if (filteredBusinesses.length > 0) {
+    if (rotatedBusinesses.length > 0) {
       // Mark this message as processed to prevent infinite loops
       setProcessedMessageIds((prev) => new Set(prev).add(lastAssistantMessage.id))
 
@@ -278,8 +335,8 @@ export function AIChatbot() {
         if (lastAssistantIndex !== -1) {
           updatedMessages[lastAssistantIndex] = {
             ...updatedMessages[lastAssistantIndex],
-            businesses: filteredBusinesses,
-          }
+            businesses: rotatedBusinesses,
+          } as any
         }
 
         return updatedMessages
@@ -312,28 +369,6 @@ export function AIChatbot() {
       handleSubmit(formEvent)
     }, 300)
   }
-
-  // Handle errors in the chat
-  useEffect(() => {
-    if (error) {
-      console.error("Chat error:", error)
-      // Only add error message if we don't already have one
-      const hasErrorMessage = messages.some(
-        (m) => m.role === "assistant" && m.content.includes("I apologize, but I encountered an error"),
-      )
-
-      if (!hasErrorMessage) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            role: "assistant",
-            content: "I apologize, but I encountered an error processing your request. Please try again.",
-          },
-        ])
-      }
-    }
-  }, [error, messages, setMessages])
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">

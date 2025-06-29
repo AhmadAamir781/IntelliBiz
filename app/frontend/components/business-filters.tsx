@@ -10,23 +10,7 @@ import { businessApi } from "@/lib/api"
 import { Business } from "@/lib/types"
 import { toast } from "sonner"
 
-// Business categories
-const categories = [
-  "Plumbing",
-  "Electrical",
-  "Carpentry",
-  "Cleaning",
-  "Landscaping",
-  "Automotive",
-  "Beauty & Wellness",
-  "Food & Catering",
-  "Education & Tutoring",
-  "IT & Technology",
-  "Healthcare",
-  "Legal Services",
-  "Financial Services",
-  "Other",
-]
+
 
 interface BusinessFiltersProps {
   onFiltersApplied?: (businesses: Business[]) => void
@@ -37,6 +21,23 @@ export function BusinessFilters({ onFiltersApplied, onClose }: BusinessFiltersPr
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [rating, setRating] = useState([4])
   const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [categories, setCategories] = useState<string[]>([]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await businessApi.getAllCategories();
+        if (response.data) {
+          // Remove duplicates and ensure unique categories
+          const uniqueCategories = [...new Set(response.data)];
+          setCategories(uniqueCategories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+  
+    fetchCategories();
+  }, []);
   const [distance, setDistance] = useState([10])
   const [loading, setLoading] = useState(false)
 
@@ -59,58 +60,42 @@ export function BusinessFilters({ onFiltersApplied, onClose }: BusinessFiltersPr
     try {
       setLoading(true)
       
-      if (selectedCategories.length === 0) {
-        // If no categories selected, get all businesses
-        const response = await businessApi.getAllBusinesses()
-        
-        // Apply additional filters
-        let filteredBusinesses = response.data.filter((business: Business) => {
-          // Filter by rating
-          if (business.rating && business.rating < rating[0]) return false
-          // Filter by verified status
-          if (verifiedOnly && !business.isVerified) return false
-          // Distance filtering would be handled here if we had location data
-          return true
-        })
-        
-        if (onFiltersApplied) {
-          onFiltersApplied(filteredBusinesses)
-        }
-      } else {
-        // Get businesses for each selected category and combine results
-        let allBusinesses: Business[] = []
-         
-        for (const category of selectedCategories) {
-          const response = await businessApi.getBusinessesByCategory(category)
-          if (response.data) {
-            allBusinesses = [...allBusinesses, ...response.data]
-          }
-        }
-        
-        // Remove duplicates (if a business belongs to multiple categories)
-        const uniqueBusinesses = Array.from(
-          new Map(allBusinesses.map(business => [business.id, business])).values()
+      // Get all businesses first
+      const response = await businessApi.getAllBusinesses()
+      let allBusinesses = response.data || []
+      
+      // Apply category filter
+      if (selectedCategories.length > 0) {
+        allBusinesses = allBusinesses.filter((business: Business) => 
+          selectedCategories.includes(business.category)
         )
-        
-        // Apply additional filters
-        let filteredBusinesses = uniqueBusinesses.filter((business: Business) => {
-          // Filter by rating
-          if (business.rating && business.rating < rating[0]) return false
-          // Filter by verified status
-          if (verifiedOnly && !business.isVerified) return false
-          // Distance filtering would be handled here if we had location data
-          return true
-        })
-        
-        if (onFiltersApplied) {
-          onFiltersApplied(filteredBusinesses)
-        }
       }
       
-      // Close the filter sheet if provided
+      // Apply rating filter
+      allBusinesses = allBusinesses.filter((business: Business) => {
+        if (business.rating && business.rating < rating[0]) return false
+        return true
+      })
+      
+      // Apply verified filter
+      if (verifiedOnly) {
+        allBusinesses = allBusinesses.filter((business: Business) => business.isVerified)
+      }
+      
+      // Distance filtering would be handled here if we had location data
+      // For now, we'll skip distance filtering
+      
+      if (onFiltersApplied) {
+        onFiltersApplied(allBusinesses)
+      }
+      
+      // Close the filter sheet
       if (onClose) {
         onClose()
       }
+      
+      toast.success(`Found ${allBusinesses.length} businesses matching your criteria`)
+      
     } catch (error) {
       console.error("Error applying filters:", error)
       toast.error("Failed to apply filters. Please try again.")
@@ -119,11 +104,22 @@ export function BusinessFilters({ onFiltersApplied, onClose }: BusinessFiltersPr
     }
   }
 
+  const hasActiveFilters = selectedCategories.length > 0 || rating[0] !== 4 || verifiedOnly || distance[0] !== 10
+
   return (
     <div className="py-4 h-full flex flex-col">
-      <SheetHeader className="px-1">
-        <SheetTitle>Filters</SheetTitle>
-        <SheetDescription>Refine your search results</SheetDescription>
+      <SheetHeader className="px-1 flex justify-between items-start">
+        <div>
+          <SheetTitle className="flex items-center gap-2">
+            Filters
+            {hasActiveFilters && (
+              <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                Active
+              </span>
+            )}
+          </SheetTitle>
+          <SheetDescription>Refine your search results</SheetDescription>
+        </div>
       </SheetHeader>
 
       <div className="flex-1 overflow-auto py-6 space-y-8">
@@ -131,14 +127,14 @@ export function BusinessFilters({ onFiltersApplied, onClose }: BusinessFiltersPr
         <div className="space-y-4">
           <h3 className="font-medium">Categories</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {categories.map((category) => (
-              <div key={category} className="flex items-center space-x-2">
+            {categories.map((category, index) => (
+              <div key={`${category}-${index}`} className="flex items-center space-x-2">
                 <Checkbox
-                  id={`category-${category}`}
+                  id={`category-${category}-${index}`}
                   checked={selectedCategories.includes(category)}
                   onCheckedChange={(checked) => handleCategoryChange(category, checked === true)}
                 />
-                <Label htmlFor={`category-${category}`} className="text-sm">
+                <Label htmlFor={`category-${category}-${index}`} className="text-sm">
                   {category}
                 </Label>
               </div>
