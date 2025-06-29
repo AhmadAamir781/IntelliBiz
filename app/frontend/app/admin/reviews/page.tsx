@@ -113,7 +113,6 @@ export default function ReviewManagement() {
   }
 
   const getStatusBadge = (status: string, isFlagged: boolean) => {
-    debugger
     if (isFlagged) {
       return (
         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">

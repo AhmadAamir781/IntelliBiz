@@ -141,6 +141,7 @@ export interface BusinessDetailDto {
   description: string;
   address: string;
   phone: string;
+  phoneNumber: string;
   email: string;
   website: string;
   state: string;

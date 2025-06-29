@@ -115,9 +115,6 @@ export default function BusinessDetailPage() {
   const imageUrl = business.images?.[0] || 
     categoryImages[business.category as keyof typeof categoryImages] || 
     categoryImages.default;
-
-    console.log("ghfghfghfgh" + business.category)
-debugger
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container px-4 py-8 md:px-6 md:py-12">
@@ -207,9 +204,9 @@ debugger
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 mb-5" style={{marginBottom: "50px"}}>
-                {business.phone ? (
+                {business.phoneNumber ? (
                   <Button asChild className="gap-2">
-                    <a href={`tel:${business.phone}`}>
+                    <a href={`tel:${business.phoneNumber}`}>
                       <Phone className="h-4 w-4" />
                       Call Now
                     </a>
