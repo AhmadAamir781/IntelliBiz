@@ -40,9 +40,6 @@ namespace IntelliBiz.API.Models
         [StringLength(20, ErrorMessage = "ZIP code cannot exceed 20 characters")]
         public string ZipCode { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Phone number is required")]
-        [Phone(ErrorMessage = "Invalid phone number")]
-        [StringLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required")]

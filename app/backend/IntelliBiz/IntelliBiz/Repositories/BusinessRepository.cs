@@ -68,7 +68,7 @@ namespace IntelliBiz.API.Repositories
         }
 
 
-        public async Task<IEnumerable<Business>> SearchAsync(string searchTerm, string? category = null)
+        public async Task<IEnumerable<Business>> SearchAsync(string? searchTerm, string? category = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             string sql;
