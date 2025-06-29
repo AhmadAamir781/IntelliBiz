@@ -53,7 +53,7 @@ export default function RegisterBusinessPage() {
     description: "",
 
     // Contact Info
-    phone: "",
+    phoneNumber: "",
     email: "",
     website: "",
 
@@ -173,8 +173,8 @@ export default function RegisterBusinessPage() {
         newErrors.description = "Description should be at least 50 characters"
       }
     } else if (step === 2) {
-      if (!formData.phone.trim()) {
-        newErrors.phone = "Phone number is required"
+      if (!formData.phoneNumber.trim()) {
+        newErrors.phoneNumber = "Phone number is required"
       }
 
       if (!formData.email.trim()) {
@@ -230,8 +230,6 @@ export default function RegisterBusinessPage() {
     setIsLoading(true)
 
     try {
-         
-         console.log(formData);
       const response = await businessApi.createBusiness(formData)
 
       if (response.data) {
@@ -406,20 +404,20 @@ export default function RegisterBusinessPage() {
                     <h3 className="text-lg font-medium text-primary">Contact Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="phone" className="flex items-center">
+                        <Label htmlFor="phoneNumber" className="flex items-center">
                           <Phone className="mr-2 h-4 w-4 text-primary" />
                           Phone Number
                         </Label>
                         <Input
-                          id="phone"
-                          name="phone"
+                          id="phoneNumber"
+                          name="phoneNumber"
                           placeholder="e.g., (555) 123-4567"
                           required
-                          value={formData.phone}
+                          value={formData.phoneNumber}
                           onChange={handleChange}
-                          className={`${errors.phone ? "border-destructive" : ""} ${themeAccentClass}`}
+                          className={`${errors.phoneNumber ? "border-destructive" : ""} ${themeAccentClass}`}
                         />
-                        {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                        {errors.phoneNumber && <p className="text-xs text-destructive">{errors.phoneNumber}</p>}
                       </div>
 
                       <div className="space-y-2">
@@ -696,7 +694,7 @@ export default function RegisterBusinessPage() {
                             <h4 className="font-medium text-primary">Contact Information</h4>
                             <ul className="mt-2 space-y-1">
                               <li>
-                                <span className="text-primary/80">Phone:</span> {formData.phone}
+                                <span className="text-primary/80">Phone:</span> {formData.phoneNumber}
                               </li>
                               <li>
                                 <span className="text-primary/80">Email:</span> {formData.email}
