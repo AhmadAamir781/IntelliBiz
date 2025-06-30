@@ -191,7 +191,6 @@ export const authApi = {
   },
 
   facebookLogin: async (token: string): Promise<ApiResponse<any>> => {
-
     const response = await api.post("/auth/facebook", {AccessToken: token})
     
     if (response.data?.token) {
@@ -215,6 +214,16 @@ export const authApi = {
       }
     }
     return response as unknown as ApiResponse<any>
+  },
+
+  forgotPassword: async (email: string): Promise<ApiResponse<any>> => {
+
+    debugger;
+    return api.post("/auth/forgot-password", { email });
+  },
+
+  resetPassword: async (token: string, newPassword: string): Promise<ApiResponse<any>> => {
+    return api.post("/auth/reset-password", { token, newPassword });
   },
 }
 

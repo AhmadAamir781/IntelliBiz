@@ -13,11 +13,15 @@ namespace IntelliBiz.API.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
+        private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
+        private readonly IEmailService _emailService;
 
-        public AuthService(IUserRepository userRepository, IConfiguration configuration)
+        public AuthService(IUserRepository userRepository, IConfiguration configuration, IPasswordResetTokenRepository passwordResetTokenRepository, IEmailService emailService)
         {
             _userRepository = userRepository;
             _configuration = configuration;
+            _passwordResetTokenRepository = passwordResetTokenRepository;
+            _emailService = emailService;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
@@ -260,6 +264,81 @@ namespace IntelliBiz.API.Services
                 Message = "Registration successful",
                 Token = token,
                 User = userDto
+            };
+        }
+
+        public async Task<AuthResponseDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto)
+        {
+            var user = await _userRepository.GetByEmailAsync(forgotPasswordDto.Email);
+            if (user == null)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "No user found with this email address."
+                };
+            }
+
+            // Generate a secure token
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var expiration = DateTime.UtcNow.AddHours(1);
+            var resetToken = new PasswordResetToken
+            {
+                UserId = user.Id,
+                Token = token,
+                Expiration = expiration,
+                User = user
+            };
+            await _passwordResetTokenRepository.AddAsync(resetToken);
+
+            // Compose reset link (replace with your frontend URL)
+            var resetLink = $"http://localhost:3000/reset-password?token={Uri.EscapeDataString(token)}";
+            var subject = "Password Reset Request";
+            var body = $"Click the following link to reset your password: {resetLink}\nThis link will expire in 1 hour.";
+            await _emailService.SendEmailAsync(user.Email, subject, body);
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "If an account with that email exists, a password reset link has been sent."
+            };
+        }
+
+        public async Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+        {
+            // Get token
+            var tokenEntry = await _passwordResetTokenRepository.GetByTokenAsync(resetPasswordDto.Token);
+            if (tokenEntry == null || tokenEntry.Expiration < DateTime.UtcNow)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid or expired token."
+                };
+            }
+
+            // Get user
+            var user = await _userRepository.GetByEmailAsync(tokenEntry.User.Email);
+            if (user == null)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "User not found."
+                };
+            }
+
+            // Update password
+            user.PasswordHash = HashPassword(resetPasswordDto.NewPassword);
+            await _userRepository.UpdateAsync(user);
+
+            // Delete token
+            await _passwordResetTokenRepository.DeleteExpiredAsync();
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Password has been reset successfully."
             };
         }
     }

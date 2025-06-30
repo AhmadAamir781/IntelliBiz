@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { CheckCircle } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { useToast } from "@/hooks/use-toast"
+import { authApi } from "@/lib/api"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -22,11 +23,13 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      setIsSuccess(true)
-      showSuccessToast("Password reset email sent!", "Check your inbox for instructions.")
+      const response = await authApi.forgotPassword(email)
+      if (response.data?.success) {
+        setIsSuccess(true)
+        showSuccessToast("Password reset email sent!", "Check your inbox for instructions.")
+      } else {
+        showErrorToast("Password reset failed", response.data?.message || "An error occurred")
+      }
     } catch (error: any) {
       console.error("Password reset failed:", error)
       showErrorToast("Password reset failed", error.response?.data?.message || "An error occurred")

@@ -305,6 +305,7 @@ export function BusinessReviews({ businessId }: BusinessReviewsProps) {
       ) : (
         <div className="space-y-6">
           {reviews.map((review) => (
+            
             <Card key={review.id}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">

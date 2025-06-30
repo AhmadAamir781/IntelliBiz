@@ -3,6 +3,7 @@ using Google.Apis.Auth;
 using IntelliBiz.API.DTOs;
 using IntelliBiz.API.Services;
 using IntelliBiz.DTOs;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.SqlServer.Server;
 
@@ -134,6 +135,48 @@ namespace IntelliBiz.API.Controllers
             if (!response.Success)
             {
                 return Unauthorized(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult<AuthResponseDto>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid request data"
+                });
+            }
+
+            var response = await _authService.ForgotPasswordAsync(forgotPasswordDto);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<AuthResponseDto>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid request data"
+                });
+            }
+
+            var response = await _authService.ResetPasswordAsync(resetPasswordDto);
+            if (!response.Success)
+            {
+                return BadRequest(response);
             }
 
             return Ok(response);

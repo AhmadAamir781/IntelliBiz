@@ -9,5 +9,7 @@ namespace IntelliBiz.API.Services
         string GenerateJwtToken(UserDto user);
         Task<AuthResponseDto> LoginWithGoogleAsync(string email);
         Task<AuthResponseDto> RegisterWithGoogleAsync(string firstName, string lastName, string email, string role = "Customer");
+        Task<AuthResponseDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
+        Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
     }
 }

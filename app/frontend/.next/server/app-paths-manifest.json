@@ -1,7 +1,7 @@
 {
+  "/page": "app/page.js",
+  "/register-business/page": "app/register-business/page.js",
   "/businesses/page": "app/businesses/page.js",
-  "/businesses/[id]/page": "app/businesses/[id]/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/profile/page": "app/admin/profile/page.js"
+  "/login/page": "app/login/page.js",
+  "/businesses/[id]/page": "app/businesses/[id]/page.js"
 }
