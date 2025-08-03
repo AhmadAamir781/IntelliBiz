@@ -49,13 +49,8 @@
 - [RabbitMQ Server](https://www.rabbitmq.com/download.html)
 - [Auth0 Account](https://auth0.com/)
 
-### Clone & Setup
-
-```bash
-git clone https://github.com/your-username/intellibiz.git
-cd IntelliBiz
-
 ### Backend Setup
+
 cd IntelliBiz
 dotnet restore
 dotnet run
