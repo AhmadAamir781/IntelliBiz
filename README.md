@@ -60,9 +60,8 @@ cd IntelliBiz
 npm install --legacy-peer-deps
 npm run dev
 
+## Swagger UI
 <img width="1679" height="1002" alt="image" src="https://github.com/user-attachments/assets/1159ac1a-7f22-4b4c-bcc7-2c11baeb5e66" />
 
+## IntelliBiz UI
 <img width="1680" height="919" alt="{2FED7DF0-E0E5-4665-BC8E-420052B70E56}" src="https://github.com/user-attachments/assets/7597a013-db7a-473f-9854-5c2a40b64e87" />
-
-### 📃 License
-This project is created for academic and demonstration purposes. All rights reserved to the respective contributors.
