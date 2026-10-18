@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Threading.Tasks;
-using IntelliBiz.API.Models;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
     public class PasswordResetTokenRepository : IPasswordResetTokenRepository
     {

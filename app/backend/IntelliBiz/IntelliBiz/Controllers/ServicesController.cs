@@ -1,35 +1,26 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
+using IntelliBiz.DTOs;
+using IntelliBiz.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ServicesController : ControllerBase
+    public class ServicesController(IServiceService serviceService, IBusinessService businessService) : ControllerBase
     {
-        private readonly IServiceService _serviceService;
-        private readonly IBusinessService _businessService;
-
-        public ServicesController(IServiceService serviceService, IBusinessService businessService)
-        {
-            _serviceService = serviceService;
-            _businessService = businessService;
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ServiceDto>>> GetAll()
         {
-            var services = await _serviceService.GetAllAsync();
+            var services = await serviceService.GetAllAsync();
             return Ok(services);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ServiceDto>> GetById(int id)
         {
-            var service = await _serviceService.GetByIdAsync(id);
+            var service = await serviceService.GetByIdAsync(id);
             if (service == null)
             {
                 return NotFound(new { message = "Service not found" });
@@ -41,7 +32,7 @@ namespace IntelliBiz.API.Controllers
         [HttpGet("business/{businessId}")]
         public async Task<ActionResult<IEnumerable<ServiceDto>>> GetByBusinessId(int businessId)
         {
-            var services = await _serviceService.GetByBusinessIdAsync(businessId);
+            var services = await serviceService.GetByBusinessIdAsync(businessId);
             return Ok(services);
         }
 
@@ -57,7 +48,7 @@ namespace IntelliBiz.API.Controllers
             // Verify that the user is the owner of the business or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(serviceDto.BusinessId);
+            var business = await businessService.GetByIdAsync(serviceDto.BusinessId);
 
             if (business == null)
             {
@@ -69,7 +60,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _serviceService.CreateAsync(serviceDto);
+            var response = await serviceService.CreateAsync(serviceDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -90,14 +81,14 @@ namespace IntelliBiz.API.Controllers
             // Verify that the user is the owner of the business or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var service = await _serviceService.GetByIdAsync(id);
+            var service = await serviceService.GetByIdAsync(id);
 
             if (service == null)
             {
                 return NotFound(ApiResponseDto<ServiceDto>.ErrorResponse("Service not found"));
             }
 
-            var business = await _businessService.GetByIdAsync(service.BusinessId);
+            var business = await businessService.GetByIdAsync(service.BusinessId);
             if (business == null)
             {
                 return NotFound(ApiResponseDto<ServiceDto>.ErrorResponse("Business not found"));
@@ -108,7 +99,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _serviceService.UpdateAsync(id, serviceDto);
+            var response = await serviceService.UpdateAsync(id, serviceDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -124,14 +115,14 @@ namespace IntelliBiz.API.Controllers
             // Verify that the user is the owner of the business or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var service = await _serviceService.GetByIdAsync(id);
+            var service = await serviceService.GetByIdAsync(id);
 
             if (service == null)
             {
                 return NotFound(ApiResponseDto<bool>.ErrorResponse("Service not found"));
             }
 
-            var business = await _businessService.GetByIdAsync(service.BusinessId);
+            var business = await businessService.GetByIdAsync(service.BusinessId);
             if (business == null)
             {
                 return NotFound(ApiResponseDto<bool>.ErrorResponse("Business not found"));
@@ -142,7 +133,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _serviceService.DeleteAsync(id);
+            var response = await serviceService.DeleteAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -158,14 +149,14 @@ namespace IntelliBiz.API.Controllers
             // Verify that the user is the owner of the business or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var service = await _serviceService.GetByIdAsync(id);
+            var service = await serviceService.GetByIdAsync(id);
 
             if (service == null)
             {
                 return NotFound(ApiResponseDto<bool>.ErrorResponse("Service not found"));
             }
 
-            var business = await _businessService.GetByIdAsync(service.BusinessId);
+            var business = await businessService.GetByIdAsync(service.BusinessId);
             if (business == null)
             {
                 return NotFound(ApiResponseDto<bool>.ErrorResponse("Business not found"));
@@ -176,7 +167,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _serviceService.ToggleActiveStatusAsync(id);
+            var response = await serviceService.ToggleActiveStatusAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);

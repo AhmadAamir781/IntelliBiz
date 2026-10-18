@@ -1,26 +1,19 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using IntelliBiz.DTOs;
 using IntelliBiz.Models;
 using IntelliBiz.Services;
-using IntelliBiz.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class SettingsController : ControllerBase
+    public class SettingsController(ISettingsService settingsService) : ControllerBase
     {
-        private readonly ISettingsService _settingsService;
-
-        public SettingsController(ISettingsService settingsService)
-        {
-            _settingsService = settingsService;
-        }
-
         [HttpGet]
         public async Task<ActionResult<SettingsDto>> GetSettings()
         {
-            var settings = await _settingsService.GetSettingsAsync();
+            var settings = await settingsService.GetSettingsAsync();
             var settingsDto = new SettingsDto
             {
                 SiteName = settings.SiteName,
@@ -54,7 +47,7 @@ namespace IntelliBiz.Controllers
                 UpdatedAt = DateTime.UtcNow
             };
 
-            var updatedSettings = await _settingsService.UpdateSettingsAsync(settings);
+            var updatedSettings = await settingsService.UpdateSettingsAsync(settings);
             var updatedSettingsDto = new SettingsDto
             {
                 SiteName = updatedSettings.SiteName,
@@ -69,4 +62,4 @@ namespace IntelliBiz.Controllers
             return Ok(updatedSettingsDto);
         }
     }
-} 
+}

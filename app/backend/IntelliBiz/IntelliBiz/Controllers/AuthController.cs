@@ -1,27 +1,15 @@
-using System.Text.Json;
 using Google.Apis.Auth;
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
 using IntelliBiz.DTOs;
-using Microsoft.AspNetCore.Identity;
+using IntelliBiz.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.SqlServer.Server;
+using System.Text.Json;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService authService, IUserService userService) : ControllerBase
     {
-        private readonly IAuthService _authService;
-        private readonly IUserService _userService;
-
-        public AuthController(IAuthService authService, IUserService userService)
-        {
-            _authService = authService;
-            _userService = userService;
-        }
-
         [HttpPost("facebook")]
         public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest dto)
         {
@@ -36,18 +24,20 @@ namespace IntelliBiz.API.Controllers
                     return BadRequest(new { Message = "Invalid Facebook token" });
 
                 var content = await response.Content.ReadAsStringAsync();
-                var fbUser = JsonSerializer.Deserialize<FacebookUserInfo>(content, new JsonSerializerOptions
+                JsonSerializerOptions jsonSerializerOptions = new()
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                };
+                JsonSerializerOptions options = jsonSerializerOptions;
+                var fbUser = JsonSerializer.Deserialize<FacebookUserInfo>(content, options);
 
                 // Step 2: Check if user exists
-                var user = await _userService.GetByEmailAsync(fbUser.Email);
+                var user = await userService.GetByEmailAsync(fbUser.Email);
 
                 if (user != null)
                 {
                     // User exists, log them in
-                    var loginResponse = await _authService.LoginWithGoogleAsync(fbUser.Email);
+                    var loginResponse = await authService.LoginWithGoogleAsync(fbUser.Email);
                     return Ok(loginResponse);
                 }
                 else
@@ -56,7 +46,7 @@ namespace IntelliBiz.API.Controllers
                     var firstName = fbUser.Name?.Split(' ').FirstOrDefault() ?? "";
                     var lastName = fbUser.Name?.Split(' ').Skip(1).FirstOrDefault() ?? "";
 
-                    var registerResponse = await _authService.RegisterWithGoogleAsync(firstName, lastName, fbUser.Email, "Customer");
+                    var registerResponse = await authService.RegisterWithGoogleAsync(firstName, lastName, fbUser.Email, "Customer");
                     return Ok(registerResponse);
                 }
             }
@@ -75,12 +65,12 @@ namespace IntelliBiz.API.Controllers
                 // 1. Validate Google token here if needed (omitted for brevity)
 
                 // 2. Check if user exists
-                var user = await _userService.GetByEmailAsync(dto.Email);
+                var user = await userService.GetByEmailAsync(dto.Email);
 
                 if (user != null)
                 {
                     // User exists, log them in (generate JWT)
-                    var loginResponse = await _authService.LoginWithGoogleAsync(dto.Email);
+                    var loginResponse = await authService.LoginWithGoogleAsync(dto.Email);
                     return Ok(loginResponse);
                 }
                 else
@@ -88,7 +78,7 @@ namespace IntelliBiz.API.Controllers
                     // User does not exist, register them (no password required)
                     var firstName = dto.Name?.Split(' ').FirstOrDefault() ?? "";
                     var lastName = dto.Name?.Split(' ').Skip(1).FirstOrDefault() ?? "";
-                    var registerResponse = await _authService.RegisterWithGoogleAsync(firstName, lastName, dto.Email, "Customer");
+                    var registerResponse = await authService.RegisterWithGoogleAsync(firstName, lastName, dto.Email, "Customer");
                     return Ok(registerResponse);
                 }
             }
@@ -110,7 +100,7 @@ namespace IntelliBiz.API.Controllers
                 });
             }
 
-            var response = await _authService.RegisterAsync(registerDto);
+            var response = await authService.RegisterAsync(registerDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -131,7 +121,7 @@ namespace IntelliBiz.API.Controllers
                 });
             }
 
-            var response = await _authService.LoginAsync(loginDto);
+            var response = await authService.LoginAsync(loginDto);
             if (!response.Success)
             {
                 return Unauthorized(response);
@@ -152,7 +142,7 @@ namespace IntelliBiz.API.Controllers
                 });
             }
 
-            var response = await _authService.ForgotPasswordAsync(forgotPasswordDto);
+            var response = await authService.ForgotPasswordAsync(forgotPasswordDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -173,7 +163,7 @@ namespace IntelliBiz.API.Controllers
                 });
             }
 
-            var response = await _authService.ResetPasswordAsync(resetPasswordDto);
+            var response = await authService.ResetPasswordAsync(resetPasswordDto);
             if (!response.Success)
             {
                 return BadRequest(response);

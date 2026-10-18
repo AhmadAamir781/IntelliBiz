@@ -1,7 +1,7 @@
 using Dapper;
 using System.Data;
 
-namespace IntelliBiz.API.Data
+namespace IntelliBiz.Data
 {
     public static class DatabaseInitializer
     {

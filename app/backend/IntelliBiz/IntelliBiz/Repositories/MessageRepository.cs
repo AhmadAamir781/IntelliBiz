@@ -1,21 +1,14 @@
 using Dapper;
-using IntelliBiz.API.Data;
-using IntelliBiz.API.Models;
+using IntelliBiz.Data;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
-    public class MessageRepository : IMessageRepository
+    public class MessageRepository(IDatabaseConnectionFactory connectionFactory) : IMessageRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
-
-        public MessageRepository(IDatabaseConnectionFactory connectionFactory)
-        {
-            _connectionFactory = connectionFactory;
-        }
-
         public async Task<List<Message>?> GetByBusinessIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT m.*,
                        s.FirstName + ' ' + s.LastName as SenderName,
@@ -29,7 +22,7 @@ namespace IntelliBiz.API.Repositories
         }
         public async Task<Message?> GetByIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT m.*,
                        s.FirstName + ' ' + s.LastName as SenderName,
@@ -43,7 +36,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Message>> GetAllAsync()
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT m.*,
                        s.FirstName + ' ' + s.LastName as SenderName,
@@ -57,7 +50,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Message>> GetBySenderIdAsync(int senderId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT m.*,
                        s.FirstName + ' ' + s.LastName as SenderName,
@@ -72,7 +65,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Message>> GetByReceiverIdAsync(int receiverId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT m.*,
                        s.FirstName + ' ' + s.LastName as SenderName,
@@ -87,7 +80,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Message>> GetConversationAsync(int user1Id, int user2Id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT m.*,
                        s.FirstName + ' ' + s.LastName as SenderName,
@@ -103,7 +96,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<int> CreateAsync(Message message)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 INSERT INTO Messages (SenderId, ReceiverId, Content, IsRead, CreatedAt)
                 VALUES (@SenderId, @ReceiverId, @Content, @IsRead, @CreatedAt);
@@ -115,7 +108,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "DELETE FROM Messages WHERE Id = @Id";
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
@@ -123,7 +116,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> MarkAsReadAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Messages
                 SET IsRead = 1
@@ -135,7 +128,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> MarkAllAsReadAsync(int receiverId, int senderId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Messages
                 SET IsRead = 1

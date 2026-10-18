@@ -1,21 +1,14 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Models;
-using IntelliBiz.API.Repositories;
+using IntelliBiz.DTOs;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
-    public class BusinessService : IBusinessService
+    public class BusinessService(IBusinessRepository businessRepository) : IBusinessService
     {
-        private readonly IBusinessRepository _businessRepository;
-
-        public BusinessService(IBusinessRepository businessRepository)
-        {
-            _businessRepository = businessRepository;
-        }
-
         public async Task<BusinessDto?> GetByIdAsync(int id)
         {
-            var business = await _businessRepository.GetByIdAsync(id);
+            var business = await businessRepository.GetByIdAsync(id);
             if (business == null)
                 return null;
 
@@ -24,29 +17,29 @@ namespace IntelliBiz.API.Services
 
         public async Task<IEnumerable<BusinessDto>> GetAllAsync()
         {
-            var businesses = await _businessRepository.GetAllAsync();
+            var businesses = await businessRepository.GetAllAsync();
             return businesses.Select(MapToDto);
         }
 
         public async Task<IEnumerable<BusinessDto>> GetByOwnerIdAsync(int ownerId)
         {
-            var businesses = await _businessRepository.GetByOwnerIdAsync(ownerId);
+            var businesses = await businessRepository.GetByOwnerIdAsync(ownerId);
             return businesses.Select(MapToDto);
         }
 
         public async Task<IEnumerable<BusinessDto>> GetByCategoryAsync(string category)
         {
-            var businesses = await _businessRepository.GetByCategoryAsync(category);
+            var businesses = await businessRepository.GetByCategoryAsync(category);
             return businesses.Select(MapToDto);
         }
         public async Task<IEnumerable<string>> GetCategoriesAsync()
         {
-            var categories = await _businessRepository.GetCategoriesAsync();
+            var categories = await businessRepository.GetCategoriesAsync();
             return categories;
         }
         public async Task<IEnumerable<BusinessDto>> SearchAsync(string searchTerm, string? category = null)
         {
-            var businesses = await _businessRepository.SearchAsync(searchTerm, category);
+            var businesses = await businessRepository.SearchAsync(searchTerm, category);
             return businesses.Select(MapToDto);
         }
 
@@ -69,7 +62,7 @@ namespace IntelliBiz.API.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            int businessId = await _businessRepository.CreateAsync(business);
+            int businessId = await businessRepository.CreateAsync(business);
             business.Id = businessId;
 
             var createdBusinessDto = MapToDto(business);
@@ -78,7 +71,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<BusinessDto>> UpdateAsync(int id, BusinessDto businessDto)
         {
-            var existingBusiness = await _businessRepository.GetByIdAsync(id);
+            var existingBusiness = await businessRepository.GetByIdAsync(id);
             if (existingBusiness == null)
             {
                 return ApiResponseDto<BusinessDto>.ErrorResponse("Business not found");
@@ -97,7 +90,7 @@ namespace IntelliBiz.API.Services
             existingBusiness.Website = businessDto.Website;
             existingBusiness.UpdatedAt = DateTime.UtcNow;
 
-            bool success = await _businessRepository.UpdateAsync(existingBusiness);
+            bool success = await businessRepository.UpdateAsync(existingBusiness);
             if (!success)
             {
                 return ApiResponseDto<BusinessDto>.ErrorResponse("Failed to update business");
@@ -109,13 +102,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int id)
         {
-            var existingBusiness = await _businessRepository.GetByIdAsync(id);
+            var existingBusiness = await businessRepository.GetByIdAsync(id);
             if (existingBusiness == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Business not found");
             }
 
-            bool success = await _businessRepository.DeleteAsync(id);
+            bool success = await businessRepository.DeleteAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to delete business");
@@ -126,13 +119,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> VerifyBusinessAsync(int id)
         {
-            var existingBusiness = await _businessRepository.GetByIdAsync(id);
+            var existingBusiness = await businessRepository.GetByIdAsync(id);
             if (existingBusiness == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Business not found");
             }
 
-            bool success = await _businessRepository.VerifyBusinessAsync(id);
+            bool success = await businessRepository.VerifyBusinessAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to verify business");

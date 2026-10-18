@@ -1,7 +1,6 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace IntelliBiz.API.Models
+namespace IntelliBiz.Models
 {
     public class PasswordResetToken
     {
@@ -13,4 +12,4 @@ namespace IntelliBiz.API.Models
         public DateTime Expiration { get; set; }
         public virtual User User { get; set; } = null!;
     }
-} 
+}

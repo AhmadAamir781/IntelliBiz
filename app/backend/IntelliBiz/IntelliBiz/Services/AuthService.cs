@@ -1,32 +1,19 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Models;
-using IntelliBiz.API.Repositories;
+using IntelliBiz.DTOs;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(IUserRepository userRepository, IConfiguration configuration, IPasswordResetTokenRepository passwordResetTokenRepository, IEmailService emailService) : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IConfiguration _configuration;
-        private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
-        private readonly IEmailService _emailService;
-
-        public AuthService(IUserRepository userRepository, IConfiguration configuration, IPasswordResetTokenRepository passwordResetTokenRepository, IEmailService emailService)
-        {
-            _userRepository = userRepository;
-            _configuration = configuration;
-            _passwordResetTokenRepository = passwordResetTokenRepository;
-            _emailService = emailService;
-        }
-
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
         {
-            if (await _userRepository.EmailExistsAsync(registerDto.Email))
+            if (await userRepository.EmailExistsAsync(registerDto.Email))
             {
                 return new AuthResponseDto
                 {
@@ -45,13 +32,13 @@ namespace IntelliBiz.API.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            var users = await _userRepository.GetAllAsync();
+            var users = await userRepository.GetAllAsync();
             if(users.Count() == 0)
             {
                 user.Role = "Admin";
             }
 
-            int userId = await _userRepository.CreateAsync(user);
+            int userId = await userRepository.CreateAsync(user);
             user.Id = userId;
 
             var userDto = new UserDto
@@ -77,7 +64,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
         {
-            var user = await _userRepository.GetByEmailAsync(loginDto.Email);
+            var user = await userRepository.GetByEmailAsync(loginDto.Email);
 
             if (user == null || !VerifyPassword(loginDto.Password, user.PasswordHash))
             {
@@ -119,13 +106,13 @@ namespace IntelliBiz.API.Services
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.UtcNow.AddDays(7);
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: configuration["Jwt:Issuer"],
+                audience: configuration["Jwt:Audience"],
                 claims: claims,
                 expires: expires,
                 signingCredentials: creds
@@ -185,7 +172,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<AuthResponseDto> LoginWithGoogleAsync(string email)
         {
-            var user = await _userRepository.GetByEmailAsync(email);
+            var user = await userRepository.GetByEmailAsync(email);
             if (user == null)
             {
                 return new AuthResponseDto
@@ -218,7 +205,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<AuthResponseDto> RegisterWithGoogleAsync(string firstName, string lastName, string email, string role = "Customer")
         {
-            if (await _userRepository.EmailExistsAsync(email))
+            if (await userRepository.EmailExistsAsync(email))
             {
                 return new AuthResponseDto
                 {
@@ -237,13 +224,13 @@ namespace IntelliBiz.API.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            var users = await _userRepository.GetAllAsync();
+            var users = await userRepository.GetAllAsync();
             if(users.Count() == 0)
             {
                 user.Role = "Admin";
             }
 
-            int userId = await _userRepository.CreateAsync(user);
+            int userId = await userRepository.CreateAsync(user);
             user.Id = userId;
 
             var userDto = new UserDto
@@ -269,7 +256,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<AuthResponseDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto)
         {
-            var user = await _userRepository.GetByEmailAsync(forgotPasswordDto.Email);
+            var user = await userRepository.GetByEmailAsync(forgotPasswordDto.Email);
             if (user == null)
             {
                 return new AuthResponseDto
@@ -289,13 +276,13 @@ namespace IntelliBiz.API.Services
                 Expiration = expiration,
                 User = user
             };
-            await _passwordResetTokenRepository.AddAsync(resetToken);
+            await passwordResetTokenRepository.AddAsync(resetToken);
 
             // Compose reset link (replace with your frontend URL)
             var resetLink = $"http://localhost:3000/reset-password?token={Uri.EscapeDataString(token)}";
             var subject = "Password Reset Request";
             var body = $"Click the following link to reset your password: {resetLink}\nThis link will expire in 1 hour.";
-            await _emailService.SendEmailAsync(user.Email, subject, body);
+            await emailService.SendEmailAsync(user.Email, subject, body);
 
             return new AuthResponseDto
             {
@@ -307,7 +294,7 @@ namespace IntelliBiz.API.Services
         public async Task<AuthResponseDto> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
         {
             // Get token
-            var tokenEntry = await _passwordResetTokenRepository.GetByTokenAsync(resetPasswordDto.Token);
+            var tokenEntry = await passwordResetTokenRepository.GetByTokenAsync(resetPasswordDto.Token);
             if (tokenEntry == null || tokenEntry.Expiration < DateTime.UtcNow)
             {
                 return new AuthResponseDto
@@ -318,7 +305,7 @@ namespace IntelliBiz.API.Services
             }
 
             // Get user
-            var user = await _userRepository.GetByEmailAsync(tokenEntry.User.Email);
+            var user = await userRepository.GetByEmailAsync(tokenEntry.User.Email);
             if (user == null)
             {
                 return new AuthResponseDto
@@ -330,10 +317,10 @@ namespace IntelliBiz.API.Services
 
             // Update password
             user.PasswordHash = HashPassword(resetPasswordDto.NewPassword);
-            await _userRepository.UpdateAsync(user);
+            await userRepository.UpdateAsync(user);
 
             // Delete token
-            await _passwordResetTokenRepository.DeleteExpiredAsync();
+            await passwordResetTokenRepository.DeleteExpiredAsync();
 
             return new AuthResponseDto
             {

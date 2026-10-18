@@ -1,21 +1,14 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Models;
-using IntelliBiz.API.Repositories;
+using IntelliBiz.DTOs;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
-    public class MessageService : IMessageService
+    public class MessageService(IMessageRepository messageRepository) : IMessageService
     {
-        private readonly IMessageRepository _messageRepository;
-
-        public MessageService(IMessageRepository messageRepository)
-        {
-            _messageRepository = messageRepository;
-        }
-
         public async Task<MessageDto?> GetByIdAsync(int id)
         {
-            var message = await _messageRepository.GetByIdAsync(id);
+            var message = await messageRepository.GetByIdAsync(id);
             if (message == null)
                 return null;
 
@@ -24,25 +17,25 @@ namespace IntelliBiz.API.Services
 
         public async Task<IEnumerable<MessageDto>> GetAllAsync()
         {
-            var messages = await _messageRepository.GetAllAsync();
+            var messages = await messageRepository.GetAllAsync();
             return messages.Select(MapToDto);
         }
 
         public async Task<IEnumerable<MessageDto>> GetBySenderIdAsync(int senderId)
         {
-            var messages = await _messageRepository.GetBySenderIdAsync(senderId);
+            var messages = await messageRepository.GetBySenderIdAsync(senderId);
             return messages.Select(MapToDto);
         }
 
         public async Task<IEnumerable<MessageDto>> GetByReceiverIdAsync(int receiverId)
         {
-            var messages = await _messageRepository.GetByReceiverIdAsync(receiverId);
+            var messages = await messageRepository.GetByReceiverIdAsync(receiverId);
             return messages.Select(MapToDto);
         }
 
         public async Task<IEnumerable<MessageDto>> GetConversationAsync(int user1Id, int user2Id)
         {
-            var messages = await _messageRepository.GetConversationAsync(user1Id, user2Id);
+            var messages = await messageRepository.GetConversationAsync(user1Id, user2Id);
             return messages.Select(MapToDto);
         }
 
@@ -57,11 +50,11 @@ namespace IntelliBiz.API.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            int messageId = await _messageRepository.CreateAsync(message);
+            int messageId = await messageRepository.CreateAsync(message);
             message.Id = messageId;
 
             // Retrieve the full message with navigation properties
-            var createdMessage = await _messageRepository.GetByIdAsync(messageId);
+            var createdMessage = await messageRepository.GetByIdAsync(messageId);
             if (createdMessage == null)
             {
                 return ApiResponseDto<MessageDto>.ErrorResponse("Failed to retrieve created message");
@@ -73,13 +66,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int id)
         {
-            var existingMessage = await _messageRepository.GetByIdAsync(id);
+            var existingMessage = await messageRepository.GetByIdAsync(id);
             if (existingMessage == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Message not found");
             }
 
-            bool success = await _messageRepository.DeleteAsync(id);
+            bool success = await messageRepository.DeleteAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to delete message");
@@ -90,13 +83,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> MarkAsReadAsync(int id)
         {
-            var existingMessage = await _messageRepository.GetByIdAsync(id);
+            var existingMessage = await messageRepository.GetByIdAsync(id);
             if (existingMessage == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Message not found");
             }
 
-            bool success = await _messageRepository.MarkAsReadAsync(id);
+            bool success = await messageRepository.MarkAsReadAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to mark message as read");
@@ -107,7 +100,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> MarkAllAsReadAsync(int receiverId, int senderId)
         {
-            bool success = await _messageRepository.MarkAllAsReadAsync(receiverId, senderId);
+            bool success = await messageRepository.MarkAllAsReadAsync(receiverId, senderId);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to mark messages as read");

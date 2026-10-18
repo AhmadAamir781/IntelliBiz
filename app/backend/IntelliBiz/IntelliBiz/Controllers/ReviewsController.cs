@@ -1,35 +1,26 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
+using IntelliBiz.DTOs;
+using IntelliBiz.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ReviewsController : ControllerBase
+    public class ReviewsController(IReviewService reviewService) : ControllerBase
     {
-        private readonly IReviewService _reviewService;
-        private readonly IBusinessService _businessService;
-
-        public ReviewsController(IReviewService reviewService, IBusinessService businessService)
-        {
-            _reviewService = reviewService;
-            _businessService = businessService;
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ReviewDto>>> GetAll()
         {
-            var reviews = await _reviewService.GetAllAsync();
+            var reviews = await reviewService.GetAllAsync();
             return Ok(reviews);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ReviewDto>> GetById(int id)
         {
-            var review = await _reviewService.GetByIdAsync(id);
+            var review = await reviewService.GetByIdAsync(id);
             if (review == null)
             {
                 return NotFound(new { message = "Review not found" });
@@ -41,7 +32,7 @@ namespace IntelliBiz.API.Controllers
         [HttpGet("business/{businessId}")]
         public async Task<ActionResult<IEnumerable<ReviewDto>>> GetByBusinessId(int businessId)
         {
-            var reviews = await _reviewService.GetByBusinessIdAsync(businessId);
+            var reviews = await reviewService.GetByBusinessIdAsync(businessId);
             return Ok(reviews);
         }
 
@@ -57,7 +48,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var reviews = await _reviewService.GetByUserIdAsync(userId);
+            var reviews = await reviewService.GetByUserIdAsync(userId);
             return Ok(reviews);
         }
 
@@ -65,7 +56,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<ReviewDto>>> GetPendingReviews()
         {
-            var reviews = await _reviewService.GetPendingReviewsAsync();
+            var reviews = await reviewService.GetPendingReviewsAsync();
             return Ok(reviews);
         }
 
@@ -73,7 +64,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<ReviewDto>>> GetFlaggedReviews()
         {
-            var reviews = await _reviewService.GetFlaggedReviewsAsync();
+            var reviews = await reviewService.GetFlaggedReviewsAsync();
             return Ok(reviews);
         }
 
@@ -81,7 +72,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<ReviewDto>>> GetPublishedReviews()
         {
-            var reviews = await _reviewService.GetByStatusAsync("published");
+            var reviews = await reviewService.GetByStatusAsync("published");
             return Ok(reviews);
         }
 
@@ -97,7 +88,7 @@ namespace IntelliBiz.API.Controllers
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             reviewDto.UserId = userId;
 
-            var response = await _reviewService.CreateAsync(reviewDto);
+            var response = await reviewService.CreateAsync(reviewDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -118,7 +109,7 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the author of the review or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var review = await _reviewService.GetByIdAsync(id);
+            var review = await reviewService.GetByIdAsync(id);
 
             if (review == null)
             {
@@ -130,7 +121,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _reviewService.UpdateAsync(id, reviewDto);
+            var response = await reviewService.UpdateAsync(id, reviewDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -146,7 +137,7 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the author of the review or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var review = await _reviewService.GetByIdAsync(id);
+            var review = await reviewService.GetByIdAsync(id);
 
             if (review == null)
             {
@@ -158,7 +149,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _reviewService.DeleteAsync(id);
+            var response = await reviewService.DeleteAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -171,7 +162,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponseDto<bool>>> ApproveReview(int id)
         {
-            var response = await _reviewService.ApproveReviewAsync(id);
+            var response = await reviewService.ApproveReviewAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -184,7 +175,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponseDto<bool>>> RejectReview(int id)
         {
-            var response = await _reviewService.RejectReviewAsync(id);
+            var response = await reviewService.RejectReviewAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -197,7 +188,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponseDto<bool>>> FlagReview(int id)
         {
-            var response = await _reviewService.FlagReviewAsync(id,"no reason");
+            var response = await reviewService.FlagReviewAsync(id, "no reason");
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -210,7 +201,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponseDto<bool>>> UnflagReview(int id)
         {
-            var response = await _reviewService.UnflagReviewAsync(id);
+            var response = await reviewService.UnflagReviewAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);

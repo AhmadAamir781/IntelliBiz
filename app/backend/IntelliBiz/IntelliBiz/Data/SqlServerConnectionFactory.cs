@@ -1,20 +1,13 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace IntelliBiz.API.Data
+namespace IntelliBiz.Data
 {
-    public class SqlServerConnectionFactory : IDatabaseConnectionFactory
+    public class SqlServerConnectionFactory(string connectionString) : IDatabaseConnectionFactory
     {
-        private readonly string _connectionString;
-
-        public SqlServerConnectionFactory(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
-
         public IDbConnection CreateConnection()
         {
-            return new SqlConnection(_connectionString);
+            return new SqlConnection(connectionString);
         }
     }
 }

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace IntelliBiz.API.DTOs
+namespace IntelliBiz.DTOs
 {
     public class ReviewDto
     {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace IntelliBiz.API.Models
+namespace IntelliBiz.Models
 {
     public class Service
     {

@@ -1,6 +1,6 @@
-using IntelliBiz.API.DTOs;
+using IntelliBiz.DTOs;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
     public interface IBusinessService
     {

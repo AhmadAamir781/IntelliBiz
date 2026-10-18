@@ -1,49 +1,42 @@
 using Dapper;
-using IntelliBiz.API.Data;
-using IntelliBiz.API.Models;
+using IntelliBiz.Data;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository(IDatabaseConnectionFactory connectionFactory) : IUserRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
-
-        public UserRepository(IDatabaseConnectionFactory connectionFactory)
-        {
-            _connectionFactory = connectionFactory;
-        }
-
         public async Task<User?> GetByIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "SELECT * FROM Users WHERE Id = @Id";
             return await connection.QueryFirstOrDefaultAsync<User>(sql, new { Id = id });
         }
 
         public async Task<User?> GetByEmailAsync(string email)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "SELECT * FROM Users WHERE Email = @Email";
             return await connection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "SELECT * FROM Users ORDER BY CreatedAt DESC";
             return await connection.QueryAsync<User>(sql);
         }
 
         public async Task<IEnumerable<User>> GetByRoleAsync(string role)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "SELECT * FROM Users WHERE Role = @Role ORDER BY CreatedAt DESC";
             return await connection.QueryAsync<User>(sql, new { Role = role });
         }
 
         public async Task<int> CreateAsync(User user)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 INSERT INTO Users (FirstName, LastName, Email, PasswordHash, Role, CreatedAt)
                 VALUES (@FirstName, @LastName, @Email, @PasswordHash, @Role, @CreatedAt);
@@ -55,7 +48,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UpdateAsync(User user)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Users
                 SET FirstName = @FirstName,
@@ -72,7 +65,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "DELETE FROM Appointments\nWHERE BusinessId IN (\n    SELECT Id FROM Businesses WHERE OwnerId = @Id\n);\n\nDELETE FROM Services\nWHERE BusinessId IN (\n    SELECT Id FROM Businesses WHERE OwnerId = @Id\n);\n\nDELETE FROM Reviews\nWHERE UserId = @Id;\n\nDELETE FROM Businesses\nWHERE OwnerId = @Id;\n\nDELETE FROM Users\nWHERE Id = @Id;\n";   
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
@@ -80,7 +73,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> EmailExistsAsync(string email)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "SELECT COUNT(1) FROM Users WHERE Email = @Email";
             int count = await connection.ExecuteScalarAsync<int>(sql, new { Email = email });
             return count > 0;

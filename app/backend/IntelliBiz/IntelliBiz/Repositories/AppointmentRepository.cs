@@ -1,21 +1,14 @@
 using Dapper;
-using IntelliBiz.API.Data;
-using IntelliBiz.API.Models;
+using IntelliBiz.Data;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
-    public class AppointmentRepository : IAppointmentRepository
+    public class AppointmentRepository(IDatabaseConnectionFactory connectionFactory) : IAppointmentRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
-
-        public AppointmentRepository(IDatabaseConnectionFactory connectionFactory)
-        {
-            _connectionFactory = connectionFactory;
-        }
-
         public async Task<Appointment?> GetByIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
@@ -32,7 +25,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Appointment>> GetAllAsync()
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
@@ -49,7 +42,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Appointment>> GetByUserIdAsync(int userId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
@@ -67,7 +60,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Appointment>> GetByBusinessIdAsync(int businessId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
@@ -85,7 +78,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Appointment>> GetByStatusAsync(string status)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT a.*, 
                        u.FirstName + ' ' + u.LastName as CustomerName,
@@ -103,7 +96,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<int> CreateAsync(Appointment appointment)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 INSERT INTO Appointments (UserId, BusinessId, ServiceId, AppointmentDate, StartTime, EndTime, Status, Notes, CreatedAt)
                 VALUES (@UserId, @BusinessId, @ServiceId, @AppointmentDate, @StartTime, @EndTime, @Status, @Notes, @CreatedAt);
@@ -116,7 +109,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UpdateAsync(Appointment appointment)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Appointments
                 SET AppointmentDate = @AppointmentDate,
@@ -134,7 +127,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "DELETE FROM Appointments WHERE Id = @Id";
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
@@ -142,7 +135,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UpdateStatusAsync(int id, string status)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Appointments
                 SET Status = @Status,

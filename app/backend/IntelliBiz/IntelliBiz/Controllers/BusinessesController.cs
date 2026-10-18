@@ -1,33 +1,26 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
+using IntelliBiz.DTOs;
+using IntelliBiz.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BusinessesController : ControllerBase
+    public class BusinessesController(IBusinessService businessService) : ControllerBase
     {
-        private readonly IBusinessService _businessService;
-
-        public BusinessesController(IBusinessService businessService)
-        {
-            _businessService = businessService;
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BusinessDto>>> GetAll()
         {
-            var businesses = await _businessService.GetAllAsync();
+            var businesses = await businessService.GetAllAsync();
             return Ok(businesses);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<BusinessDto>> GetById(int id)
         {
-            var business = await _businessService.GetByIdAsync(id);
+            var business = await businessService.GetByIdAsync(id);
             if (business == null)
             {
                 return NotFound(new { message = "Business not found" });
@@ -39,27 +32,27 @@ namespace IntelliBiz.API.Controllers
         [HttpGet("owner/{ownerId}")]
         public async Task<ActionResult<IEnumerable<BusinessDto>>> GetByOwnerId(int ownerId)
         {
-            var businesses = await _businessService.GetByOwnerIdAsync(ownerId);
+            var businesses = await businessService.GetByOwnerIdAsync(ownerId);
             return Ok(businesses);
         }
 
         [HttpGet("category/{category}")]
         public async Task<ActionResult<IEnumerable<BusinessDto>>> GetByCategory(string category)
         {
-            var businesses = await _businessService.GetByCategoryAsync(category);
+            var businesses = await businessService.GetByCategoryAsync(category);
             return Ok(businesses);
         }
         [HttpGet("categories")]
         public async Task<ActionResult<IEnumerable<string>>> GetCategories()
         {
-            var categories = await _businessService.GetCategoriesAsync();
+            var categories = await businessService.GetCategoriesAsync();
             return Ok(categories);
         }
 
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<BusinessDto>>> Search([FromQuery] string term, [FromQuery] string? category = null)
         {
-            var businesses = await _businessService.SearchAsync(term, category);
+            var businesses = await businessService.SearchAsync(term, category);
             return Ok(businesses);
         }
 
@@ -79,7 +72,7 @@ namespace IntelliBiz.API.Controllers
                 businessDto.OwnerId = userId;
             }
 
-            var response = await _businessService.CreateAsync(businessDto);
+            var response = await businessService.CreateAsync(businessDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -100,7 +93,7 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the owner of the business or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(id);
+            var business = await businessService.GetByIdAsync(id);
 
             if (business == null)
             {
@@ -112,7 +105,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _businessService.UpdateAsync(id, businessDto);
+            var response = await businessService.UpdateAsync(id, businessDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -128,7 +121,7 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the owner of the business or an admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(id);
+            var business = await businessService.GetByIdAsync(id);
 
             if (business == null)
             {
@@ -140,7 +133,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _businessService.DeleteAsync(id);
+            var response = await businessService.DeleteAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -152,7 +145,7 @@ namespace IntelliBiz.API.Controllers
         [HttpPatch("{id}/verify")]
         public async Task<ActionResult<ApiResponseDto<bool>>> VerifyBusiness(int id)
         {
-            var response = await _businessService.VerifyBusinessAsync(id);
+            var response = await businessService.VerifyBusinessAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);

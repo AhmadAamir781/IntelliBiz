@@ -1,21 +1,14 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Models;
-using IntelliBiz.API.Repositories;
+using IntelliBiz.DTOs;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
-    public class UserService : IUserService
+    public class UserService(IUserRepository userRepository) : IUserService
     {
-        private readonly IUserRepository _userRepository;
-
-        public UserService(IUserRepository userRepository)
-        {
-            _userRepository = userRepository;
-        }
-
         public async Task<UserDto?> GetByIdAsync(int id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var user = await userRepository.GetByIdAsync(id);
             if (user == null)
                 return null;
 
@@ -24,32 +17,32 @@ namespace IntelliBiz.API.Services
 
         public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
-            var users = await _userRepository.GetAllAsync();
+            var users = await userRepository.GetAllAsync();
             return users.Select(MapToDto);
         }
 
         public async Task<IEnumerable<UserDto>> GetByRoleAsync(string role)
         {
-            var users = await _userRepository.GetByRoleAsync(role);
+            var users = await userRepository.GetByRoleAsync(role);
             return users.Select(MapToDto);
         }
 
         public async Task<UserDto?> GetByEmailAsync(string email)
         {
-            var user = await _userRepository.GetByEmailAsync(email);
+            var user = await userRepository.GetByEmailAsync(email);
             return user is not null ? MapToDto(user) : null;
         }
 
         public async Task<ApiResponseDto<UserDto>> UpdateAsync(int id, UserDto userDto)
         {
-            var existingUser = await _userRepository.GetByIdAsync(id);
+            var existingUser = await userRepository.GetByIdAsync(id);
             if (existingUser == null)
             {
                 return ApiResponseDto<UserDto>.ErrorResponse("User not found");
             }
 
             // Check if email is being changed and if it already exists
-            if (existingUser.Email != userDto.Email && await _userRepository.EmailExistsAsync(userDto.Email))
+            if (existingUser.Email != userDto.Email && await userRepository.EmailExistsAsync(userDto.Email))
             {
                 return ApiResponseDto<UserDto>.ErrorResponse("Email already exists");
             }
@@ -61,7 +54,7 @@ namespace IntelliBiz.API.Services
             existingUser.Role = userDto.Role;
             existingUser.UpdatedAt = DateTime.UtcNow;
 
-            bool success = await _userRepository.UpdateAsync(existingUser);
+            bool success = await userRepository.UpdateAsync(existingUser);
             if (!success)
             {
                 return ApiResponseDto<UserDto>.ErrorResponse("Failed to update user");
@@ -72,13 +65,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int id)
         {
-            var existingUser = await _userRepository.GetByIdAsync(id);
+            var existingUser = await userRepository.GetByIdAsync(id);
             if (existingUser == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("User not found");
             }
 
-            bool success = await _userRepository.DeleteAsync(id);
+            bool success = await userRepository.DeleteAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to delete user");

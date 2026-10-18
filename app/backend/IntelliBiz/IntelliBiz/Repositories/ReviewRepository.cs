@@ -1,21 +1,14 @@
 using Dapper;
-using IntelliBiz.API.Data;
-using IntelliBiz.API.Models;
+using IntelliBiz.Data;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
-    public class ReviewRepository : IReviewRepository
+    public class ReviewRepository(IDatabaseConnectionFactory connectionFactory) : IReviewRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
-
-        public ReviewRepository(IDatabaseConnectionFactory connectionFactory)
-        {
-            _connectionFactory = connectionFactory;
-        }
-
         public async Task<Review?> GetByIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT r.*, 
                        u.FirstName + ' ' + u.LastName as UserName,
@@ -29,7 +22,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Review>> GetAllAsync()
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT r.*, 
                        u.FirstName + ' ' + u.LastName as UserName,
@@ -43,7 +36,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Review>> GetByUserIdAsync(int userId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT r.*, 
                        u.FirstName + ' ' + u.LastName as UserName,
@@ -58,7 +51,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Review>> GetByBusinessIdAsync(int businessId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT r.*, 
                        u.FirstName + ' ' + u.LastName as UserName,
@@ -73,7 +66,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Review>> GetByStatusAsync(string status)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT r.*, 
                        u.FirstName + ' ' + u.LastName as UserName,
@@ -88,7 +81,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Review>> GetFlaggedAsync()
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT r.*, 
                        u.FirstName + ' ' + u.LastName as UserName,
@@ -103,7 +96,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<int> CreateAsync(Review review)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 INSERT INTO Reviews (UserId, BusinessId, Rating, Comment, IsFlagged, Status, CreatedAt)
                 VALUES (@UserId, @BusinessId, @Rating, @Comment, @IsFlagged, @Status, @CreatedAt);
@@ -115,7 +108,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UpdateAsync(Review review)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Reviews
                 SET Rating = @Rating,
@@ -130,7 +123,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "DELETE FROM Reviews WHERE Id = @Id";
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
@@ -138,7 +131,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> FlagReviewAsync(int id, string flagReason)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Reviews
                 SET IsFlagged = 1,
@@ -152,7 +145,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UnflagReviewAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Reviews
                 SET IsFlagged = 0,
@@ -166,7 +159,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UpdateStatusAsync(int id, string status)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Reviews
                 SET Status = @Status,

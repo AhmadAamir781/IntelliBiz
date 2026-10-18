@@ -1,37 +1,23 @@
-using System.Threading.Tasks;
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Models;
-using IntelliBiz.API.Repositories;
 using IntelliBiz.DTOs;
+using IntelliBiz.Repositories;
 
 namespace IntelliBiz.API.Services
 {
-    public class BusinessDetailService : IBusinessDetailService
+    public class BusinessDetailService(
+        IBusinessRepository businessRepository,
+        IReviewRepository reviewRepository,
+        IServiceRepository serviceRepository) : IBusinessDetailService
     {
-        private readonly IBusinessRepository _businessRepository;
-        private readonly IReviewRepository _reviewRepository;
-        private readonly IServiceRepository _serviceRepository;
-
-        public BusinessDetailService(
-            IBusinessRepository businessRepository,
-            IReviewRepository reviewRepository,
-            IServiceRepository serviceRepository)
+        public async Task<BusinessDetailDto?> GetBusinessDetailAsync(int businessId)
         {
-            _businessRepository = businessRepository;
-            _reviewRepository = reviewRepository;
-            _serviceRepository = serviceRepository;
-        }
-
-        public async Task<BusinessDetailDto> GetBusinessDetailAsync(int businessId)
-        {
-            var business = await _businessRepository.GetByIdAsync(businessId);
+            var business = await businessRepository.GetByIdAsync(businessId);
             if (business == null)
             {
                 return null;
             }
 
-            var reviews = await _reviewRepository.GetByBusinessIdAsync(businessId);
-            var services = await _serviceRepository.GetByBusinessIdAsync(businessId);
+            var reviews = await reviewRepository.GetByBusinessIdAsync(businessId);
+            var services = await serviceRepository.GetByBusinessIdAsync(businessId);
 
             return new BusinessDetailDto
             {

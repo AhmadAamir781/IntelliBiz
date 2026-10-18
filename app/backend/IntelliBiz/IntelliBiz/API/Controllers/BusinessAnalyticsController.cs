@@ -1,24 +1,15 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using IntelliBiz.API.DTOs;
 using IntelliBiz.API.Services;
 using IntelliBiz.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IntelliBiz.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class BusinessAnalyticsController : ControllerBase
+    public class BusinessAnalyticsController(IBusinessAnalyticsService analyticsService) : ControllerBase
     {
-        private readonly IBusinessAnalyticsService _analyticsService;
-
-        public BusinessAnalyticsController(IBusinessAnalyticsService analyticsService)
-        {
-            _analyticsService = analyticsService;
-        }
-
         [HttpGet("{businessId}")]
         public async Task<ActionResult<BusinessAnalyticsDto>> GetAnalytics(int businessId, [FromQuery] string timeRange = "30days")
         {
@@ -28,11 +19,11 @@ namespace IntelliBiz.API.Controllers
                 return BadRequest(new { message = "Invalid time range. Valid values are: 7days, 30days, 90days, year" });
             }
 
-            var analytics = await _analyticsService.GetBusinessAnalyticsAsync(businessId, timeRange);
+            var analytics = await analyticsService.GetBusinessAnalyticsAsync(businessId, timeRange);
             return Ok(analytics);
         }
 
-        private bool IsValidTimeRange(string timeRange)
+        private static bool IsValidTimeRange(string timeRange)
         {
             return timeRange switch
             {
@@ -41,4 +32,4 @@ namespace IntelliBiz.API.Controllers
             };
         }
     }
-} 
+}

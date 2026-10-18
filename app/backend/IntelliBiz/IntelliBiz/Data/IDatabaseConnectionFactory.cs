@@ -1,6 +1,6 @@
 using System.Data;
 
-namespace IntelliBiz.API.Data
+namespace IntelliBiz.Data
 {
     public interface IDatabaseConnectionFactory
     {

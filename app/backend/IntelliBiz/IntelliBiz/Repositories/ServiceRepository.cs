@@ -1,21 +1,14 @@
 using Dapper;
-using IntelliBiz.API.Data;
-using IntelliBiz.API.Models;
+using IntelliBiz.Data;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
-    public class ServiceRepository : IServiceRepository
+    public class ServiceRepository(IDatabaseConnectionFactory connectionFactory) : IServiceRepository
     {
-        private readonly IDatabaseConnectionFactory _connectionFactory;
-
-        public ServiceRepository(IDatabaseConnectionFactory connectionFactory)
-        {
-            _connectionFactory = connectionFactory;
-        }
-
         public async Task<Service?> GetByIdAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT s.*, b.Name as BusinessName
                 FROM Services s
@@ -26,7 +19,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Service>> GetAllAsync()
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT s.*, b.Name as BusinessName
                 FROM Services s
@@ -37,7 +30,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<IEnumerable<Service>> GetByBusinessIdAsync(int businessId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 SELECT s.*, b.Name as BusinessName
                 FROM Services s
@@ -49,7 +42,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<int> CreateAsync(Service service)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 INSERT INTO Services (BusinessId, Name, Description, Price, Duration, IsActive, CreatedAt)
                 VALUES (@BusinessId, @Name, @Description, @Price, @Duration, @IsActive, @CreatedAt);
@@ -61,7 +54,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> UpdateAsync(Service service)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Services
                 SET Name = @Name,
@@ -79,7 +72,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = "DELETE FROM Services WHERE Id = @Id";
             int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
             return rowsAffected > 0;
@@ -87,7 +80,7 @@ namespace IntelliBiz.API.Repositories
 
         public async Task<bool> ToggleActiveStatusAsync(int id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             const string sql = @"
                 UPDATE Services
                 SET IsActive = ~IsActive,

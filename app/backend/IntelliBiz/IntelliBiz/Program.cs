@@ -1,8 +1,6 @@
 using System.Text;
 using System.Threading.RateLimiting;
-using IntelliBiz.API.Data;
-using IntelliBiz.API.Repositories;
-using IntelliBiz.API.Services;
+using IntelliBiz.Data;
 using IntelliBiz.Repositories;
 using IntelliBiz.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

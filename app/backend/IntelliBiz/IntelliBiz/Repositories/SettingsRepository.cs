@@ -1,23 +1,14 @@
-using System.Threading.Tasks;
-using System.Data;
 using Dapper;
 using IntelliBiz.Models;
-using IntelliBiz.API.Data;
+using IntelliBiz.Data;
 
 namespace IntelliBiz.Repositories
 {
-    public class SettingsRepository : ISettingsRepository
+    public class SettingsRepository(IDatabaseConnectionFactory connection) : ISettingsRepository
     {
-        private readonly IDatabaseConnectionFactory _connection;
-
-        public SettingsRepository(IDatabaseConnectionFactory connection)
-        {
-            _connection = connection;
-        }
-
         public async Task<Settings> GetSettingsAsync()
         {
-            using var dbconnection = _connection.CreateConnection();
+            using var dbconnection = connection.CreateConnection();
             const string sql = @"
                 SELECT Id, SiteName, AdminEmail, SupportEmail, DefaultCurrency, 
                        TermsOfService, PrivacyPolicy, UpdatedAt
@@ -33,7 +24,7 @@ namespace IntelliBiz.Repositories
             
             if (existingSettings.Id == 0)
             {
-                using var dbconnection = _connection.CreateConnection();
+                using var dbconnection = connection.CreateConnection();
 
                 const string insertSql = @"
                     INSERT INTO Settings (SiteName, AdminEmail, SupportEmail, DefaultCurrency, 
@@ -47,7 +38,7 @@ namespace IntelliBiz.Repositories
             }
             else
             {
-                using var dbconnection = _connection.CreateConnection();
+                using var dbconnection = connection.CreateConnection();
 
                 const string updateSql = @"
                     UPDATE Settings

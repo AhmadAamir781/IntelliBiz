@@ -1,4 +1,4 @@
-namespace IntelliBiz.API.DTOs
+namespace IntelliBiz.DTOs
 {
     public class ApiResponseDto<T>
     {

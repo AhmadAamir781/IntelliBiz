@@ -1,35 +1,25 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
-using Microsoft.AspNetCore.Authorization;
+using IntelliBiz.DTOs;
+using IntelliBiz.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class MessagesController : ControllerBase
+    public class MessagesController(IMessageService messageService, IBusinessService businessService) : ControllerBase
     {
-        private readonly IMessageService _messageService;
-        private readonly IBusinessService _businessService;
-
-        public MessagesController(IMessageService messageService, IBusinessService businessService)
-        {
-            _messageService = messageService;
-            _businessService = businessService;
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetAll()
         {
-            var messages = await _messageService.GetAllAsync();
+            var messages = await messageService.GetAllAsync();
             return Ok(messages);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<MessageDto>> GetById(int id)
         {
-            var message = await _messageService.GetByIdAsync(id);
+            var message = await messageService.GetByIdAsync(id);
             if (message == null)
             {
                 return NotFound(new { message = "Message not found" });
@@ -38,7 +28,7 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the sender, recipient, or admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(message.BusinessId);
+            var business = await businessService.GetByIdAsync(message.BusinessId);
 
             if (message.UserId != userId && (business == null || business.OwnerId != userId) && userRole != "Admin")
             {
@@ -52,7 +42,7 @@ namespace IntelliBiz.API.Controllers
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetUserMessages()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var messages = await _messageService.GetBySenderIdAsync(userId);
+            var messages = await messageService.GetBySenderIdAsync(userId);
             return Ok(messages);
         }
 
@@ -62,7 +52,7 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the business owner or admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(businessId);
+            var business = await businessService.GetByIdAsync(businessId);
 
             if (business == null)
             {
@@ -74,7 +64,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var messages = await _messageService.GetConversationAsync(userId, businessId);
+            var messages = await messageService.GetConversationAsync(userId, businessId);
             return Ok(messages);
         }
 
@@ -84,14 +74,14 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the sender, recipient, or admin
             var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var business = await _businessService.GetByIdAsync(businessId);
+            var business = await businessService.GetByIdAsync(businessId);
 
             if (currentUserId != userId && (business == null || business.OwnerId != currentUserId) && userRole != "Admin")
             {
                 return Forbid();
             }
 
-            var messages = await _messageService.GetConversationAsync(userId, businessId);
+            var messages = await messageService.GetConversationAsync(userId, businessId);
             return Ok(messages);
         }
 
@@ -106,11 +96,11 @@ namespace IntelliBiz.API.Controllers
             // Set user ID from the authenticated user if sending as user
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            
+
             // If sending as business, verify ownership
             if (messageDto.IsFromBusiness)
             {
-                var business = await _businessService.GetByIdAsync(messageDto.BusinessId);
+                var business = await businessService.GetByIdAsync(messageDto.BusinessId);
                 if (business == null)
                 {
                     return NotFound(ApiResponseDto<MessageDto>.ErrorResponse("Business not found"));
@@ -126,7 +116,7 @@ namespace IntelliBiz.API.Controllers
                 messageDto.UserId = userId;
             }
 
-            var response = await _messageService.CreateAsync(messageDto);
+            var response = await messageService.CreateAsync(messageDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -141,17 +131,17 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the recipient
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var message = await _messageService.GetByIdAsync(id);
+            var message = await messageService.GetByIdAsync(id);
 
             if (message == null)
             {
                 return NotFound(ApiResponseDto<bool>.ErrorResponse("Message not found"));
             }
 
-            var business = await _businessService.GetByIdAsync(message.BusinessId);
-            
+            var business = await businessService.GetByIdAsync(message.BusinessId);
+
             // Check if the user is the intended recipient
-            bool isRecipient = false;
+            bool isRecipient;
             if (message.IsFromBusiness)
             {
                 // If message is from business, user should be the recipient
@@ -168,7 +158,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _messageService.MarkAsReadAsync(id);
+            var response = await messageService.MarkAsReadAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -183,20 +173,20 @@ namespace IntelliBiz.API.Controllers
             // Check if user is the sender, recipient, or admin
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            var message = await _messageService.GetByIdAsync(id);
+            var message = await messageService.GetByIdAsync(id);
 
             if (message == null)
             {
                 return NotFound(ApiResponseDto<bool>.ErrorResponse("Message not found"));
             }
 
-            var business = await _businessService.GetByIdAsync(message.BusinessId);
+            var business = await businessService.GetByIdAsync(message.BusinessId);
             if (message.UserId != userId && (business == null || business.OwnerId != userId) && userRole != "Admin")
             {
                 return Forbid();
             }
 
-            var response = await _messageService.DeleteAsync(id);
+            var response = await messageService.DeleteAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);

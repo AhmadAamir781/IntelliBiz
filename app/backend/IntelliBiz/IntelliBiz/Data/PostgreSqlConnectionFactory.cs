@@ -1,20 +1,13 @@
 using Npgsql;
 using System.Data;
 
-namespace IntelliBiz.API.Data
+namespace IntelliBiz.Data
 {
-    public class PostgreSqlConnectionFactory : IDatabaseConnectionFactory
+    public class PostgreSqlConnectionFactory(string connectionString) : IDatabaseConnectionFactory
     {
-        private readonly string _connectionString;
-
-        public PostgreSqlConnectionFactory(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
-
         public IDbConnection CreateConnection()
         {
-            return new NpgsqlConnection(_connectionString);
+            return new NpgsqlConnection(connectionString);
         }
     }
 }

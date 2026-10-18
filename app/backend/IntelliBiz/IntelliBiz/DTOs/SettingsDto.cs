@@ -1,5 +1,3 @@
-using System;
-
 namespace IntelliBiz.DTOs
 {
     public class SettingsDto
@@ -12,4 +10,4 @@ namespace IntelliBiz.DTOs
         public string PrivacyPolicy { get; set; } = string.Empty;
         public DateTime? UpdatedAt { get; set; }
     }
-} 
+}

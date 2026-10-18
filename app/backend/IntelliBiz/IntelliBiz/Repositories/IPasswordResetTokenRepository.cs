@@ -1,7 +1,6 @@
-using System.Threading.Tasks;
-using IntelliBiz.API.Models;
+using IntelliBiz.Models;
 
-namespace IntelliBiz.API.Repositories
+namespace IntelliBiz.Repositories
 {
     public interface IPasswordResetTokenRepository
     {

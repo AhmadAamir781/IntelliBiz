@@ -1,28 +1,21 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Services;
+using IntelliBiz.DTOs;
+using IntelliBiz.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace IntelliBiz.API.Controllers
+namespace IntelliBiz.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UsersController : ControllerBase
+    public class UsersController(IUserService userService) : ControllerBase
     {
-        private readonly IUserService _userService;
-
-        public UsersController(IUserService userService)
-        {
-            _userService = userService;
-        }
-
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
         {
-            var users = await _userService.GetAllAsync();
+            var users = await userService.GetAllAsync();
             return Ok(users);
         }
 
@@ -38,7 +31,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var user = await _userService.GetByIdAsync(id);
+            var user = await userService.GetByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
@@ -51,14 +44,14 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetByRole(string role)
         {
-            var users = await _userService.GetByRoleAsync(role);
+            var users = await userService.GetByRoleAsync(role);
             return Ok(users);
         }
 
         [HttpGet("email/{email}")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetByEmail(string email)
         {
-            var users = await _userService.GetByEmailAsync(email);
+            var users = await userService.GetByEmailAsync(email);
             return Ok(users);
         }
 
@@ -79,7 +72,7 @@ namespace IntelliBiz.API.Controllers
                 return Forbid();
             }
 
-            var response = await _userService.UpdateAsync(id, userDto);
+            var response = await userService.UpdateAsync(id, userDto);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -92,7 +85,7 @@ namespace IntelliBiz.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponseDto<bool>>> Delete(int id)
         {
-            var response = await _userService.DeleteAsync(id);
+            var response = await userService.DeleteAsync(id);
             if (!response.Success)
             {
                 return BadRequest(response);

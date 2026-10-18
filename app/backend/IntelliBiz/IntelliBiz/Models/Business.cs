@@ -1,8 +1,8 @@
+using IntelliBiz.DTOs;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using IntelliBiz.DTOs;
 
-namespace IntelliBiz.API.Models
+namespace IntelliBiz.Models
 {
     public class Business
     {
@@ -64,9 +64,11 @@ namespace IntelliBiz.API.Models
                           .Select(s => s.Trim())
                           .ToList();
 
-        public string? ServiceAreas { 
+        public string? ServiceAreas
+        {
             get;
-            set; } = string.Empty;
+            set;
+        } = string.Empty;
         public List<string>? ServiceArea =>
             ServiceAreas.Split(',', StringSplitOptions.RemoveEmptyEntries)
                           .Select(s => s.Trim())

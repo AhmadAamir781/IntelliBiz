@@ -1,26 +1,18 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
     public interface IEmailService
     {
         Task SendEmailAsync(string to, string subject, string body);
     }
 
-    public class EmailService : IEmailService
+    public class EmailService(IConfiguration configuration) : IEmailService
     {
-        private readonly IConfiguration _configuration;
-        public EmailService(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
         public async Task SendEmailAsync(string to, string subject, string body)
         {
-            var smtpSection = _configuration.GetSection("Smtp");
+            var smtpSection = configuration.GetSection("Smtp");
             var host = smtpSection["Host"];
             var port = int.Parse(smtpSection["Port"] ?? "587");
             var username = smtpSection["Username"];

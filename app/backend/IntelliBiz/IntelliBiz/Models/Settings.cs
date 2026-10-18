@@ -1,5 +1,3 @@
-using System;
-
 namespace IntelliBiz.Models
 {
     public class Settings
@@ -13,4 +11,4 @@ namespace IntelliBiz.Models
         public string PrivacyPolicy { get; set; } = string.Empty;
         public DateTime UpdatedAt { get; set; }
     }
-} 
+}

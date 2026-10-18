@@ -1,21 +1,14 @@
-using IntelliBiz.API.DTOs;
-using IntelliBiz.API.Models;
-using IntelliBiz.API.Repositories;
+using IntelliBiz.DTOs;
+using IntelliBiz.Models;
+using IntelliBiz.Repositories;
 
-namespace IntelliBiz.API.Services
+namespace IntelliBiz.Services
 {
-    public class ServiceService : IServiceService
+    public class ServiceService(IServiceRepository serviceRepository) : IServiceService
     {
-        private readonly IServiceRepository _serviceRepository;
-
-        public ServiceService(IServiceRepository serviceRepository)
-        {
-            _serviceRepository = serviceRepository;
-        }
-
         public async Task<ServiceDto?> GetByIdAsync(int id)
         {
-            var service = await _serviceRepository.GetByIdAsync(id);
+            var service = await serviceRepository.GetByIdAsync(id);
             if (service == null)
                 return null;
 
@@ -24,13 +17,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<IEnumerable<ServiceDto>> GetAllAsync()
         {
-            var services = await _serviceRepository.GetAllAsync();
+            var services = await serviceRepository.GetAllAsync();
             return services.Select(MapToDto);
         }
 
         public async Task<IEnumerable<ServiceDto>> GetByBusinessIdAsync(int businessId)
         {
-            var services = await _serviceRepository.GetByBusinessIdAsync(businessId);
+            var services = await serviceRepository.GetByBusinessIdAsync(businessId);
             return services.Select(MapToDto);
         }
 
@@ -47,7 +40,7 @@ namespace IntelliBiz.API.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            int serviceId = await _serviceRepository.CreateAsync(service);
+            int serviceId = await serviceRepository.CreateAsync(service);
             service.Id = serviceId;
 
             var createdServiceDto = MapToDto(service);
@@ -56,7 +49,7 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<ServiceDto>> UpdateAsync(int id, ServiceDto serviceDto)
         {
-            var existingService = await _serviceRepository.GetByIdAsync(id);
+            var existingService = await serviceRepository.GetByIdAsync(id);
             if (existingService == null)
             {
                 return ApiResponseDto<ServiceDto>.ErrorResponse("Service not found");
@@ -70,7 +63,7 @@ namespace IntelliBiz.API.Services
             existingService.IsActive = serviceDto.IsActive;
             existingService.UpdatedAt = DateTime.UtcNow;
 
-            bool success = await _serviceRepository.UpdateAsync(existingService);
+            bool success = await serviceRepository.UpdateAsync(existingService);
             if (!success)
             {
                 return ApiResponseDto<ServiceDto>.ErrorResponse("Failed to update service");
@@ -82,13 +75,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> DeleteAsync(int id)
         {
-            var existingService = await _serviceRepository.GetByIdAsync(id);
+            var existingService = await serviceRepository.GetByIdAsync(id);
             if (existingService == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Service not found");
             }
 
-            bool success = await _serviceRepository.DeleteAsync(id);
+            bool success = await serviceRepository.DeleteAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to delete service");
@@ -99,13 +92,13 @@ namespace IntelliBiz.API.Services
 
         public async Task<ApiResponseDto<bool>> ToggleActiveStatusAsync(int id)
         {
-            var existingService = await _serviceRepository.GetByIdAsync(id);
+            var existingService = await serviceRepository.GetByIdAsync(id);
             if (existingService == null)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Service not found");
             }
 
-            bool success = await _serviceRepository.ToggleActiveStatusAsync(id);
+            bool success = await serviceRepository.ToggleActiveStatusAsync(id);
             if (!success)
             {
                 return ApiResponseDto<bool>.ErrorResponse("Failed to toggle service status");
